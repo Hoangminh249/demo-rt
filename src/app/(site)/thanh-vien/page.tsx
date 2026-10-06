@@ -34,21 +34,21 @@ export default function LoyaltyPage() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       <div className="relative mb-8 overflow-hidden rounded-2xl">
-        <Photo src="/images/loyalty.svg" alt="" className="absolute inset-0" />
+        <Photo src="/images/loyalty.jpg" alt="" className="absolute inset-0" />
         <div className="relative bg-brand/70 p-8 text-white md:p-12">
           <h1 className="text-3xl font-bold">Rooty Members</h1>
           <p className="mt-2 max-w-xl text-white/90">Khách không mất đi sau check-out. Một tài khoản dùng chung cho khách sạn, tour Rooty Trip và du thuyền RIVUS.</p>
         </div>
       </div>
       <div className="mb-10 grid gap-4 md:grid-cols-4">
-        {BENEFITS.map(({ Icon, t, d }) => <Card key={t} className="p-4"><Icon className="size-6 text-primary" /><p className="mt-2 font-semibold">{t}</p><p className="text-sm text-muted">{d}</p></Card>)}
+        {BENEFITS.map(({ Icon, t, d }) => <Card key={t} className="p-4"><Icon className="size-6 text-primary" /><p className="mt-2 font-semibold">{t}</p><p className="text-sm text-muted-foreground">{d}</p></Card>)}
       </div>
       <PageTitle title="Hạng thành viên" />
       <div className="grid gap-4 md:grid-cols-4">
         {TIERS.map(t => (
           <Card key={t.name} className="p-5">
             <p className="flex items-center gap-2 text-lg font-bold"><Crown className="size-5 text-amber-500" />{t.name}</p>
-            <p className="text-xs text-muted">{t.need}</p>
+            <p className="text-xs text-muted-foreground">{t.need}</p>
             <ul className="mt-3 space-y-1 text-sm">{t.perks.map(p => <li key={p}>• {p}</li>)}</ul>
           </Card>
         ))}
@@ -64,14 +64,14 @@ export default function LoyaltyPage() {
         ) : (
           <div className="mt-3 flex flex-wrap items-end gap-3">
             <Button size="lg" className="h-auto! max-w-full whitespace-normal! py-2" onClick={() => login('C001')}>Đăng nhập là Nguyễn Văn A (khách quen)</Button>
-            <span className="text-sm text-muted">hoặc</span>
+            <span className="text-sm text-muted-foreground">hoặc</span>
             <label className="text-sm">Khách khác
               <Select value={pick} onChange={e => setPick(e.target.value)} className="mt-1 w-56">{customers.slice(1, 25).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</Select>
             </label>
             <Button variant="secondary" onClick={() => login(pick)}>Đăng nhập</Button>
           </div>
         )}
-        <p className="mt-3 text-xs text-muted">Đăng nhập là Nguyễn Văn A để xem trang chủ và AI cá nhân hoá (Ocean View → Family Room → Breakfast → tour phù hợp).</p>
+        <p className="mt-3 text-xs text-muted-foreground">Đăng nhập là Nguyễn Văn A để xem trang chủ và AI cá nhân hoá (Ocean View → Family Room → Breakfast → tour phù hợp).</p>
       </Card>
     </div>
   )

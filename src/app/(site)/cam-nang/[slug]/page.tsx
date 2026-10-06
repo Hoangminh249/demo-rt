@@ -14,12 +14,12 @@ export default function ArticlePage({ params }: PageProps<'/cam-nang/[slug]'>) {
   return (
     <article className="mx-auto max-w-3xl px-4 py-8">
       <Breadcrumb items={[{ label: 'Trang chủ', href: '/' }, { label: 'Cẩm nang', href: '/cam-nang' }, { label: x.title }]} />
-      <p className="text-sm text-muted">{x.category} · {fmtDate(x.date)} · {x.read_min} phút đọc</p>
+      <p className="text-sm text-muted-foreground">{x.category} · {fmtDate(x.date)} · {x.read_min} phút đọc</p>
       <h1 className="mt-2 text-3xl font-bold">{x.title}</h1>
       <Photo src={x.image} alt={x.title} className="mt-6 aspect-[16/9] rounded-2xl" sizes="768px" priority />
       <div className="mt-6 space-y-4 text-lg leading-relaxed">{x.body.map((p, i) => <p key={i}>{p}</p>)}</div>
-      <div className="mt-10 rounded-2xl bg-mint p-6">
-        <p className="font-semibold text-brand dark:text-accent">Sẵn sàng đi Phú Quốc?</p>
+      <div className="mt-10 rounded-2xl bg-accent p-6">
+        <p className="font-semibold text-brand dark:text-brand-accent">Sẵn sàng đi Phú Quốc?</p>
         <ButtonLink href="/tim-kiem" className="mt-3">Tìm phòng</ButtonLink>
       </div>
     </article>

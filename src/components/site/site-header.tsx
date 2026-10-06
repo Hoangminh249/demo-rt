@@ -9,22 +9,26 @@ import { cn } from '../ui'
 import { Dialog, toast } from '../ui/overlay'
 
 const NAV = [
-  { href: '/khach-san', vi: 'Khách sạn & Resort', en: 'Hotels & Resorts' },
+  { href: '/khach-san', vi: 'Khách sạn', en: 'Hotels' },
   { href: '/diem-den', vi: 'Điểm đến', en: 'Destinations' },
   { href: '/uu-dai', vi: 'Ưu đãi', en: 'Offers' },
   { href: '/trai-nghiem', vi: 'Trải nghiệm', en: 'Experiences' },
-  { href: '/hoi-nghi-su-kien', vi: 'Hội nghị & Sự kiện', en: 'Meetings & Events' },
+  { href: '/hoi-nghi-su-kien', vi: 'Sự kiện', en: 'Events' },
   { href: '/wedding', vi: 'Wedding', en: 'Wedding' },
-  { href: '/cam-nang', vi: 'Cẩm nang', en: 'Travel Guide' },
+  { href: '/cam-nang', vi: 'Cẩm nang', en: 'Guide' },
 ]
 
 export function Logo({ className }: { className?: string }) {
   return (
-    <Link href="/" className={cn('flex items-baseline gap-1 font-bold tracking-tight text-brand dark:text-accent', className)} aria-label="Rooty Hospitality — trang chủ">
-      <span className="text-xl">Rooty</span><span className="text-xl font-medium text-accent">Hospitality</span>
+    <Link href="/" className={cn('flex shrink-0 items-center gap-2 text-brand dark:text-brand-accent', className)} aria-label="Rooty Hospitality — trang chủ">
+      {/* Dấu chữ R trong ô bo — chưa có logo thật */}
+      <span className="grid size-8 place-items-center rounded-lg bg-brand text-sm font-bold text-brand-foreground" aria-hidden>R</span>
+      <span className="text-base font-semibold leading-tight">Rooty <span className="font-normal text-primary dark:text-brand-accent">Hospitality</span></span>
     </Link>
   )
 }
+
+const ACTION = 'inline-flex h-10 items-center gap-2 rounded-xl px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground'
 
 export function SiteHeader() {
   const { overlay, update } = useDemo()
@@ -38,43 +42,45 @@ export function SiteHeader() {
     update(o => ({ session: { ...o.session, lang: o.session.lang === 'vi' ? 'en' : 'vi' } }))
     toast(lang === 'vi' ? 'English (giả lập): mới dịch menu, nội dung vẫn tiếng Việt' : 'Đã chuyển về tiếng Việt', 'info')
   }
-
-  const links = NAV.map(n => (
-    <Link key={n.href} href={n.href} onClick={() => setMenu(false)}
-      className={cn('rounded-md px-2.5 py-2 text-sm font-medium hover:text-primary', path.startsWith(n.href) ? 'text-primary' : 'text-fg')}>
-      {n[lang]}
-    </Link>
-  ))
+  const link = (n: (typeof NAV)[number], mobile = false) => {
+    const active = path.startsWith(n.href)
+    return (
+      <Link key={n.href} href={n.href} onClick={() => setMenu(false)} aria-current={active ? 'page' : undefined}
+        className={cn('rounded-xl text-sm font-medium transition-colors', mobile ? 'flex h-11 items-center px-3 hover:bg-item-hover' : 'px-3 py-2 hover:text-foreground',
+          active ? 'text-foreground' : 'text-muted-foreground', mobile && active && 'bg-secondary')}>
+        {n[lang]}
+      </Link>
+    )
+  }
 
   return (
-    <header className="no-print sticky top-9 z-40 border-b border-border bg-surface/95 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4">
+    <header className="no-print sticky top-9 z-40 border-b border-border bg-card">
+      <div className="mx-auto flex h-16 max-w-7xl items-center gap-2 px-4 sm:px-6">
         <Logo />
-        <nav aria-label="Chính" className="ml-4 hidden items-center xl:flex">{links}</nav>
+        <nav aria-label="Chính" className="ml-6 hidden items-center lg:flex">{NAV.map(n => link(n))}</nav>
         <div className="ml-auto flex items-center gap-1">
           {compare > 0 && (
-            <Link href="/so-sanh" className="relative hidden items-center gap-1 rounded-md px-2 py-2 text-sm font-medium text-fg hover:bg-surface-2 sm:inline-flex">
-              <Scale className="size-4" /> So sánh <span className="rounded-full bg-primary px-1.5 text-xs text-white">{compare}</span>
+            <Link href="/so-sanh" className={cn(ACTION, 'hidden sm:inline-flex')}>
+              <Scale className="size-4" aria-hidden />So sánh <span className="grid h-5 min-w-5 place-items-center rounded-full bg-primary px-1 text-xs text-primary-foreground">{compare}</span>
             </Link>
           )}
-          <button type="button" onClick={toggleLang} className="rounded-md px-2 py-2 text-sm font-semibold text-muted hover:bg-surface-2" aria-label="Đổi ngôn ngữ">
-            {lang === 'vi' ? 'VI' : 'EN'}<span className="text-border"> | </span>{lang === 'vi' ? 'EN' : 'VI'}
+          <button type="button" onClick={toggleLang} className={cn(ACTION, 'px-2.5')} aria-label={lang === 'vi' ? 'Switch to English' : 'Chuyển sang tiếng Việt'}>
+            {lang === 'vi' ? 'VI' : 'EN'}
           </button>
-          <Link href="/my-booking" className="hidden items-center gap-1 rounded-md px-2 py-2 text-sm font-medium hover:bg-surface-2 md:inline-flex">
-            <Ticket className="size-4" /> My Booking
+          <Link href="/my-booking" className={cn(ACTION, 'hidden md:inline-flex')}><Ticket className="size-4" aria-hidden />My Booking</Link>
+          <Link href={me ? '/tai-khoan' : '/thanh-vien'} className={cn(ACTION, 'max-w-48')}>
+            <UserRound className="size-4 shrink-0" aria-hidden /><span className="hidden truncate sm:inline">{me ? me.name : lang === 'vi' ? 'Đăng nhập' : 'Sign in'}</span>
           </Link>
-          <Link href={me ? '/tai-khoan' : '/thanh-vien'} className="inline-flex items-center gap-1 rounded-md px-2 py-2 text-sm font-medium hover:bg-surface-2">
-            <UserRound className="size-4" /> <span className="hidden sm:inline">{me ? me.name : lang === 'vi' ? 'Thành viên' : 'Members'}</span>
-          </Link>
-          <button type="button" onClick={() => setMenu(true)} className="rounded-md p-2 hover:bg-surface-2 xl:hidden" aria-label="Mở menu"><Menu className="size-5" /></button>
+          <button type="button" onClick={() => setMenu(true)} className={cn(ACTION, 'px-2.5 lg:hidden')} aria-label="Mở menu"><Menu className="size-5" /></button>
         </div>
       </div>
       <Dialog open={menu} onClose={() => setMenu(false)} title="Menu" side="right">
-        <nav aria-label="Menu di động" className="flex flex-col">
-          {links}
-          <Link href="/my-booking" onClick={() => setMenu(false)} className="rounded-md px-2.5 py-2 text-sm font-medium">My Booking</Link>
-          <Link href="/thanh-vien" onClick={() => setMenu(false)} className="rounded-md px-2.5 py-2 text-sm font-medium">Thành viên / Loyalty</Link>
-          {compare > 0 && <Link href="/so-sanh" onClick={() => setMenu(false)} className="rounded-md px-2.5 py-2 text-sm font-medium">So sánh ({compare})</Link>}
+        <nav aria-label="Menu di động" className="flex flex-col gap-1">
+          {NAV.map(n => link(n, true))}
+          <div className="my-2 border-t border-border" />
+          <Link href="/my-booking" onClick={() => setMenu(false)} className="flex h-11 items-center rounded-xl px-3 text-sm font-medium hover:bg-item-hover">My Booking</Link>
+          <Link href="/thanh-vien" onClick={() => setMenu(false)} className="flex h-11 items-center rounded-xl px-3 text-sm font-medium hover:bg-item-hover">Thành viên</Link>
+          {compare > 0 && <Link href="/so-sanh" onClick={() => setMenu(false)} className="flex h-11 items-center rounded-xl px-3 text-sm font-medium hover:bg-item-hover">So sánh ({compare})</Link>}
         </nav>
       </Dialog>
     </header>

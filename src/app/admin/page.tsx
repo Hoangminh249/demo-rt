@@ -12,17 +12,17 @@ import type { Channel } from '@/lib/types'
 import { previousPeriod, type Kpis } from '@/lib/metrics'
 import { Card, PageTitle, Skeleton, Table, cn } from '@/components/ui'
 
-const TT = { contentStyle: { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--fg)' } }
-const AX = { tick: { fontSize: 11, fill: 'var(--muted)' } }
+const TT = { contentStyle: { background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--foreground)' } }
+const AX = { tick: { fontSize: 11, fill: 'var(--muted-foreground)' } }
 
 function Kpi({ label, value, cur, prev, pct, invert }: { label: string; value: string; cur: number; prev: number; pct?: boolean; invert?: boolean }) {
   const diff = pct ? (cur - prev) * 100 : prev ? ((cur - prev) / prev) * 100 : 0
   const good = invert ? diff < 0 : diff > 0
   return (
     <Card className="p-4">
-      <p className="text-xs font-medium uppercase tracking-wide text-muted">{label}</p>
+      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
       <p className="mt-1 text-2xl font-bold">{value}</p>
-      <p className={cn('mt-1 flex items-center gap-0.5 text-xs', Math.abs(diff) < 0.05 ? 'text-muted' : good ? 'text-ok' : 'text-danger')}>
+      <p className={cn('mt-1 flex items-center gap-0.5 text-xs', Math.abs(diff) < 0.05 ? 'text-muted-foreground' : good ? 'text-ok' : 'text-danger')}>
         {Math.abs(diff) < 0.05 ? 'Không đổi so với kỳ trước' : <>{diff > 0 ? <ArrowUpRight className="size-3.5" /> : <ArrowDownRight className="size-3.5" />}{diff > 0 ? '+' : ''}{diff.toLocaleString('vi-VN', { maximumFractionDigits: 1 })}{pct ? ' điểm %' : '%'} so với kỳ trước</>}
       </p>
     </Card>
@@ -61,9 +61,9 @@ export default function Dashboard() {
     <div className={cn('space-y-6', d.loading && 'opacity-70 transition-opacity')}>
       <PageTitle title="Dashboard lãnh đạo" sub={`${scope} · ${fmtRange(a.period.from, a.period.to)} · so với ${fmtRange(previousPeriod(a.period).from, previousPeriod(a.period).to)}`} />
       <KpiGrid c={c} p={p} />
-      <p className="flex items-center gap-1 text-xs text-muted"><Info className="size-3.5" />Mọi chỉ số tính từ dữ liệu booking (không nhập tay). Booking/huỷ/kênh theo ngày nhận phòng; room nights, doanh thu, occupancy, ADR theo đêm lưu trú trong kỳ. Bấm vào biểu đồ để lọc danh sách booking.</p>
+      <p className="flex items-center gap-1 text-xs text-muted-foreground"><Info className="size-3.5" />Mọi chỉ số tính từ dữ liệu booking (không nhập tay). Booking/huỷ/kênh theo ngày nhận phòng; room nights, doanh thu, occupancy, ADR theo đêm lưu trú trong kỳ. Bấm vào biểu đồ để lọc danh sách booking.</p>
 
-      <div className="grid gap-4 xl:grid-cols-3">
+      <div className="grid gap-4 xl:grid-cols-3 [&>*]:min-w-0">
         <Card className="p-4 xl:col-span-2">
           <h2 className="mb-2 font-semibold">Doanh thu phòng theo ngày & kênh</h2>
           <div className="h-72">
@@ -112,13 +112,13 @@ export default function Dashboard() {
       </Card>
 
       <h2 className="pt-2 text-lg font-bold">Xem sâu</h2>
-      <div className="grid gap-4 xl:grid-cols-2">
+      <div className="grid gap-4 xl:grid-cols-2 [&>*]:min-w-0">
         <section>
           <h3 className="mb-2 text-sm font-semibold">1. Khách sạn nào bán tốt nhất?</h3>
           <Table>
             <thead><tr><th>Khách sạn</th><th className="text-right">Doanh thu</th><th className="text-right">RN</th><th className="text-right">Occ.</th><th className="text-right">ADR</th></tr></thead>
             <tbody>{best.map((h, i) => (
-              <tr key={h.hotel.id} className="cursor-pointer hover:bg-surface-2" onClick={() => router.push(q({ hotel: h.hotel.id }))}>
+              <tr key={h.hotel.id} className="cursor-pointer hover:bg-muted" onClick={() => router.push(q({ hotel: h.hotel.id }))}>
                 <td>{i === 0 && '🏆 '}<span className="font-medium">{h.hotel.name}</span></td><td className="text-right">{fmtMoneyShort(h.revenue)}</td><td className="text-right">{fmtNumber(h.roomNights)}</td><td className="text-right">{fmtPct(h.occupancy, 0)}</td><td className="text-right">{fmtMoneyShort(h.adr)}</td>
               </tr>
             ))}</tbody>
@@ -130,8 +130,8 @@ export default function Dashboard() {
             <thead><tr><th>Hạng phòng</th><th className="text-right">Occ.</th><th className="text-right">RN</th><th className="text-right">Doanh thu</th></tr></thead>
             <tbody>
               {[...rooms.slice(0, 4), ...rooms.slice(Math.max(4, rooms.length - 4))].map((r, i) => (
-                <tr key={r.rt.room_type_id} className="cursor-pointer hover:bg-surface-2" onClick={() => router.push(q({ room: r.rt.room_type_id, hotel: r.rt.hotel_id }))}>
-                  <td><span className={cn('mr-1 inline-block size-2 rounded-full', i < 4 ? 'bg-ok' : 'bg-danger')} />{r.rt.name}<div className="text-xs text-muted">{r.hotel.name}</div></td>
+                <tr key={r.rt.room_type_id} className="cursor-pointer hover:bg-muted" onClick={() => router.push(q({ room: r.rt.room_type_id, hotel: r.rt.hotel_id }))}>
+                  <td><span className={cn('mr-1 inline-block size-2 rounded-full', i < 4 ? 'bg-ok' : 'bg-danger')} />{r.rt.name}<div className="text-xs text-muted-foreground">{r.hotel.name}</div></td>
                   <td className="text-right">{fmtPct(r.occupancy, 0)}</td><td className="text-right">{r.rn}</td><td className="text-right">{fmtMoneyShort(r.revenue)}</td>
                 </tr>
               ))}
@@ -143,7 +143,7 @@ export default function Dashboard() {
           <Table>
             <thead><tr><th>Đại lý</th><th className="text-right">Booking</th><th className="text-right">Doanh thu net</th><th className="text-right">Công nợ</th></tr></thead>
             <tbody>{agents.slice(0, 6).map(g => (
-              <tr key={g.agent.id} className="cursor-pointer hover:bg-surface-2" onClick={() => router.push(`/admin/agents/${g.agent.id}`)}>
+              <tr key={g.agent.id} className="cursor-pointer hover:bg-muted" onClick={() => router.push(`/admin/agents/${g.agent.id}`)}>
                 <td className="font-medium">{g.agent.name}</td><td className="text-right">{g.bookings}</td><td className="text-right">{fmtMoneyShort(g.revenue)}</td><td className="text-right">{fmtMoneyShort(g.debt)}</td>
               </tr>
             ))}</tbody>
@@ -157,20 +157,20 @@ export default function Dashboard() {
               return (
                 <Link key={m.ch} href={q({ channel: m.ch })} className="block">
                   <div className="flex justify-between text-sm"><span>{m.name}</span><span className="font-semibold">{fmtMoneyShort(m.revenue)} · {fmtPct(share, 0)}</span></div>
-                  <div className="mt-1 h-2 rounded-full bg-surface-2"><div className="h-2 rounded-full" style={{ width: `${share * 100}%`, background: CHANNEL_COLOR[m.ch] }} /></div>
+                  <div className="mt-1 h-2 rounded-full bg-muted"><div className="h-2 rounded-full" style={{ width: `${share * 100}%`, background: CHANNEL_COLOR[m.ch] }} /></div>
                 </Link>
               )
             })}
-            <p className="text-xs text-muted">Hoa hồng OTA ước tính (15–18%): <b className="text-danger">{fmtMoneyShort(c.channelRevenue.ota * 0.165)}</b> — mỗi điểm % chuyển từ OTA sang direct tiết kiệm ~{fmtMoneyShort(c.revenue * 0.01 * 0.165)}/kỳ.</p>
+            <p className="text-xs text-muted-foreground">Hoa hồng OTA ước tính (15–18%): <b className="text-danger">{fmtMoneyShort(c.channelRevenue.ota * 0.165)}</b> — mỗi điểm % chuyển từ OTA sang direct tiết kiệm ~{fmtMoneyShort(c.revenue * 0.01 * 0.165)}/kỳ.</p>
           </Card>
         </section>
         <section className="xl:col-span-2">
           <h3 className="mb-2 text-sm font-semibold">5. Khách cũ quay lại bao nhiêu?</h3>
           <Card className="flex flex-wrap items-center gap-6 p-4">
-            <div><p className="text-3xl font-bold">{returning.returning}</p><p className="text-xs text-muted">booking của khách quay lại</p></div>
-            <div><p className="text-3xl font-bold">{fmtPct(returning.identified ? returning.returning / returning.identified : 0, 0)}</p><p className="text-xs text-muted">trên {returning.identified} booking đã định danh khách</p></div>
-            <div><p className="text-3xl font-bold">{returning.customers}</p><p className="text-xs text-muted">khách quay lại</p></div>
-            <p className="max-w-md text-sm text-muted">Booking OTA/đại lý thường không có hồ sơ khách → chỉ đo được trên kênh trực tiếp. Đây là lý do cần đẩy direct booking và CRM chung.</p>
+            <div><p className="text-3xl font-bold">{returning.returning}</p><p className="text-xs text-muted-foreground">booking của khách quay lại</p></div>
+            <div><p className="text-3xl font-bold">{fmtPct(returning.identified ? returning.returning / returning.identified : 0, 0)}</p><p className="text-xs text-muted-foreground">trên {returning.identified} booking đã định danh khách</p></div>
+            <div><p className="text-3xl font-bold">{returning.customers}</p><p className="text-xs text-muted-foreground">khách quay lại</p></div>
+            <p className="max-w-md text-sm text-muted-foreground">Booking OTA/đại lý thường không có hồ sơ khách → chỉ đo được trên kênh trực tiếp. Đây là lý do cần đẩy direct booking và CRM chung.</p>
             <Link href="/admin/customers?segment=returning" className="ml-auto text-sm font-medium text-primary hover:underline">Xem phân khúc khách quay lại →</Link>
           </Card>
         </section>

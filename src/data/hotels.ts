@@ -1,7 +1,7 @@
 // Dữ liệu giả lập. Chỉ src/lib/repo được import file này.
 import type { Hotel, RatePlan, RoomType } from '@/lib/types'
 
-const gallery = (slug: string) => Array.from({ length: 8 }, (_, i) => `/images/${slug}/gallery-${i + 1}.svg`)
+const gallery = (slug: string) => Array.from({ length: 8 }, (_, i) => `/images/${slug}/gallery-${i + 1}.jpg`)
 
 const STD_POLICIES = {
   checkin: 'Nhận phòng từ 14:00',
@@ -31,7 +31,7 @@ export const HOTELS: Hotel[] = [
       { name: 'Câu mực đêm', desc: 'Tour Rooty Trip, đón tại sảnh.' },
     ],
     policies: { ...STD_POLICIES, pets: 'Không nhận thú cưng.' },
-    gallery: gallery('pito-hon-thom'), cover: '/images/pito-hon-thom/cover.svg',
+    gallery: gallery('pito-hon-thom'), cover: '/images/pito-hon-thom/cover.jpg',
   },
   {
     id: 'H02', tenant_id: 'gh-tenant-calista', slug: 'calista', name: 'Calista Phú Quốc', area: 'trung-tam', stars: 4,
@@ -50,7 +50,7 @@ export const HOTELS: Hotel[] = [
       { name: 'Tour 4 đảo', desc: 'Rooty Trip đón tại sảnh 7:30.' },
     ],
     policies: STD_POLICIES,
-    gallery: gallery('calista'), cover: '/images/calista/cover.svg',
+    gallery: gallery('calista'), cover: '/images/calista/cover.jpg',
   },
   {
     id: 'H03', tenant_id: 'gh-tenant-saobien', slug: 'sao-bien-bai-dai', name: 'Sao Biển Bãi Dài Resort', area: 'bac-dao', stars: 5,
@@ -68,7 +68,7 @@ export const HOTELS: Hotel[] = [
       { name: 'Hoàng hôn Gành Dầu', desc: 'Du thuyền RIVUS khởi hành 16:30.' },
     ],
     policies: { ...STD_POLICIES, pets: 'Nhận thú cưng dưới 10kg ở hạng Garden Villa, phụ thu 500.000đ/đêm.' },
-    gallery: gallery('sao-bien-bai-dai'), cover: '/images/sao-bien-bai-dai/cover.svg',
+    gallery: gallery('sao-bien-bai-dai'), cover: '/images/sao-bien-bai-dai/cover.jpg',
   },
   {
     id: 'H04', tenant_id: 'gh-tenant-ngoclan', slug: 'ngoc-lan-boutique', name: 'Ngọc Lan Boutique Hotel', area: 'trung-tam', stars: 3,
@@ -81,7 +81,7 @@ export const HOTELS: Hotel[] = [
     restaurants: [{ name: 'Lan Café', cuisine: 'Ăn sáng Việt', hours: '06:00–10:00', desc: 'Bún kèn, bánh mì, cà phê phin.' }],
     experiences: [{ name: 'Dinh Cậu', desc: 'Đi bộ 10 phút.' }],
     policies: STD_POLICIES,
-    gallery: gallery('ngoc-lan-boutique'), cover: '/images/ngoc-lan-boutique/cover.svg',
+    gallery: gallery('ngoc-lan-boutique'), cover: '/images/ngoc-lan-boutique/cover.jpg',
   },
   {
     id: 'H05', tenant_id: 'gh-tenant-rangdong', slug: 'rang-dong-bay', name: 'Rạng Đông Bay Resort', area: 'nam-dao', stars: 4,
@@ -94,14 +94,15 @@ export const HOTELS: Hotel[] = [
     restaurants: [{ name: 'Khem Grill', cuisine: 'Nướng & hải sản', hours: '11:00–22:00', desc: 'BBQ tối thứ 6, thứ 7.' }],
     experiences: [{ name: 'Sunset Town', desc: '5 phút đi xe.' }, { name: 'Lặn biển Hòn Móng Tay', desc: 'Cano RIVUS.' }],
     policies: STD_POLICIES,
-    gallery: gallery('rang-dong-bay'), cover: '/images/rang-dong-bay/cover.svg',
+    gallery: gallery('rang-dong-bay'), cover: '/images/rang-dong-bay/cover.jpg',
   },
 ]
 
 type RoomSeed = Omit<RoomType, 'hotel_id' | 'image' | 'room_type_id'> & { code: string }
 const r = (hotel: Hotel, rooms: RoomSeed[]): RoomType[] =>
   rooms.map(({ code, ...x }) => ({
-    ...x, room_type_id: `RT-${code}`, hotel_id: hotel.id, image: `/images/${hotel.slug}/rooms/${x.slug}.svg`,
+    ...x, room_type_id: `RT-${code}`, hotel_id: hotel.id, // NL-FAM cố ý chưa có ảnh: ca biên "Chưa có ảnh" (S8)
+    image: code === 'NL-FAM' ? '' : `/images/${hotel.slug}/rooms/${x.slug}.jpg`,
   }))
 
 const [PITO, CALISTA, SAOBIEN, NGOCLAN, RANGDONG] = HOTELS

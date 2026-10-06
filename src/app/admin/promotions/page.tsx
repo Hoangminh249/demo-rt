@@ -45,7 +45,7 @@ export default function PromotionsAdmin() {
   const list = useAsync(() => repo.listPromotions({ all: true }), [])
   const [edit, setEdit] = useState<Promotion | null>(null)
   const canEdit = a.can('promotions', 'full')
-  const blank = (): Promotion => ({ id: repo.newPromotionId(), slug: `uu-dai-${Date.now() % 10000}`, type: 'early-bird', name: '', summary: '', description: '', perks: [], discount_pct: 10, valid_from: TODAY, valid_to: '2026-12-31', hotel_ids: 'all', active: true, image: '/images/offers/early-bird.svg' })
+  const blank = (): Promotion => ({ id: repo.newPromotionId(), slug: `uu-dai-${Date.now() % 10000}`, type: 'early-bird', name: '', summary: '', description: '', perks: [], discount_pct: 10, valid_from: TODAY, valid_to: '2026-12-31', hotel_ids: 'all', active: true, image: '/images/offers/early-bird.jpg' })
   async function save(p: Promotion) {
     await repo.savePromotion({ ...p, description: p.description || p.summary })
     setEdit(null)
@@ -56,7 +56,7 @@ export default function PromotionsAdmin() {
     <>
       <PageTitle title="Promotions" sub="Ưu đãi tự áp dụng khi khách đủ điều kiện (không cộng dồn, chọn mức giảm cao nhất)">
         <div className="flex gap-2">
-          <Link href="/uu-dai" target="_blank" className="inline-flex h-10 items-center gap-1 rounded-lg border border-border px-4 text-sm font-semibold hover:bg-surface-2">Xem trên website <ExternalLink className="size-3.5" /></Link>
+          <Link href="/uu-dai" target="_blank" className="inline-flex h-10 items-center gap-1 rounded-lg border border-border px-4 text-sm font-semibold hover:bg-muted">Xem trên website <ExternalLink className="size-3.5" /></Link>
           {canEdit && <Button onClick={() => setEdit(blank())}><Plus className="size-4" /> Tạo ưu đãi</Button>}
         </div>
       </PageTitle>
@@ -68,7 +68,7 @@ export default function PromotionsAdmin() {
               <td className="font-medium">{p.name}</td>
               <td>{TYPES[p.type]}</td>
               <td className="text-right">{p.discount_pct}%</td>
-              <td className="text-xs text-muted">{[p.min_advance_days && `trước ≥${p.min_advance_days} ngày`, p.min_nights && `≥${p.min_nights} đêm`, p.min_children && `≥${p.min_children} trẻ em`, p.needs_code && 'khách chọn', p.needs_addons && 'kèm xe + tour'].filter(Boolean).join(' · ') || '—'}</td>
+              <td className="text-xs text-muted-foreground">{[p.min_advance_days && `trước ≥${p.min_advance_days} ngày`, p.min_nights && `≥${p.min_nights} đêm`, p.min_children && `≥${p.min_children} trẻ em`, p.needs_code && 'khách chọn', p.needs_addons && 'kèm xe + tour'].filter(Boolean).join(' · ') || '—'}</td>
               <td className="whitespace-nowrap text-xs">{fmtDate(p.valid_from)} – {fmtDate(p.valid_to)}</td>
               <td className="text-xs">{p.hotel_ids === 'all' ? 'Tất cả' : `${p.hotel_ids.length} KS`}</td>
               <td>{live(p) ? <Badge tone="ok">Đang hiển thị</Badge> : p.active ? <Badge tone="warn">Chưa tới hạn</Badge> : <Badge>Tắt</Badge>}</td>

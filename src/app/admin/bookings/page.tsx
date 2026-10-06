@@ -55,18 +55,18 @@ function BookingsList() {
         </div>
       </PageTitle>
 
-      <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl border border-border bg-surface p-3">
+      <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card p-3">
         <div className="flex flex-wrap gap-2">
           {SOURCES.map(({ ch, label, Icon }) => (
             <button key={ch} type="button" onClick={() => set('channel', f.channel === ch ? undefined : ch)} aria-pressed={f.channel === ch}
-              className={cn('flex items-center gap-2 rounded-lg border px-3 py-2 text-sm', f.channel === ch ? 'border-primary bg-mint text-primary' : 'border-border')}>
+              className={cn('flex items-center gap-2 rounded-lg border px-3 py-2 text-sm', f.channel === ch ? 'border-primary bg-accent text-primary' : 'border-border')}>
               <Icon className="size-4" />{label}<b>{counts.data ? fmtNumber(counts.data[ch]) : '…'}</b>
             </button>
           ))}
         </div>
-        <ArrowRight className="hidden size-5 text-muted md:block" />
+        <ArrowRight className="hidden size-5 text-muted-foreground md:block" />
         <span className="rounded-lg bg-brand px-3 py-2 text-sm font-bold text-white">BOOKING SYSTEM</span>
-        <span className="hidden text-xs text-muted md:inline">→ Inventory · Customer · Payment · Reporting</span>
+        <span className="hidden text-xs text-muted-foreground md:inline">→ Inventory · Customer · Payment · Reporting</span>
       </div>
 
       <div className="mb-3 flex flex-wrap gap-2">
@@ -90,21 +90,21 @@ function BookingsList() {
 
       {!res.data ? <SkeletonList rows={6} /> : res.data.total === 0 ? <Empty title="Không có booking khớp bộ lọc" /> : (
         <div className={cn(res.loading && 'opacity-60')}>
-          <p className="mb-2 text-sm text-muted">{fmtNumber(res.data.total)} booking · tổng giá trị {fmtVND(res.data.sum)}</p>
+          <p className="mb-2 text-sm text-muted-foreground">{fmtNumber(res.data.total)} booking · tổng giá trị {fmtVND(res.data.sum)}</p>
           <Table>
             <thead><tr><th>Mã</th><th>Khách</th><th>Khách sạn / phòng</th><th>Ngày</th><th>Nguồn</th><th>Trạng thái</th><th>Thanh toán</th><th className="text-right">Tổng</th><th>Tạo lúc</th></tr></thead>
             <tbody>
               {res.data.rows.map(b => (
-                <tr key={b.code} className="cursor-pointer hover:bg-surface-2" onClick={() => router.push(`/admin/bookings/${b.code}`)}>
+                <tr key={b.code} className="cursor-pointer hover:bg-muted" onClick={() => router.push(`/admin/bookings/${b.code}`)}>
                   <td><Link href={`/admin/bookings/${b.code}`} className="font-mono text-primary hover:underline" onClick={e => e.stopPropagation()}>{b.code}</Link></td>
-                  <td>{b.guest.name}<div className="text-xs text-muted">{b.adults} NL{b.children ? ` + ${b.children} TE` : ''}</div></td>
-                  <td>{b.hotel.name}<div className="text-xs text-muted">{b.booking_rooms.length} × {b.rt.name}</div></td>
+                  <td>{b.guest.name}<div className="text-xs text-muted-foreground">{b.adults} NL{b.children ? ` + ${b.children} TE` : ''}</div></td>
+                  <td>{b.hotel.name}<div className="text-xs text-muted-foreground">{b.booking_rooms.length} × {b.rt.name}</div></td>
                   <td className="whitespace-nowrap">{fmtRange(b.checkin_date, b.checkout_date)}</td>
-                  <td><Badge tone={CHANNEL[b.channel][1]}>{CHANNEL[b.channel][0]}</Badge><div className="text-xs text-muted">{b.ota ?? b.agentName ?? ''}</div></td>
+                  <td><Badge tone={CHANNEL[b.channel][1]}>{CHANNEL[b.channel][0]}</Badge><div className="text-xs text-muted-foreground">{b.ota ?? b.agentName ?? ''}</div></td>
                   <td><Badge tone={STATUS[b.status][1]}>{STATUS[b.status][0]}</Badge></td>
                   <td><Badge tone={PAYMENT[b.payment_status][1]}>{PAYMENT[b.payment_status][0]}</Badge></td>
                   <td className="text-right font-medium">{fmtVND(b.total)}</td>
-                  <td className="whitespace-nowrap text-xs text-muted">{fmtDateTime(b.created_at)}</td>
+                  <td className="whitespace-nowrap text-xs text-muted-foreground">{fmtDateTime(b.created_at)}</td>
                 </tr>
               ))}
             </tbody>

@@ -37,7 +37,7 @@ export default function ContentAdmin() {
           <ul className="divide-y divide-border text-sm">
             {hotels.map(h => (
               <li key={h.id} className="flex items-center justify-between py-2">
-                <span><span className="font-medium">{h.name}</span><span className="block text-xs text-muted">/{h.slug} · 9 mục: tổng quan, phòng, tiện ích, nhà hàng, trải nghiệm, gallery, chính sách, ưu đãi, đặt phòng</span></span>
+                <span><span className="font-medium">{h.name}</span><span className="block text-xs text-muted-foreground">/{h.slug} · 9 mục: tổng quan, phòng, tiện ích, nhà hàng, trải nghiệm, gallery, chính sách, ưu đãi, đặt phòng</span></span>
                 <Link href={`/admin/hotels/${h.id}`} className="text-primary hover:underline">Sửa</Link>
               </li>
             ))}
@@ -65,7 +65,7 @@ export default function ContentAdmin() {
         {!leads.data ? <SkeletonList rows={1} /> : leads.data.length === 0 ? <Empty title="Chưa có yêu cầu">Gửi thử ở trang <Link href="/hoi-nghi-su-kien" className="text-primary underline">Hội nghị & Sự kiện</Link> hoặc <Link href="/wedding" className="text-primary underline">Wedding</Link>.</Empty> : (
           <Table>
             <thead><tr><th>Loại</th><th>Khách</th><th>Ngày dự kiến</th><th className="text-right">Số khách</th><th>Ghi chú</th><th>Gửi lúc</th></tr></thead>
-            <tbody>{leads.data.map(l => <tr key={l.id}><td><Badge tone={l.kind === 'wedding' ? 'info' : 'brand'}>{l.kind === 'wedding' ? 'Wedding' : 'MICE'}</Badge></td><td>{l.name}<div className="text-xs text-muted">{l.phone} · {l.email}</div></td><td>{l.date && fmtDate(l.date)}</td><td className="text-right">{l.guests}</td><td className="text-xs">{l.note}</td><td className="text-xs">{fmtDateTime(l.at)}</td></tr>)}</tbody>
+            <tbody>{leads.data.map(l => <tr key={l.id}><td><Badge tone={l.kind === 'wedding' ? 'info' : 'brand'}>{l.kind === 'wedding' ? 'Wedding' : 'MICE'}</Badge></td><td>{l.name}<div className="text-xs text-muted-foreground">{l.phone} · {l.email}</div></td><td>{l.date && fmtDate(l.date)}</td><td className="text-right">{l.guests}</td><td className="text-xs">{l.note}</td><td className="text-xs">{fmtDateTime(l.at)}</td></tr>)}</tbody>
           </Table>
         )}
       </section>

@@ -22,7 +22,7 @@ export default function AgentDebt() {
         <Stat label="Đã dùng" value={fmtPct(used, 0)} tone={used > 0.8 ? 'down' : undefined} sub={used > 0.8 ? 'Sắp chạm hạn mức' : 'Trong hạn mức'} />
       </div>
       <Card className="mt-4 p-4">
-        <div className="h-3 overflow-hidden rounded-full bg-surface-2" role="progressbar" aria-valuenow={Math.round(used * 100)} aria-valuemin={0} aria-valuemax={100} aria-label="Mức dùng hạn mức">
+        <div className="h-3 overflow-hidden rounded-full bg-muted" role="progressbar" aria-valuenow={Math.round(used * 100)} aria-valuemin={0} aria-valuemax={100} aria-label="Mức dùng hạn mức">
           <div className={cn('h-full', used > 0.8 ? 'bg-danger' : 'bg-primary')} style={{ width: `${Math.min(100, used * 100)}%` }} />
         </div>
       </Card>
@@ -34,7 +34,7 @@ export default function AgentDebt() {
       <h2 className="mb-3 mt-8 text-lg font-bold">Lịch sử thanh toán</h2>
       <Table>
         <thead><tr><th>Thời gian</th><th>Booking</th><th>Phương thức</th><th>Ghi chú</th><th className="text-right">Số tiền</th></tr></thead>
-        <tbody>{payments.slice(0, 50).map(p => <tr key={p.id}><td>{fmtDateTime(p.at)}</td><td className="font-mono">{p.booking}</td><td>{METHOD[p.method]}</td><td className="text-muted">{p.note}</td><td className="text-right">{fmtVND(p.amount)}</td></tr>)}</tbody>
+        <tbody>{payments.slice(0, 50).map(p => <tr key={p.id}><td>{fmtDateTime(p.at)}</td><td className="font-mono">{p.booking}</td><td>{METHOD[p.method]}</td><td className="text-muted-foreground">{p.note}</td><td className="text-right">{fmtVND(p.amount)}</td></tr>)}</tbody>
       </Table>
     </>
   )

@@ -27,7 +27,7 @@ export default function AdminLayout({ children }: LayoutProps<'/admin'>) {
         const allowed = a.can(m.key)
         return (
           <Link key={m.key} href={m.href} onClick={() => setMenu(false)}
-            className={cn('flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium', current === m.key ? 'bg-primary text-white' : 'text-fg hover:bg-surface-2', !allowed && 'opacity-45')}>
+            className={cn('flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium', current === m.key ? 'bg-primary text-white' : 'text-foreground hover:bg-muted', !allowed && 'opacity-45')}>
             <Icon className="size-4" />{m.label}{!allowed && <Lock className="ml-auto size-3.5" />}
           </Link>
         )
@@ -35,29 +35,29 @@ export default function AdminLayout({ children }: LayoutProps<'/admin'>) {
     </nav>
   )
   return (
-    <div className={cn('min-h-[calc(100vh-2.25rem)] bg-bg text-fg', a.dark && 'dark')}>
+    <div className={cn('min-h-[calc(100vh-2.25rem)] bg-background text-foreground', a.dark && 'dark')}>
       <div className="flex">
-        <aside className="no-print sticky top-9 hidden h-[calc(100vh-2.25rem)] w-60 shrink-0 flex-col border-r border-border bg-surface p-3 lg:flex">
+        <aside className="no-print sticky top-9 hidden h-[calc(100vh-2.25rem)] w-60 shrink-0 flex-col border-r border-border bg-card p-3 lg:flex">
           <Link href="/admin" className="mb-4 px-3 pt-1">
-            <p className="font-bold text-brand dark:text-accent">Rooty Hospitality</p>
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted">Admin</p>
+            <p className="font-bold text-brand dark:text-brand-accent">Rooty Hospitality</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Admin</p>
           </Link>
           <div className="flex-1 overflow-y-auto">{nav}</div>
-          <Link href="/" className="mt-2 flex items-center gap-2 rounded-lg px-3 py-2 text-xs text-muted hover:bg-surface-2"><ExternalLink className="size-3.5" /> Xem website khách</Link>
+          <Link href="/" className="mt-2 flex items-center gap-2 rounded-lg px-3 py-2 text-xs text-muted-foreground hover:bg-muted"><ExternalLink className="size-3.5" /> Xem website khách</Link>
         </aside>
         <div className="min-w-0 flex-1">
-          <header className="no-print sticky top-9 z-30 flex flex-wrap items-center gap-2 border-b border-border bg-surface/95 px-4 py-2 backdrop-blur">
-            <button type="button" className="rounded-md p-2 hover:bg-surface-2 lg:hidden" onClick={() => setMenu(true)} aria-label="Mở menu admin"><Menu className="size-5" /></button>
+          <header className="no-print sticky top-9 z-30 flex flex-wrap items-center gap-2 border-b border-border bg-card/95 px-4 py-2 backdrop-blur">
+            <button type="button" className="rounded-md p-2 hover:bg-muted lg:hidden" onClick={() => setMenu(true)} aria-label="Mở menu admin"><Menu className="size-5" /></button>
             <label className="sr-only" htmlFor="admin-hotel">Khách sạn</label>
-            <select id="admin-hotel" value={a.hotelId} disabled={!!a.locked} onChange={e => a.setHotel(e.target.value)} className="h-9 rounded-lg border border-border bg-surface px-2 text-sm disabled:opacity-80">
+            <select id="admin-hotel" value={a.hotelId} disabled={!!a.locked} onChange={e => a.setHotel(e.target.value)} className="h-9 rounded-lg border border-border bg-card px-2 text-sm disabled:opacity-80">
               {!a.locked && <option value="all">Tất cả khách sạn</option>}
               {a.hotels.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
             </select>
-            {a.locked && <span className="flex items-center gap-1 text-xs text-muted"><Lock className="size-3" />Chỉ KS của bạn</span>}
+            {a.locked && <span className="flex items-center gap-1 text-xs text-muted-foreground"><Lock className="size-3" />Chỉ KS của bạn</span>}
             <PeriodPicker />
             <div className="ml-auto flex items-center gap-2">
-              <button type="button" onClick={a.toggleDark} className="rounded-md p-2 hover:bg-surface-2" aria-label={a.dark ? 'Chế độ sáng' : 'Chế độ tối'}>{a.dark ? <Sun className="size-4" /> : <Moon className="size-4" />}</button>
-              <div className="text-right text-xs leading-tight"><p className="font-semibold">{a.user.name}</p><p className="text-muted">{ROLE_LABEL[a.user.role]}</p></div>
+              <button type="button" onClick={a.toggleDark} className="rounded-md p-2 hover:bg-muted" aria-label={a.dark ? 'Chế độ sáng' : 'Chế độ tối'}>{a.dark ? <Sun className="size-4" /> : <Moon className="size-4" />}</button>
+              <div className="text-right text-xs leading-tight"><p className="font-semibold">{a.user.name}</p><p className="text-muted-foreground">{ROLE_LABEL[a.user.role]}</p></div>
             </div>
           </header>
           <main className="p-4 md:p-6">

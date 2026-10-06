@@ -36,7 +36,7 @@ export default function ComparePage() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       <PageTitle title="So sánh phòng" sub={`Tối đa 3 phòng · đang so sánh ${ids.length}`} />
-      <div className="overflow-x-auto rounded-xl border border-border bg-surface">
+      <div className="overflow-x-auto rounded-xl border border-border bg-card">
         <table className="w-full min-w-[640px] text-sm">
           <thead>
             <tr>
@@ -55,7 +55,7 @@ export default function ComparePage() {
           <tbody>
             {rows.map(([label, fn]) => (
               <tr key={label} className="border-t border-border">
-                <th className="p-3 text-left text-xs font-semibold uppercase text-muted">{label}</th>
+                <th className="p-3 text-left text-xs font-semibold uppercase text-muted-foreground">{label}</th>
                 {rooms.data!.map(r => <td key={r.rt.room_type_id} className="p-3 align-top">{fn(r)}</td>)}
               </tr>
             ))}

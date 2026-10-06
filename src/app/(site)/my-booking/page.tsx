@@ -48,11 +48,11 @@ function MyBooking() {
           <Button type="submit" disabled={busy}><Search className="size-4" /> Tra cứu</Button>
         </form>
         {last && (
-          <p className="mt-3 text-xs text-muted">Gợi ý demo: booking vừa đặt{' '}
+          <p className="mt-3 text-xs text-muted-foreground">Gợi ý demo: booking vừa đặt{' '}
             <button type="button" className="font-mono text-primary underline" onClick={() => { setCode(last.code); setContact(last.guest.email); lookup(undefined, last.code, last.guest.email) }}>{last.code}</button> · {last.guest.email}
           </p>
         )}
-        <p className="mt-1 text-xs text-muted">Booking cũ của Nguyễn Văn A: thử mã trong trang Tài khoản sau khi đăng nhập, email nguyenvana@gmail.com.</p>
+        <p className="mt-1 text-xs text-muted-foreground">Booking cũ của Nguyễn Văn A: thử mã trong trang Tài khoản sau khi đăng nhập, email nguyenvana@gmail.com.</p>
       </Card>
       {err && <div className="mt-4"><ErrorBox>{err}</ErrorBox></div>}
       {b && (
@@ -73,7 +73,7 @@ function MyBooking() {
       )}
       <Dialog open={change} onClose={() => setChange(false)} title="Đổi ngày lưu trú"
         footer={<Button onClick={() => { setChange(false); toast('Đã gửi yêu cầu đổi ngày tới khách sạn (giả lập)') }}>Gửi yêu cầu</Button>}>
-        <p className="text-sm text-muted">Đổi ngày cần khách sạn xác nhận lại giá và tồn phòng. Ghi chú: Gohost API hiện không hỗ trợ đổi ngày — ngoài đời lễ tân xử lý trong Gohost.</p>
+        <p className="text-sm text-muted-foreground">Đổi ngày cần khách sạn xác nhận lại giá và tồn phòng. Ghi chú: Gohost API hiện không hỗ trợ đổi ngày — ngoài đời lễ tân xử lý trong Gohost.</p>
         <div className="mt-3 grid grid-cols-2 gap-3"><Field label="Nhận phòng mới"><Input type="date" /></Field><Field label="Trả phòng mới"><Input type="date" /></Field></div>
       </Dialog>
     </div>

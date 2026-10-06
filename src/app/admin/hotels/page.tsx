@@ -36,7 +36,7 @@ export default function HotelsAdmin() {
           })}
         </tbody>
       </Table>
-      <p className="mt-3 text-xs text-muted">Ngoài đời: property & phòng quản lý trong Gohost; nội dung trang (ảnh, mô tả, chính sách) do CMS Rooty giữ, ánh xạ hotel_code ↔ tenant_id ↔ slug.</p>
+      <p className="mt-3 text-xs text-muted-foreground">Ngoài đời: property & phòng quản lý trong Gohost; nội dung trang (ảnh, mô tả, chính sách) do CMS Rooty giữ, ánh xạ hotel_code ↔ tenant_id ↔ slug.</p>
     </>
   )
 }

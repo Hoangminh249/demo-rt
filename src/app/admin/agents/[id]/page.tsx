@@ -49,7 +49,7 @@ export default function AgentAdminDetail({ params }: PageProps<'/admin/agents/[i
           <thead><tr><th>Khách sạn</th><th>Hạng phòng</th><th className="text-right">Public rate</th><th className="text-right">Agent net rate</th><th className="text-right">Chênh lệch</th></tr></thead>
           <tbody>{rooms.data.map(r => {
             const net = agentNet(agent, r)
-            return <tr key={r.room_type_id}><td>{hotels.find(h => h.id === r.hotel_id)?.name}</td><td>{r.name}{agent.net_overrides[r.room_type_id] && <Badge tone="info" className="ml-2">Giá riêng</Badge>}</td><td className="text-right">{fmtVND(r.public_rate)}</td><td className="text-right font-semibold">{fmtVND(net)}</td><td className="text-right text-muted">{fmtVND(r.public_rate - net)}</td></tr>
+            return <tr key={r.room_type_id}><td>{hotels.find(h => h.id === r.hotel_id)?.name}</td><td>{r.name}{agent.net_overrides[r.room_type_id] && <Badge tone="info" className="ml-2">Giá riêng</Badge>}</td><td className="text-right">{fmtVND(r.public_rate)}</td><td className="text-right font-semibold">{fmtVND(net)}</td><td className="text-right text-muted-foreground">{fmtVND(r.public_rate - net)}</td></tr>
           })}</tbody>
         </Table>
       </section>

@@ -33,7 +33,7 @@ export default function PaymentsAdmin() {
               <td>{m.amount - m.reconciled > 0 ? <Badge tone="warn">Chờ đối soát {fmtPct((m.amount - m.reconciled) / m.amount, 0)}</Badge> : <Badge tone="ok">Khớp</Badge>}</td></tr>
           ))}</tbody>
         </Table>
-        <p className="mt-1 text-xs text-muted">OTA thu hộ đối soát theo kỳ thanh toán của OTA (giả lập 82% đã về). Cổng thanh toán & merchant đứng tên ai: UNKNOWN.</p>
+        <p className="mt-1 text-xs text-muted-foreground">OTA thu hộ đối soát theo kỳ thanh toán của OTA (giả lập 82% đã về). Cổng thanh toán & merchant đứng tên ai: UNKNOWN.</p>
       </section>
       <section>
         <h2 className="mb-2 font-semibold">Công nợ đại lý</h2>
@@ -52,7 +52,7 @@ export default function PaymentsAdmin() {
         <Card className="overflow-hidden">
           <Table className="rounded-none border-0">
             <thead><tr><th>Thời gian</th><th>Booking</th><th>Khách</th><th>Nguồn</th><th>Phương thức</th><th className="text-right">Số tiền</th></tr></thead>
-            <tbody>{d.rows.slice(0, 50).map(t => <tr key={t.id + t.booking}><td className="whitespace-nowrap">{fmtDateTime(t.at)}</td><td><Link href={`/admin/bookings/${t.booking}`} className="font-mono text-primary hover:underline">{t.booking}</Link></td><td>{t.guest}</td><td><Badge tone={CHANNEL[t.channel][1]}>{t.source_name}</Badge></td><td>{METHOD[t.method]}{t.note && <div className="text-xs text-muted">{t.note}</div>}</td><td className="text-right">{fmtVND(t.amount)}</td></tr>)}</tbody>
+            <tbody>{d.rows.slice(0, 50).map(t => <tr key={t.id + t.booking}><td className="whitespace-nowrap">{fmtDateTime(t.at)}</td><td><Link href={`/admin/bookings/${t.booking}`} className="font-mono text-primary hover:underline">{t.booking}</Link></td><td>{t.guest}</td><td><Badge tone={CHANNEL[t.channel][1]}>{t.source_name}</Badge></td><td>{METHOD[t.method]}{t.note && <div className="text-xs text-muted-foreground">{t.note}</div>}</td><td className="text-right">{fmtVND(t.amount)}</td></tr>)}</tbody>
           </Table>
         </Card>
       </section>

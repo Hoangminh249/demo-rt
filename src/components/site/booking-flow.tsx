@@ -1,21 +1,41 @@
 'use client'
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Check, Coffee, CreditCard, QrCode, Landmark, Hotel as HotelIcon, Timer, Minus, Plus, Car, Compass, Ship, Sparkles, Loader2, ShieldCheck } from 'lucide-react'
+import { Check, CreditCard, QrCode, Landmark, Hotel as HotelIcon, Timer, Minus, Plus, LoaderCircle, ShieldCheck, Info, Sparkles, ChevronUp } from 'lucide-react'
 import { repo, type CreateBookingInput } from '@/lib/repo'
 import type { Addon } from '@/lib/types'
 import { useAsync, useDemo } from '@/store/provider'
 import { parseSearch, searchToParams } from '@/lib/search-params'
-import { addDays, diffDays, fmtDate, fmtRange, fmtVND, guestsLabel, roomsLeft, TODAY } from '@/lib/format'
+import { addDays, diffDays, fmtDate, fmtRange, fmtVND, guestsLabel } from '@/lib/format'
 import { DEPOSIT_RATE } from '@/lib/pricing'
-import { Badge, Breadcrumb, Button, Card, ErrorBox, Field, Input, Photo, Select, Skeleton, SkeletonList, Textarea, cn } from '../ui'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Badge, Breadcrumb, ErrorBox, Photo, Skeleton, cn } from '../ui'
+import { Dialog } from '../ui/overlay'
+import { DateRangeField, GuestsField } from './stay-fields'
 
-const STEPS = ['Phòng', 'Dịch vụ thêm', 'Thông tin khách', 'Thanh toán'] as const
+const STEPS = ['Phòng', 'Dịch vụ thêm', 'Thông tin', 'Thanh toán'] as const
 const HOLD_SECONDS = 15 * 60
-const CAT_ICON = { transfer: Car, tour: Compass, rivus: Ship, spa: Sparkles, dining: Coffee }
-
+const clock = () => Date.now() // chỉ gọi trong handler/interval, không trong render
 type PayMethod = CreateBookingInput['payment']['method']
+
+/** Radio dạng card (choice-controls.md): đang chọn = viền focus + ring mờ. */
+const CHOICE = 'flex cursor-pointer items-start gap-3 rounded-xl border border-border-strong bg-card p-4 transition-colors hover:bg-surface-hover has-checked:border-focus has-checked:ring-2 has-checked:ring-focus has-disabled:cursor-not-allowed has-disabled:opacity-50'
+const RADIO = 'mt-0.5 size-5 shrink-0 cursor-pointer appearance-none rounded-full border-[1.5px] border-border-strong bg-card transition-[border-color,border-width] checked:border-[6px] checked:border-primary disabled:cursor-not-allowed'
+
+function FieldRow({ label, error, required, children, className, htmlFor }: { label: string; error?: string; required?: boolean; children: React.ReactNode; className?: string; htmlFor: string }) {
+  return (
+    <div className={cn('space-y-1.5', className)}>
+      <label htmlFor={htmlFor} className="w-fit cursor-pointer text-sm font-medium">{label}{required && <span className="text-red-600"> *</span>}</label>
+      {children}
+      <p className="min-h-4 text-xs text-red-600" aria-live="polite">{error}</p>
+    </div>
+  )
+}
 
 export function BookingFlow({ slug }: { slug: string }) {
   const sp = useSearchParams()
@@ -23,6 +43,7 @@ export function BookingFlow({ slug }: { slug: string }) {
   const s0 = parseSearch(sp)
   const { overlay } = useDemo()
   const me = overlay.session.customerId ? repo.customerBrief(overlay.session.customerId) : null
+  const uid = useId()
 
   const [step, setStep] = useState(0)
   const [stay, setStay] = useState({ checkin: s0.checkin, checkout: s0.checkout, adults: s0.adults, children: s0.children, rooms: s0.rooms, ages: s0.ages })
@@ -31,13 +52,14 @@ export function BookingFlow({ slug }: { slug: string }) {
   const [addons, setAddons] = useState<Record<string, number>>({})
   const [honeymoon, setHoneymoon] = useState(s0.promo === 'honeymoon')
   const [guest, setGuest] = useState({ name: me?.name ?? '', phone: me?.phone ?? '', email: me?.email ?? '', nationality: me?.nationality ?? 'Việt Nam', notes: '', arrival: '14:00' })
-  const [invoice, setInvoice] = useState<{ on: boolean; company: string; tax_code: string; address: string }>({ on: false, company: '', tax_code: '', address: '' })
+  const [invoice, setInvoice] = useState({ on: false, company: '', tax_code: '', address: '' })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [pay, setPay] = useState<{ method: PayMethod; mode: 'deposit' | 'full'; outcome: 'ok' | 'fail' }>({ method: 'card', mode: 'full', outcome: 'ok' })
   const [holdStart, setHoldStart] = useState<number | null>(null)
   const [now, setNow] = useState(0)
   const [state, setState] = useState<'idle' | 'processing' | 'failed'>('idle')
   const [submitError, setSubmitError] = useState('')
+  const [summaryOpen, setSummaryOpen] = useState(false)
 
   const hotel = useAsync(() => repo.getHotel(slug), [slug])
   const h = hotel.data
@@ -52,38 +74,41 @@ export function BookingFlow({ slug }: { slug: string }) {
 
   useEffect(() => {
     if (holdStart == null) return
-    const t = setInterval(() => setNow(Date.now()), 1000)
+    const t = setInterval(() => setNow(clock()), 1000)
     return () => clearInterval(t)
   }, [holdStart])
   const remaining = holdStart == null ? HOLD_SECONDS : Math.max(0, HOLD_SECONDS - Math.floor(((now || holdStart) - holdStart) / 1000))
   const expired = holdStart != null && remaining === 0
   const mmss = `${String(Math.floor(remaining / 60)).padStart(2, '0')}:${String(remaining % 60).padStart(2, '0')}`
 
-  if (!h) return <div className="mx-auto max-w-6xl px-4 py-8"><SkeletonList /></div>
+  if (!h) return <div className="mx-auto max-w-6xl space-y-4 px-4 py-8 sm:px-6"><Skeleton className="h-10 w-80" /><Skeleton className="h-96" /></div>
 
   const nights = diffDays(stay.checkin, stay.checkout)
   const bump = (a: Addon, d: number) => setAddons(x => ({ ...x, [a.id]: Math.max(0, (x[a.id] ?? 0) + d) }))
   const canNext0 = !!offer && !!plan && offer.fits && offer.left >= stay.rooms
+  const hasTransfer = !!addons['AD-TRF']
+  const hasTour = ['AD-T4D', 'AD-TBD', 'AD-TCM'].some(k => addons[k])
 
   function validate() {
     const e: Record<string, string> = {}
-    if (guest.name.trim().length < 2) e.name = 'Nhập họ tên'
-    if (guest.name.length > 50) e.name = 'Tối đa 50 ký tự'
-    if (!/^(\+?\d[\d\s]{7,14})$/.test(guest.phone.trim())) e.phone = 'Số điện thoại không hợp lệ'
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guest.email.trim())) e.email = 'Email không hợp lệ'
-    if (invoice.on && (!invoice.company || !/^\d{10}(-\d{3})?$/.test(invoice.tax_code))) e.invoice = 'Nhập tên công ty và MST 10 số'
+    if (guest.name.trim().length < 2) e.name = 'Chưa nhập họ tên'
+    else if (guest.name.length > 50) e.name = 'Họ tên tối đa 50 ký tự'
+    if (!/^(\+?\d[\d\s]{7,14})$/.test(guest.phone.trim())) e.phone = 'Số điện thoại chưa đúng'
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guest.email.trim())) e.email = 'Email chưa đúng'
+    if (invoice.on && !invoice.company.trim()) e.company = 'Chưa nhập tên công ty'
+    if (invoice.on && !/^\d{10}(-\d{3})?$/.test(invoice.tax_code)) e.tax = 'Mã số thuế gồm 10 số'
     setErrors(e)
     return !Object.keys(e).length
   }
 
   function go(n: number) {
-    if (n === 3 && holdStart == null) { setHoldStart(Date.now()); setNow(Date.now()) }
+    if (n === 3 && holdStart == null) { const t = clock(); setHoldStart(t); setNow(t) }
     setStep(n)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   async function submit() {
-    if (!quoteInput || expired) return
+    if (!quoteInput || expired || state === 'processing') return
     setState('processing')
     setSubmitError('')
     await new Promise(r => setTimeout(r, 1200)) // giả lập cổng thanh toán
@@ -103,99 +128,111 @@ export function BookingFlow({ slug }: { slug: string }) {
     }
   }
 
+  const payAmount = q.data ? (pay.mode === 'full' || pay.method === 'transfer' || pay.method === 'hotel' ? q.data.total : q.data.deposit) : 0
+
   const summary = (
-    <Card className="overflow-hidden">
-      <Photo src={offer?.rt.image ?? h.cover} alt={offer?.rt.name ?? h.name} className="aspect-[16/9]" sizes="380px" />
-      <div className="space-y-3 p-4 text-sm">
-        <div><p className="font-semibold">{h.name}</p><p className="text-muted">{offer?.rt.name ?? 'Chưa chọn phòng'}{plan ? ` · ${plan.has_breakfast ? 'Breakfast Included' : 'Room Only'}` : ''}</p></div>
-        <p className="text-muted">{fmtRange(stay.checkin, stay.checkout)} · {nights} đêm · {guestsLabel(stay.adults, stay.children)} · {stay.rooms} phòng</p>
-        {!q.data ? (quoteInput ? <Skeleton className="h-32" /> : null) : (
-          <div className={cn('space-y-1 border-t border-border pt-3', q.loading && 'opacity-60')}>
-            {q.data.days_breakdown.map(d => <Row key={d.day} k={`Đêm ${fmtDate(d.day)}${stay.rooms > 1 ? ` × ${stay.rooms}` : ''}`} v={fmtVND(d.price * stay.rooms)} />)}
-            {q.data.promo && <Row k={`Ưu đãi ${q.data.promo.name.split('–')[0].trim()} (−${q.data.promo.discount_pct}%)`} v={`−${fmtVND(q.data.promo_discount)}`} tone="ok" />}
-            {q.data.member_discount > 0 && <Row k="Giá thành viên (−5%)" v={`−${fmtVND(q.data.member_discount)}`} tone="ok" />}
-            {q.data.addons.map(a => <Row key={a.addon_id} k={`${a.name} × ${a.qty}`} v={fmtVND(a.total)} />)}
-            <div className="flex justify-between border-t border-border pt-2 text-base font-bold"><span>Tổng cộng</span><span>{fmtVND(q.data.total)}</span></div>
-            <p className="text-xs text-muted">Đã gồm thuế & phí. Đặt cọc {DEPOSIT_RATE * 100}%: {fmtVND(q.data.deposit)}</p>
-            {!q.data.promo && addons['AD-TRF'] && !Object.keys(addons).some(k => k.startsWith('AD-T') && k !== 'AD-TRF' && addons[k]) && <p className="rounded-md bg-mint px-2 py-1 text-xs text-brand dark:text-accent">Thêm 1 tour Rooty Trip để được ưu đãi Package −12%</p>}
-          </div>
-        )}
+    <div className="overflow-hidden rounded-2xl border border-border bg-card">
+      <div className="flex gap-3 p-4 sm:p-5">
+        <Photo src={offer?.rt.image ?? h.cover} alt="" className="size-20 shrink-0 rounded-xl" sizes="80px" />
+        <div className="min-w-0">
+          <p className="text-base font-semibold">{h.name}</p>
+          <p className="text-sm text-muted-foreground">{offer?.rt.name ?? 'Chưa chọn phòng'}{plan ? ` · ${plan.has_breakfast ? 'có ăn sáng' : 'chỉ phòng'}` : ''}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{fmtRange(stay.checkin, stay.checkout)} · {nights} đêm</p>
+          <p className="text-sm text-muted-foreground">{guestsLabel(stay.adults, stay.children)} · {stay.rooms} phòng</p>
+        </div>
       </div>
-    </Card>
+      {!q.data ? (quoteInput ? <div className="px-5 pb-5"><Skeleton className="h-32" /></div> : null) : (
+        <div className={cn('space-y-2 border-t border-border p-4 text-sm transition-opacity sm:p-5', q.loading && 'opacity-60')}>
+          {q.data.days_breakdown.map(d => <Line key={d.day} k={`Đêm ${fmtDate(d.day)}${stay.rooms > 1 ? ` × ${stay.rooms}` : ''}`} v={fmtVND(d.price * stay.rooms)} />)}
+          {q.data.promo && <Line tone="ok" k={`Ưu đãi ${q.data.promo.name.split('–')[0].trim()} (−${q.data.promo.discount_pct}%)`} v={`−${fmtVND(q.data.promo_discount)}`} />}
+          {q.data.member_discount > 0 && <Line tone="ok" k="Giá thành viên (−5%)" v={`−${fmtVND(q.data.member_discount)}`} />}
+          {q.data.addons.map(a => <Line key={a.addon_id} k={`${a.name} × ${a.qty}`} v={fmtVND(a.total)} />)}
+          <div className="flex items-baseline justify-between gap-2 border-t border-border pt-3"><span className="font-semibold">Tổng cộng</span><span className="text-lg font-semibold tabular-nums">{fmtVND(q.data.total)}</span></div>
+          <p className="text-xs text-muted-foreground">Đã gồm thuế & phí · đặt cọc {DEPOSIT_RATE * 100}%: {fmtVND(q.data.deposit)}</p>
+        </div>
+      )}
+    </div>
+  )
+
+  const footer = (back: number | null, next: React.ReactNode) => (
+    <div className="flex items-center justify-between gap-3 border-t border-border pt-5">
+      {back != null ? <Button variant="ghost" onClick={() => go(back)} disabled={state === 'processing'}>Quay lại</Button> : <span />}
+      {next}
+    </div>
   )
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6">
+    <div className="mx-auto max-w-6xl px-4 py-6 pb-28 sm:px-6 lg:pb-10">
       <Breadcrumb items={[{ label: 'Trang chủ', href: '/' }, { label: h.name, href: `/${slug}?${searchToParams({ ...stay })}` }, { label: 'Đặt phòng' }]} />
-      <ol className="mb-6 flex items-center gap-2 overflow-x-auto text-sm" aria-label="Các bước đặt phòng">
+      <h1 className="text-xl font-semibold">Đặt phòng {h.name}</h1>
+      <ol className="scrollbar-clean mt-4 mb-6 flex items-center gap-2 overflow-x-auto" aria-label="Các bước đặt phòng">
         {STEPS.map((label, i) => (
           <li key={label} className="flex shrink-0 items-center gap-2" aria-current={i === step ? 'step' : undefined}>
-            <span className={cn('grid size-7 place-items-center rounded-full text-xs font-bold', i < step ? 'bg-ok text-white' : i === step ? 'bg-primary text-white' : 'bg-surface-2 text-muted')}>{i < step ? <Check className="size-4" /> : i + 1}</span>
-            <span className={cn(i === step ? 'font-semibold' : 'text-muted')}>{label}</span>
-            {i < STEPS.length - 1 && <span className="h-px w-6 bg-border" />}
+            <span className={cn('grid size-7 place-items-center rounded-full text-xs font-semibold', i < step ? 'bg-accent text-accent-foreground' : i === step ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground')}>{i < step ? <Check className="size-4" aria-hidden /> : i + 1}</span>
+            <span className={cn('text-sm', i === step ? 'font-semibold text-foreground' : 'hidden text-muted-foreground sm:inline')}>{label}</span>
+            {i < STEPS.length - 1 && <span className="mx-1 h-px w-4 bg-border-strong sm:w-10" aria-hidden />}
           </li>
         ))}
       </ol>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
-        <div className="space-y-4">
+        <div className="min-w-0 rounded-2xl border border-border bg-card p-4 sm:p-6">
           {step === 0 && (
-            <Card className="space-y-4 p-5">
-              <h2 className="text-lg font-bold">Chọn phòng & ngày</h2>
-              <div className="grid gap-3 sm:grid-cols-5">
-                <Field label="Nhận phòng"><Input type="date" min={TODAY} value={stay.checkin} onChange={e => e.target.value && setStay(x => ({ ...x, checkin: e.target.value, checkout: x.checkout > e.target.value ? x.checkout : addDays(e.target.value, 1) }))} /></Field>
-                <Field label="Trả phòng"><Input type="date" min={addDays(stay.checkin, 1)} value={stay.checkout} onChange={e => e.target.value && setStay(x => ({ ...x, checkout: e.target.value }))} /></Field>
-                <Field label="Người lớn"><Select value={stay.adults} onChange={e => setStay(x => ({ ...x, adults: +e.target.value }))}>{[1, 2, 3, 4, 5, 6, 7, 8].map(n => <option key={n}>{n}</option>)}</Select></Field>
-                <Field label="Trẻ em"><Select value={stay.children} onChange={e => setStay(x => ({ ...x, children: +e.target.value, ages: Array(+e.target.value).fill(6) }))}>{[0, 1, 2, 3, 4].map(n => <option key={n}>{n}</option>)}</Select></Field>
-                <Field label="Số phòng"><Select value={stay.rooms} onChange={e => setStay(x => ({ ...x, rooms: +e.target.value }))}>{[1, 2, 3, 4].map(n => <option key={n}>{n}</option>)}</Select></Field>
+            <div className="space-y-5">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <DateRangeField id={`${uid}-d`} checkin={stay.checkin} checkout={stay.checkout} onChange={r => setStay(x => ({ ...x, ...r }))} />
+                <GuestsField id={`${uid}-g`} party={{ adults: stay.adults, children: stay.children, ages: stay.ages, rooms: stay.rooms }} onChange={p => setStay(x => ({ ...x, ...p }))} />
               </div>
-              {!offers.data ? <SkeletonList rows={2} /> : (
-                <div className="space-y-2" role="radiogroup" aria-label="Hạng phòng và gói giá">
-                  {offers.data.map(o => o.plans.map(p => {
-                    const ok = o.fits && o.left >= stay.rooms
-                    const checked = roomId === o.rt.room_type_id && planId === p.plan.rate_plan_id
-                    return (
-                      <label key={p.plan.rate_plan_id} className={cn('flex cursor-pointer items-center gap-3 rounded-xl border p-3', checked ? 'border-primary bg-mint/60' : 'border-border', !ok && 'cursor-not-allowed opacity-50')}>
-                        <input type="radio" name="plan" className="size-4 accent-[var(--primary)]" disabled={!ok} checked={checked} onChange={() => { setRoomId(o.rt.room_type_id); setPlanId(p.plan.rate_plan_id) }} />
-                        <div className="min-w-0 flex-1">
-                          <p className="font-semibold">{o.rt.name} <span className="font-normal text-muted">· {p.plan.name}</span></p>
-                          <p className="text-xs text-muted">{!o.fits ? `Tối đa ${o.rt.max_adults} NL + ${o.rt.max_children} TE/phòng` : o.left >= stay.rooms ? roomsLeft(o.left) : o.left ? `Chỉ còn ${o.left} phòng` : 'Hết phòng'}</p>
-                        </div>
-                        <div className="text-right"><p className="font-bold">{fmtVND(p.nightly)}</p><p className="text-xs text-muted">/đêm</p></div>
-                      </label>
-                    )
-                  }))}
-                </div>
-              )}
-              {offers.data && !offers.data.some(o => o.fits && o.left >= stay.rooms) && <ErrorBox>Hết phòng phù hợp cho ngày này. Đổi ngày hoặc <Link href={`/tim-kiem?${searchToParams({ ...stay, dest: '' })}`} className="underline">xem khách sạn khác</Link>.</ErrorBox>}
-              <div className="flex justify-end"><Button size="lg" disabled={!canNext0} onClick={() => go(1)}>Tiếp tục: Dịch vụ thêm</Button></div>
-            </Card>
+              <fieldset>
+                <legend className="mb-3 text-base font-semibold">Hạng phòng & gói giá</legend>
+                {!offers.data ? <div className="space-y-3"><Skeleton className="h-24" /><Skeleton className="h-24" /></div> : (
+                  <div className="space-y-3">
+                    {offers.data.flatMap(o => o.plans.map(p => {
+                      const ok = o.fits && o.left >= stay.rooms
+                      return (
+                        <label key={p.plan.rate_plan_id} className={CHOICE}>
+                          <input type="radio" name="plan" className={RADIO} disabled={!ok} checked={roomId === o.rt.room_type_id && planId === p.plan.rate_plan_id} onChange={() => { setRoomId(o.rt.room_type_id); setPlanId(p.plan.rate_plan_id) }} />
+                          <span className="min-w-0 flex-1">
+                            <span className="block text-sm font-medium">{o.rt.name} · {p.plan.has_breakfast ? 'Phòng + ăn sáng' : 'Chỉ phòng'}</span>
+                            <span className="mt-0.5 block text-sm text-muted-foreground">{p.plan.free_cancel_days ? `Huỷ miễn phí trước ${fmtDate(addDays(stay.checkin, -p.plan.free_cancel_days))}` : 'Không hoàn huỷ'} · {!o.fits ? `tối đa ${o.rt.max_adults} người lớn + ${o.rt.max_children} trẻ em/phòng` : o.left >= stay.rooms ? `còn ${o.left} phòng` : o.left ? `chỉ còn ${o.left} phòng` : 'hết phòng'}</span>
+                          </span>
+                          <span className="shrink-0 text-right"><span className="block text-base font-semibold tabular-nums">{fmtVND(p.nightly)}</span><span className="block text-xs text-muted-foreground">/ đêm</span></span>
+                        </label>
+                      )
+                    }))}
+                  </div>
+                )}
+              </fieldset>
+              {offers.data && !offers.data.some(o => o.fits && o.left >= stay.rooms) && <ErrorBox>Hết phòng phù hợp cho ngày này. Đổi ngày hoặc <Link href={`/tim-kiem?${searchToParams({ ...stay, dest: '' })}`} className="font-medium underline">xem khách sạn khác</Link>.</ErrorBox>}
+              {footer(null, <Button variant="default" className="min-h-11 md:min-h-10" disabled={!canNext0} onClick={() => go(1)}>Tiếp tục</Button>)}
+            </div>
           )}
 
           {step === 1 && (
-            <Card className="space-y-4 p-5">
+            <div className="space-y-5">
               <div>
-                <h2 className="text-lg font-bold">Dịch vụ thêm từ hệ sinh thái Rooty</h2>
-                <p className="text-sm text-muted">Khách không cần rời Rooty Hospitality: xe sân bay, tour Rooty Trip, du thuyền RIVUS, spa — thanh toán một lần.</p>
+                <h2 className="text-base font-semibold">Thêm dịch vụ cho chuyến đi</h2>
+                <p className="mt-1 text-sm text-muted-foreground">Xe sân bay, tour Rooty Trip, du thuyền RIVUS, spa — đặt cùng phòng, thanh toán một lần. Không bắt buộc.</p>
               </div>
-              {!allAddons.data ? <SkeletonList /> : (
-                <ul className="space-y-2">
+              {q.data?.promo?.type === 'package'
+                ? <p className="flex items-center gap-2 rounded-xl bg-ok-bg px-4 py-3 text-sm text-ok"><Sparkles className="size-4 shrink-0" aria-hidden />Đã áp ưu đãi Package −12% giá phòng vì có xe sân bay và tour.</p>
+                : <p className="flex items-center gap-2 rounded-xl bg-info-bg px-4 py-3 text-sm text-info"><Info className="size-4 shrink-0" aria-hidden />{hasTransfer && !hasTour ? 'Thêm 1 tour Rooty Trip nữa để được ưu đãi Package −12% giá phòng.' : 'Thêm xe sân bay + 1 tour Rooty Trip để được ưu đãi Package −12% giá phòng.'}</p>}
+              {!allAddons.data ? <div className="space-y-3"><Skeleton className="h-20" /><Skeleton className="h-20" /></div> : (
+                <ul className="divide-y divide-border rounded-xl border border-border">
                   {allAddons.data.map(a => {
-                    const Icon = CAT_ICON[a.category]
                     const qty = addons[a.id] ?? 0
-                    const suggested = a.id === 'AD-TRF' || a.id === 'AD-T4D'
                     return (
-                      <li key={a.id} className={cn('flex flex-wrap items-center gap-3 rounded-xl border p-3', qty ? 'border-primary bg-mint/50' : 'border-border')}>
-                        <Photo src={a.image} alt={a.name} className="size-16 shrink-0 rounded-lg" sizes="64px" />
-                        <div className="min-w-0 flex-1">
-                          <p className="flex flex-wrap items-center gap-2 font-semibold"><Icon className="size-4 text-primary" />{a.name}{suggested && <Badge tone="brand">Gợi ý</Badge>}</p>
-                          <p className="text-xs text-muted">{a.provider} · {a.desc}</p>
-                          <p className="text-sm font-medium">{fmtVND(a.price)}<span className="text-xs font-normal text-muted"> / {a.unit === 'trip' ? (a.category === 'transfer' ? 'chiều' : 'chuyến') : 'người lớn'}{a.child_price ? ` · trẻ em ${fmtVND(a.child_price)}` : ''}</span></p>
+                      <li key={a.id} className="flex flex-wrap items-center gap-3 p-3 sm:gap-4 sm:p-4">
+                        <Photo src={a.image} alt="" className="size-16 shrink-0 rounded-xl" sizes="64px" />
+                        <div className="min-w-0 flex-1 basis-48">
+                          <p className="flex flex-wrap items-center gap-2 text-sm font-medium">{a.name}<Badge tone={a.provider === 'RIVUS' ? 'info' : a.provider === 'Rooty Trip' ? 'brand' : 'neutral'}>{a.provider}</Badge></p>
+                          <p className="mt-0.5 line-clamp-2 text-sm text-muted-foreground">{a.desc}</p>
+                          <p className="mt-0.5 text-sm tabular-nums">{fmtVND(a.price)}<span className="text-muted-foreground"> / {a.unit === 'trip' ? (a.category === 'transfer' ? 'chiều' : 'chuyến') : 'người lớn'}{a.child_price ? ` · trẻ em ${fmtVND(a.child_price)}` : ''}</span></p>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <button type="button" aria-label={`Bớt ${a.name}`} disabled={!qty} onClick={() => bump(a, -1)} className="grid size-8 place-items-center rounded-full border border-border disabled:opacity-40"><Minus className="size-4" /></button>
-                          <span className="w-5 text-center font-semibold">{qty}</span>
-                          <button type="button" aria-label={`Thêm ${a.name}`} onClick={() => bump(a, 1)} className="grid size-8 place-items-center rounded-full border border-border"><Plus className="size-4" /></button>
+                        <div className="ml-auto flex h-10 items-center rounded-xl border border-border-strong bg-card">
+                          <button type="button" aria-label={`Bớt ${a.name}`} disabled={!qty} onClick={() => bump(a, -1)} className="m-1 grid size-8 place-items-center rounded-lg text-muted-foreground hover:bg-foreground/5 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"><Minus className="size-4" /></button>
+                          <span className="w-6 text-center text-sm font-semibold tabular-nums" aria-live="polite">{qty}</span>
+                          <button type="button" aria-label={`Thêm ${a.name}`} onClick={() => bump(a, 1)} className="m-1 grid size-8 place-items-center rounded-lg text-muted-foreground hover:bg-foreground/5 hover:text-foreground"><Plus className="size-4" /></button>
                         </div>
                       </li>
                     )
@@ -203,98 +240,135 @@ export function BookingFlow({ slug }: { slug: string }) {
                 </ul>
               )}
               {honeymoonPromo && (
-                <label className="flex items-center gap-2 rounded-xl border border-border p-3 text-sm">
-                  <input type="checkbox" className="size-4 accent-[var(--primary)]" checked={honeymoon} onChange={e => setHoneymoon(e.target.checked)} />
-                  Chuyến đi trăng mật — áp dụng ưu đãi <b>Honeymoon</b> (−10%, trang trí phòng)
+                <label className="flex w-fit cursor-pointer items-center gap-3 text-sm">
+                  <Checkbox checked={honeymoon} onCheckedChange={v => setHoneymoon(v === true)} className="size-5 rounded-md border-border-strong data-[state=checked]:border-primary data-[state=checked]:bg-primary" />
+                  Chuyến đi trăng mật — áp ưu đãi Honeymoon (−10%, trang trí phòng)
                 </label>
               )}
-              <div className="flex justify-between"><Button variant="secondary" onClick={() => go(0)}>Quay lại</Button><Button size="lg" onClick={() => go(2)}>Tiếp tục: Thông tin khách</Button></div>
-            </Card>
+              {footer(0, <Button variant="default" className="min-h-11 md:min-h-10" onClick={() => go(2)}>Tiếp tục</Button>)}
+            </div>
           )}
 
           {step === 2 && (
-            <Card className="space-y-4 p-5">
-              <h2 className="text-lg font-bold">Thông tin khách</h2>
-              {me ? <p className="rounded-lg bg-mint px-3 py-2 text-sm text-brand dark:text-accent">Đã điền từ tài khoản thành viên {me.name} ({me.tier}).</p> : <p className="text-sm text-muted">Đã là thành viên? <Link href="/thanh-vien" className="text-primary underline">Đăng nhập</Link> để nhận giá thành viên −5%.</p>}
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Field label="Họ tên *"><Input autoComplete="name" value={guest.name} onChange={e => setGuest({ ...guest, name: e.target.value })} aria-invalid={!!errors.name} />{errors.name && <span className="text-xs text-danger">{errors.name}</span>}</Field>
-                <Field label="Số điện thoại *"><Input type="tel" autoComplete="tel" value={guest.phone} onChange={e => setGuest({ ...guest, phone: e.target.value })} aria-invalid={!!errors.phone} />{errors.phone && <span className="text-xs text-danger">{errors.phone}</span>}</Field>
-                <Field label="Email *" hint="Gửi xác nhận & voucher"><Input type="email" autoComplete="email" value={guest.email} onChange={e => setGuest({ ...guest, email: e.target.value })} aria-invalid={!!errors.email} />{errors.email && <span className="text-xs text-danger">{errors.email}</span>}</Field>
-                <Field label="Quốc tịch"><Select value={guest.nationality} onChange={e => setGuest({ ...guest, nationality: e.target.value })}>{['Việt Nam', 'Hàn Quốc', 'Nhật Bản', 'Trung Quốc', 'Nga', 'Khác'].map(n => <option key={n}>{n}</option>)}</Select></Field>
-                <Field label="Giờ đến dự kiến"><Select value={guest.arrival} onChange={e => setGuest({ ...guest, arrival: e.target.value })}>{['12:00', '14:00', '16:00', '18:00', '20:00', '22:00', 'Sau 22:00'].map(t => <option key={t}>{t}</option>)}</Select></Field>
-                <Field label="Yêu cầu đặc biệt" className="sm:col-span-2"><Textarea value={guest.notes} onChange={e => setGuest({ ...guest, notes: e.target.value })} placeholder="Tầng cao, giường phụ, kỷ niệm ngày cưới…" /></Field>
+            <form noValidate onSubmit={e => { e.preventDefault(); if (validate()) go(3) }} className="space-y-4">
+              <h2 className="text-base font-semibold">Thông tin khách</h2>
+              {me ? <p className="rounded-xl bg-accent px-4 py-3 text-sm text-accent-foreground">Đã điền từ tài khoản {me.name} (hạng {me.tier}). Giá thành viên −5% đã áp.</p>
+                : <p className="text-sm text-muted-foreground">Đã là thành viên? <Link href="/thanh-vien" className="font-medium text-foreground underline-offset-4 hover:underline">Đăng nhập</Link> để giảm thêm 5%.</p>}
+              <div className="grid gap-x-4 sm:grid-cols-2">
+                <FieldRow htmlFor={`${uid}-name`} label="Họ tên" required error={errors.name}><Input id={`${uid}-name`} autoComplete="name" value={guest.name} onChange={e => setGuest({ ...guest, name: e.target.value })} aria-invalid={!!errors.name} /></FieldRow>
+                <FieldRow htmlFor={`${uid}-phone`} label="Số điện thoại" required error={errors.phone}><Input id={`${uid}-phone`} type="tel" autoComplete="tel" value={guest.phone} onChange={e => setGuest({ ...guest, phone: e.target.value })} aria-invalid={!!errors.phone} /></FieldRow>
+                <FieldRow htmlFor={`${uid}-email`} label="Email" required error={errors.email}><Input id={`${uid}-email`} type="email" autoComplete="email" value={guest.email} onChange={e => setGuest({ ...guest, email: e.target.value })} aria-invalid={!!errors.email} /></FieldRow>
+                <FieldRow htmlFor={`${uid}-nat`} label="Quốc tịch">
+                  <Select value={guest.nationality} onValueChange={v => setGuest({ ...guest, nationality: v })}>
+                    <SelectTrigger id={`${uid}-nat`}><SelectValue /></SelectTrigger>
+                    <SelectContent>{['Việt Nam', 'Hàn Quốc', 'Nhật Bản', 'Trung Quốc', 'Nga', 'Khác'].map(n => <SelectItem key={n} value={n}>{n}</SelectItem>)}</SelectContent>
+                  </Select>
+                </FieldRow>
+                <FieldRow htmlFor={`${uid}-arr`} label="Giờ đến dự kiến">
+                  <Select value={guest.arrival} onValueChange={v => setGuest({ ...guest, arrival: v })}>
+                    <SelectTrigger id={`${uid}-arr`}><SelectValue /></SelectTrigger>
+                    <SelectContent>{['12:00', '14:00', '16:00', '18:00', '20:00', '22:00', 'Sau 22:00'].map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+                  </Select>
+                </FieldRow>
+                <FieldRow htmlFor={`${uid}-note`} label="Yêu cầu đặc biệt" className="sm:col-span-2"><Textarea id={`${uid}-note`} value={guest.notes} onChange={e => setGuest({ ...guest, notes: e.target.value })} placeholder="Tầng cao, giường phụ, kỷ niệm ngày cưới…" /></FieldRow>
               </div>
-              <label className="flex items-center gap-2 text-sm"><input type="checkbox" className="size-4 accent-[var(--primary)]" checked={invoice.on} onChange={e => setInvoice({ ...invoice, on: e.target.checked })} /> Xuất hoá đơn công ty</label>
+              <label className="flex w-fit cursor-pointer items-center gap-3 text-sm">
+                <Checkbox checked={invoice.on} onCheckedChange={v => setInvoice({ ...invoice, on: v === true })} className="size-5 rounded-md border-border-strong data-[state=checked]:border-primary data-[state=checked]:bg-primary" />
+                Xuất hoá đơn công ty
+              </label>
               {invoice.on && (
-                <div className="grid gap-3 sm:grid-cols-3">
-                  <Field label="Tên công ty"><Input value={invoice.company} onChange={e => setInvoice({ ...invoice, company: e.target.value })} /></Field>
-                  <Field label="Mã số thuế"><Input inputMode="numeric" value={invoice.tax_code} onChange={e => setInvoice({ ...invoice, tax_code: e.target.value })} /></Field>
-                  <Field label="Địa chỉ"><Input value={invoice.address} onChange={e => setInvoice({ ...invoice, address: e.target.value })} /></Field>
-                  {errors.invoice && <span className="text-xs text-danger sm:col-span-3">{errors.invoice}</span>}
+                <div className="grid gap-x-4 sm:grid-cols-3">
+                  <FieldRow htmlFor={`${uid}-co`} label="Tên công ty" required error={errors.company}><Input id={`${uid}-co`} value={invoice.company} onChange={e => setInvoice({ ...invoice, company: e.target.value })} aria-invalid={!!errors.company} /></FieldRow>
+                  <FieldRow htmlFor={`${uid}-tax`} label="Mã số thuế" required error={errors.tax}><Input id={`${uid}-tax`} inputMode="numeric" value={invoice.tax_code} onChange={e => setInvoice({ ...invoice, tax_code: e.target.value })} aria-invalid={!!errors.tax} /></FieldRow>
+                  <FieldRow htmlFor={`${uid}-addr`} label="Địa chỉ"><Input id={`${uid}-addr`} value={invoice.address} onChange={e => setInvoice({ ...invoice, address: e.target.value })} /></FieldRow>
                 </div>
               )}
-              <div className="flex justify-between"><Button variant="secondary" onClick={() => go(1)}>Quay lại</Button><Button size="lg" onClick={() => validate() && go(3)}>Tiếp tục: Thanh toán</Button></div>
-            </Card>
+              {footer(1, <Button type="submit" variant="default" className="min-h-11 md:min-h-10">Tiếp tục</Button>)}
+            </form>
           )}
 
           {step === 3 && (
-            <Card className="space-y-4 p-5">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <h2 className="text-lg font-bold">Thanh toán</h2>
-                <span className={cn('flex items-center gap-1 rounded-full px-3 py-1 text-sm font-semibold', remaining < 120 ? 'bg-danger-bg text-danger' : 'bg-warn-bg text-warn')} role="timer" aria-live="off">
-                  <Timer className="size-4" /> Giữ phòng {mmss}
+            <div className="space-y-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h2 className="text-base font-semibold">Thanh toán</h2>
+                <span className={cn('inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-sm font-medium tabular-nums', remaining < 120 ? 'bg-danger-bg text-danger' : 'bg-warn-bg text-warn')} role="timer">
+                  <Timer className="size-4" aria-hidden />Giữ phòng {mmss}
                 </span>
               </div>
               {expired ? (
-                <ErrorBox>Hết thời gian giữ phòng 15 phút. Phòng đã được trả lại kho. <button type="button" className="font-semibold underline" onClick={() => { setHoldStart(Date.now()); setNow(Date.now()) }}>Kiểm tra lại & giữ phòng</button></ErrorBox>
+                <ErrorBox>Hết 15 phút giữ phòng, phòng đã trả lại kho. <button type="button" className="font-semibold underline" onClick={() => { const t = clock(); setHoldStart(t); setNow(t) }}>Kiểm tra lại và giữ phòng</button></ErrorBox>
               ) : (
                 <>
-                  <fieldset className="grid gap-2 sm:grid-cols-2">
-                    <legend className="mb-2 text-sm font-semibold">Phương thức</legend>
-                    {([['card', CreditCard, 'Thẻ quốc tế', 'Visa · Master · JCB'], ['qr', QrCode, 'QR / VNPay', 'Quét mã bằng app ngân hàng'], ['transfer', Landmark, 'Chuyển khoản', 'Giữ chỗ 24h chờ xác nhận'], ['hotel', HotelIcon, 'Trả tại khách sạn', 'Thanh toán khi nhận phòng']] as const).map(([v, Icon, label, sub]) => (
-                      <label key={v} className={cn('flex cursor-pointer items-center gap-3 rounded-xl border p-3', pay.method === v ? 'border-primary bg-mint/60' : 'border-border')}>
-                        <input type="radio" name="pay" className="size-4 accent-[var(--primary)]" checked={pay.method === v} onChange={() => setPay({ ...pay, method: v, mode: v === 'hotel' || v === 'transfer' ? 'full' : pay.mode })} />
-                        <Icon className="size-5 text-primary" /><span><span className="block text-sm font-semibold">{label}</span><span className="block text-xs text-muted">{sub}</span></span>
-                      </label>
-                    ))}
+                  <fieldset>
+                    <legend className="mb-3 text-sm font-medium">Phương thức</legend>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {([['card', CreditCard, 'Thẻ quốc tế', 'Visa, Master, JCB'], ['qr', QrCode, 'QR / VNPay', 'Quét bằng app ngân hàng'], ['transfer', Landmark, 'Chuyển khoản', 'Giữ chỗ 24 giờ chờ xác nhận'], ['hotel', HotelIcon, 'Trả tại khách sạn', 'Thanh toán khi nhận phòng']] as const).map(([v, Icon, label, sub]) => (
+                        <label key={v} className={CHOICE}>
+                          <input type="radio" name="pay" className={RADIO} checked={pay.method === v} onChange={() => setPay({ ...pay, method: v, mode: v === 'hotel' || v === 'transfer' ? 'full' : pay.mode })} />
+                          <span className="min-w-0 flex-1"><span className="block text-sm font-medium">{label}</span><span className="block text-sm text-muted-foreground">{sub}</span></span>
+                          <Icon className="size-5 shrink-0 text-muted-foreground" aria-hidden />
+                        </label>
+                      ))}
+                    </div>
                   </fieldset>
                   {(pay.method === 'card' || pay.method === 'qr') && (
-                    <fieldset className="flex flex-wrap gap-4 text-sm">
-                      <legend className="mb-2 text-sm font-semibold">Số tiền</legend>
-                      <label className="flex items-center gap-2"><input type="radio" name="mode" className="accent-[var(--primary)]" checked={pay.mode === 'full'} onChange={() => setPay({ ...pay, mode: 'full' })} /> Thanh toán toàn bộ {q.data && <b>{fmtVND(q.data.total)}</b>}</label>
-                      <label className="flex items-center gap-2"><input type="radio" name="mode" className="accent-[var(--primary)]" checked={pay.mode === 'deposit'} onChange={() => setPay({ ...pay, mode: 'deposit' })} /> Đặt cọc {DEPOSIT_RATE * 100}% {q.data && <b>{fmtVND(q.data.deposit)}</b>}</label>
+                    <fieldset>
+                      <legend className="mb-3 text-sm font-medium">Số tiền</legend>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        {([['full', 'Thanh toán toàn bộ', q.data?.total], ['deposit', `Đặt cọc ${DEPOSIT_RATE * 100}%`, q.data?.deposit]] as const).map(([v, label, amt]) => (
+                          <label key={v} className={CHOICE}>
+                            <input type="radio" name="mode" className={RADIO} checked={pay.mode === v} onChange={() => setPay({ ...pay, mode: v })} />
+                            <span className="min-w-0 flex-1 text-sm font-medium">{label}</span>
+                            <span className="text-sm font-semibold tabular-nums">{amt ? fmtVND(amt) : '…'}</span>
+                          </label>
+                        ))}
+                      </div>
                     </fieldset>
                   )}
-                  <div className="rounded-xl border border-dashed border-border bg-surface-2 p-4 text-sm">
-                    {pay.method === 'card' && <p className="flex items-center gap-2"><ShieldCheck className="size-4 text-ok" />Cổng thanh toán giả lập — bản demo <b>không</b> nhập số thẻ.</p>}
-                    {pay.method === 'qr' && <div className="flex items-center gap-4"><div className="grid size-24 place-items-center rounded-lg bg-white"><QrCode className="size-16 text-black" /></div><p>Quét mã VNPay (giả lập) để thanh toán {q.data && fmtVND(pay.mode === 'full' ? q.data.total : q.data.deposit)}.</p></div>}
-                    {pay.method === 'transfer' && <p>Chuyển khoản tới <b>CTCP Rooty Trip Phú Quốc</b> · STK 0000 0000 (giả lập) · Nội dung: mã booking. Booking ở trạng thái <b>Mới</b> cho tới khi kế toán xác nhận.</p>}
-                    {pay.method === 'hotel' && <p>Không thu tiền trước. Booking giữ tới 18:00 ngày nhận phòng (theo chính sách khách sạn).</p>}
+                  <div className="rounded-xl bg-muted p-4 text-sm">
+                    {pay.method === 'card' && <p className="flex items-start gap-2"><ShieldCheck className="mt-0.5 size-4 shrink-0 text-ok" aria-hidden />Cổng thanh toán giả lập — bản demo không nhập số thẻ.</p>}
+                    {pay.method === 'qr' && <div className="flex items-center gap-4"><div className="grid size-20 shrink-0 place-items-center rounded-xl bg-white"><QrCode className="size-14 text-black" aria-hidden /></div><p>Quét mã VNPay (giả lập) để trả {fmtVND(payAmount)}.</p></div>}
+                    {pay.method === 'transfer' && <p>Chuyển khoản tới <b>CTCP Rooty Trip Phú Quốc</b> · STK 0000 0000 (giả lập) · nội dung là mã booking. Booking ở trạng thái <b>Mới</b> cho tới khi kế toán xác nhận.</p>}
+                    {pay.method === 'hotel' && <p>Không thu tiền trước. Khách sạn giữ phòng tới 18:00 ngày nhận phòng.</p>}
                     {(pay.method === 'card' || pay.method === 'qr') && (
-                      <label className="mt-3 flex items-center gap-2 text-xs text-muted">Kết quả giả lập:
-                        <select value={pay.outcome} onChange={e => setPay({ ...pay, outcome: e.target.value as 'ok' | 'fail' })} className="h-8 rounded-md border border-border bg-surface px-2 text-fg"><option value="ok">Thành công</option><option value="fail">Thất bại</option></select>
-                      </label>
+                      <div className="mt-3 flex flex-wrap items-center gap-2 text-muted-foreground">
+                        <span id={`${uid}-out`}>Kết quả giả lập</span>
+                        <Select value={pay.outcome} onValueChange={v => setPay({ ...pay, outcome: v as 'ok' | 'fail' })}>
+                          <SelectTrigger aria-labelledby={`${uid}-out`} className="h-9 w-40 md:h-9"><SelectValue /></SelectTrigger>
+                          <SelectContent><SelectItem value="ok">Thành công</SelectItem><SelectItem value="fail">Thất bại</SelectItem></SelectContent>
+                        </Select>
+                      </div>
                     )}
                   </div>
-                  {state === 'failed' && <ErrorBox>Thanh toán thất bại (giả lập: ngân hàng từ chối). Phòng vẫn được giữ thêm {mmss}. Đổi kết quả giả lập hoặc phương thức rồi bấm <b>Thử lại</b>.</ErrorBox>}
+                  {state === 'failed' && <ErrorBox>Thanh toán không thành công (giả lập: ngân hàng từ chối). Phòng vẫn được giữ {mmss}. Đổi phương thức hoặc kết quả giả lập rồi bấm <b>Thử lại</b>.</ErrorBox>}
                   {submitError && <ErrorBox>{submitError}</ErrorBox>}
-                  <div className="flex justify-between gap-2">
-                    <Button variant="secondary" onClick={() => go(2)} disabled={state === 'processing'}>Quay lại</Button>
-                    <Button size="lg" onClick={submit} disabled={state === 'processing' || !q.data}>
-                      {state === 'processing' ? <><Loader2 className="size-4 animate-spin" /> Đang xử lý…</> : state === 'failed' ? 'Thử lại' : pay.method === 'card' || pay.method === 'qr' ? `Thanh toán ${q.data ? fmtVND(pay.mode === 'full' ? q.data.total : q.data.deposit) : ''}` : 'Xác nhận đặt phòng'}
+                  {plan && <p className="text-sm text-muted-foreground">{plan.free_cancel_days ? `Huỷ miễn phí trước ${fmtDate(addDays(stay.checkin, -plan.free_cancel_days))}, sau đó không hoàn tiền.` : 'Gói này không hoàn huỷ.'} Bấm thanh toán là đồng ý chính sách của khách sạn.</p>}
+                  {footer(2, (
+                    <Button variant="default" className="relative min-h-11 md:min-h-10" onClick={submit} aria-busy={state === 'processing' || undefined} aria-disabled={state === 'processing' || !q.data || undefined}>
+                      {state === 'processing' && <LoaderCircle className="absolute inset-0 m-auto size-4 animate-spin" aria-hidden />}
+                      <span className={cn(state === 'processing' && 'invisible')}>{state === 'failed' ? 'Thử lại' : pay.method === 'card' || pay.method === 'qr' ? `Thanh toán ${fmtVND(payAmount)}` : 'Xác nhận đặt phòng'}</span>
                     </Button>
-                  </div>
+                  ))}
                 </>
               )}
-            </Card>
+            </div>
           )}
         </div>
-        <aside><div className="sticky top-32">{summary}</div></aside>
+        <aside className="hidden lg:block"><div className="sticky top-32">{summary}</div></aside>
       </div>
+
+      {/* Mobile: tổng tiền ở thanh dưới, bấm mở chi tiết */}
+      <div className="no-print fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card px-4 py-3 lg:hidden">
+        <button type="button" onClick={() => setSummaryOpen(true)} className="flex w-full items-center justify-between gap-3 text-left">
+          <span><span className="block text-xs text-muted-foreground">Tổng cộng · {nights} đêm</span><span className="block text-base font-semibold tabular-nums">{q.data ? fmtVND(q.data.total) : '—'}</span></span>
+          <span className="flex items-center gap-1 text-sm font-medium">Chi tiết<ChevronUp className="size-4" aria-hidden /></span>
+        </button>
+      </div>
+      <Dialog open={summaryOpen} onClose={() => setSummaryOpen(false)} title="Chi tiết giá" side="bottom">{summary}</Dialog>
     </div>
   )
 }
 
-function Row({ k, v, tone }: { k: string; v: string; tone?: 'ok' }) {
-  return <div className={cn('flex justify-between gap-2', tone === 'ok' ? 'text-ok' : 'text-muted')}><span>{k}</span><span className="shrink-0 text-fg">{v}</span></div>
+function Line({ k, v, tone }: { k: string; v: string; tone?: 'ok' }) {
+  return <div className={cn('flex justify-between gap-3', tone === 'ok' ? 'text-ok' : 'text-muted-foreground')}><span>{k}</span><span className="shrink-0 tabular-nums text-foreground">{v}</span></div>
 }

@@ -2,7 +2,7 @@
 
 Demo bấm được từ đầu đến cuối cho `docs/de-xuat-cau-truc-rooty-hospitality-v4-tham-khao.pdf`. **Dữ liệu là giả lập**: không có backend, database, đăng nhập hay thanh toán thật, và không gọi Gohost/TourWell.
 
-Stack: Next.js 16 (App Router) · TypeScript · Tailwind CSS 4 · lucide-react · recharts · font Be Vietnam Pro.
+Stack: Next.js 16 (App Router) · TypeScript · Tailwind CSS 4 · **shadcn/ui** (Radix, style radix-nova, đã chỉnh theo skill evon ui-ux) · lucide-react · recharts · react-day-picker · font Be Vietnam Pro.
 
 ## Chạy
 
@@ -14,7 +14,8 @@ yarn dev           # http://localhost:3000
 yarn build         # build production (cũng là bước kiểm tra type)
 yarn lint
 yarn check-data    # kiểm tra seed khớp các ví dụ trong PDF + bộ phân tích câu của AI
-yarn images        # sinh lại ảnh placeholder vào public/images
+yarn photos        # tải lại ảnh mẫu (Unsplash) vào public/images — chỉ tải file chưa có
+yarn images        # sinh lại bản đồ tĩnh map-phu-quoc.svg
 ```
 
 Script kiểm tra tên là `check-data` vì `yarn check` là lệnh có sẵn của Yarn 1 (kiểm tra dependency), sẽ chạy thay cho script.
@@ -29,7 +30,7 @@ Ngày "hôm nay" của demo được cố định là **06/10/2026** (`src/lib/f
 
 | Phút | Vai trò | Thao tác | Điểm nhấn |
 |---|---|---|---|
-| 0–3 | Khách | Trang chủ → **Tìm** (mặc định 12–15/10, 2 người lớn + 1 trẻ em) → PITO Hòn Thơm · Deluxe Ocean View · *Breakfast Included* → **BOOK NOW** → thêm **2 chiều xe sân bay** + **Tour 4 đảo** → điền thông tin → chọn thanh toán thẻ, đặt kết quả giả lập là **Thất bại** → bấm **Thử lại** với kết quả **Thành công** | Thẻ phòng giống PDF: 2.850.000đ/night · *3 rooms left*. Thêm xe + tour thì ưu đãi **Package −12%** tự áp. Có bộ đếm giữ phòng 15 phút. Trang xác nhận có voucher in được và file .ics |
+| 0–3 | Khách | Trang chủ → **Tìm** (mặc định 12–15/10, 2 người lớn + 1 trẻ em) → PITO Hòn Thơm · Deluxe Ocean View · *Phòng + ăn sáng* → **Đặt phòng** → thêm **2 chiều xe sân bay** + **Tour 4 đảo** → điền thông tin → chọn thanh toán thẻ, đặt kết quả giả lập là **Thất bại** → bấm **Thử lại** với kết quả **Thành công** | Thẻ phòng theo ví dụ PDF (chữ tiếng Việt): 2.850.000đ / đêm · *Chỉ còn 3 phòng* · Bao gồm ăn sáng · Huỷ miễn phí. Thêm xe + tour thì ưu đãi **Package −12%** tự áp. Có bộ đếm giữ phòng 15 phút. Trang xác nhận có voucher in được và file .ics |
 | 3–5 | Đại lý | Chuyển vai **Đại lý** (ABC Travel) → thẻ PITO · Deluxe Ocean View đêm 20/10 → **BOOK** 2 phòng → **Ghi công nợ** | Thẻ đúng ví dụ PDF: *Public 3.000.000 · Net 2.500.000 · 7 rooms*. Thông báo hiện *Source: Agent ABC Travel \| Revenue: 5.000.000 \| Payment: Credit \| Status: Confirmed*, tồn còn **5** |
 | 5–7 | Lãnh đạo | Chuyển vai **Lãnh đạo** → **Inventory** (ô 20/10: W7 · A7 · O8 · Off3 → còn 5) → **Bookings** (2 booking vừa tạo, nguồn Website và Đại lý) → **Dashboard** tháng 09/2026 | Dashboard tính từ dữ liệu, ra ~1.301 booking · 3.437 room nights · 8,4 tỷ · 76% · ADR 2,43 triệu · Direct 38% / Agent 28% / OTA 34% · huỷ 7,3%. Bấm vào biểu đồ để lọc booking |
 | 7–8 | Lãnh đạo | **Customers / CRM** → Nguyễn Văn A | Đúng thẻ PDF §7: 4 bookings · 11 room nights · 42 triệu · Ocean View · đã mua tour và dùng xe sân bay · ở gần nhất 05/09/2026. Kèm gợi ý hành động |
@@ -120,7 +121,8 @@ src/
 ## Những chỗ đã đơn giản hoá so với PDF
 
 - Mỗi khách sạn có **một trang landing với tab/anchor**, chỉ tách route con cho Phòng, Ưu đãi, Đặt phòng (không làm đủ 9 trang con). Lý do: tốt cho SEO và đúng với kết luận của review ngày 06/10.
-- Bản đồ là ảnh SVG tĩnh có ghim; ảnh khách sạn và phòng là placeholder trong `public/images/` (giữ tên file để thay ảnh thật).
+- Bản đồ là ảnh SVG tĩnh có ghim.
+- **Ảnh là ảnh MẪU tải từ Unsplash** về `public/images/` (không hotlink). Thay bằng ảnh thật của khách sạn trước khi chạy thật: ghi đè file cùng tên. Hạng phòng Family Room của Ngọc Lan cố ý chưa có ảnh để thấy khung "Chưa có ảnh".
 - Nút EN chỉ dịch menu.
 - Đăng nhập khách và đại lý là giả lập (chọn từ danh sách).
 - Thanh toán không nhập số thẻ; kết quả thành công/thất bại chọn bằng tay.

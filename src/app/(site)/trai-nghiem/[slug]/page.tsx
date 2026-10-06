@@ -16,8 +16,8 @@ export default function ExperiencePage({ params }: PageProps<'/trai-nghiem/[slug
       <Breadcrumb items={[{ label: 'Trang chủ', href: '/' }, { label: 'Trải nghiệm', href: '/trai-nghiem' }, { label: x.name }]} />
       <Photo src={x.image} alt={x.name} className="aspect-[21/9] rounded-2xl" sizes="100vw" priority />
       <h1 className="mt-6 text-3xl font-bold">{x.name}</h1>
-      <p className="mt-2 text-muted">{x.desc}</p>
-      <div className="mt-6 grid gap-4 sm:grid-cols-2">{x.items.map(i => <Card key={i.name} className="p-4"><p className="font-semibold">{i.name}</p><p className="text-sm text-muted">{i.desc}</p></Card>)}</div>
+      <p className="mt-2 text-muted-foreground">{x.desc}</p>
+      <div className="mt-6 grid gap-4 sm:grid-cols-2">{x.items.map(i => <Card key={i.name} className="p-4"><p className="font-semibold">{i.name}</p><p className="text-sm text-muted-foreground">{i.desc}</p></Card>)}</div>
       {x.addons.length > 0 && (
         <>
           <h2 className="mb-3 mt-10 text-xl font-bold">Đặt kèm khi đặt phòng</h2>
@@ -28,13 +28,13 @@ export default function ExperiencePage({ params }: PageProps<'/trai-nghiem/[slug
                 <div className="min-w-0">
                   <Badge tone={a.provider === 'RIVUS' ? 'info' : 'brand'}>{a.provider}</Badge>
                   <p className="mt-1 font-semibold">{a.name}</p>
-                  <p className="text-sm text-muted">{a.desc}</p>
-                  <p className="mt-1 text-sm font-semibold">{fmtVND(a.price)} <span className="font-normal text-muted">/ {a.unit === 'person' ? 'người lớn' : a.category === 'transfer' ? 'chiều' : 'chuyến'}</span></p>
+                  <p className="text-sm text-muted-foreground">{a.desc}</p>
+                  <p className="mt-1 text-sm font-semibold">{fmtVND(a.price)} <span className="font-normal text-muted-foreground">/ {a.unit === 'person' ? 'người lớn' : a.category === 'transfer' ? 'chiều' : 'chuyến'}</span></p>
                 </div>
               </Card>
             ))}
           </div>
-          <p className="mt-4 text-sm text-muted">Dịch vụ của Rooty Trip / RIVUS được thêm ở bước <b>Dịch vụ thêm</b> trong luồng đặt phòng — khách không cần rời Rooty Hospitality.</p>
+          <p className="mt-4 text-sm text-muted-foreground">Dịch vụ của Rooty Trip / RIVUS được thêm ở bước <b>Dịch vụ thêm</b> trong luồng đặt phòng — khách không cần rời Rooty Hospitality.</p>
           <ButtonLink href="/tim-kiem" className="mt-3">Tìm phòng & thêm dịch vụ</ButtonLink>
         </>
       )}

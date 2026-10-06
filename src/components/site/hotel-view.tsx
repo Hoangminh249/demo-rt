@@ -2,60 +2,54 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { MapPin, Phone, Mail, Check, ChevronLeft, ChevronRight, Utensils, Clock, Baby, PawPrint, Ban, Images } from 'lucide-react'
+import { MapPin, Phone, Check, ChevronLeft, ChevronRight, Utensils, Images, Car, Compass, Ship, ShieldCheck, BadgePercent } from 'lucide-react'
 import { repo } from '@/lib/repo'
 import { useAsync, useDemo } from '@/store/provider'
 import { parseSearch, searchToParams, type SearchState } from '@/lib/search-params'
 import { AREA_LABEL } from '@/lib/labels'
-import { addDays, diffDays, fmtRange, fmtVND, guestsLabel, TODAY } from '@/lib/format'
-import { Breadcrumb, Button, ButtonLink, Card, Photo, Skeleton, SkeletonList, Stars, Empty, cn } from '../ui'
+import { fmtRange, fmtVND, guestsLabel } from '@/lib/format'
+import { Button, buttonVariants } from '@/components/ui/button'
+import { Breadcrumb, Empty, Photo, Skeleton, Stars, cn } from '../ui'
 import { Dialog } from '../ui/overlay'
 import { PromoCard, RoomOfferCard } from './cards'
+import { DateRangeField, GuestsField, type Party } from './stay-fields'
 
-const TABS = [
-  ['tong-quan', 'Tổng quan'], ['phong', 'Phòng'], ['tien-ich', 'Tiện ích'], ['nha-hang', 'Nhà hàng'], ['trai-nghiem', 'Trải nghiệm'],
-  ['gallery', 'Gallery'], ['chinh-sach', 'Chính sách'], ['uu-dai', 'Ưu đãi'], ['dat-phong', 'Đặt phòng'],
-] as const
+const TABS = [['tong-quan', 'Tổng quan'], ['phong', 'Phòng'], ['tien-ich', 'Tiện ích'], ['nha-hang', 'Nhà hàng'], ['trai-nghiem', 'Trải nghiệm'], ['gallery', 'Gallery'], ['chinh-sach', 'Chính sách'], ['uu-dai', 'Ưu đãi']] as const
 
 export function Lightbox({ images, index, onClose, title }: { images: string[]; index: number | null; onClose: () => void; title: string }) {
   const [i, setI] = useState(index ?? 0) // parent đặt key theo index để mở đúng ảnh
   return (
-    <Dialog open={index != null} onClose={onClose} title={`${title} · ${i + 1}/${images.length}`} wide>
+    <Dialog open={index != null} onClose={onClose} title={`${title} · ảnh ${i + 1}/${images.length}`} wide>
       <div className="relative">
-        <Photo src={images[i]} alt={`${title} ảnh ${i + 1}`} className="aspect-[3/2] rounded-lg" sizes="900px" />
-        <button type="button" aria-label="Ảnh trước" onClick={() => setI((i - 1 + images.length) % images.length)} className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-black/50 p-2 text-white"><ChevronLeft /></button>
-        <button type="button" aria-label="Ảnh sau" onClick={() => setI((i + 1) % images.length)} className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-black/50 p-2 text-white"><ChevronRight /></button>
+        <Photo src={images[i]} alt={`${title} ảnh ${i + 1}`} className="aspect-[3/2] rounded-xl" sizes="900px" />
+        <Button variant="outline" size="icon" aria-label="Ảnh trước" onClick={() => setI((i - 1 + images.length) % images.length)} className="absolute top-1/2 left-3 -translate-y-1/2 rounded-full"><ChevronLeft /></Button>
+        <Button variant="outline" size="icon" aria-label="Ảnh sau" onClick={() => setI((i + 1) % images.length)} className="absolute top-1/2 right-3 -translate-y-1/2 rounded-full"><ChevronRight /></Button>
       </div>
-      <div className="mt-3 grid grid-cols-8 gap-1">
-        {images.map((src, k) => <button key={src} type="button" onClick={() => setI(k)} aria-label={`Ảnh ${k + 1}`} className={cn('overflow-hidden rounded', k === i && 'ring-2 ring-primary')}><Photo src={src} alt="" className="aspect-square" sizes="80px" /></button>)}
+      <div className="mt-3 grid grid-cols-8 gap-2">
+        {images.map((src, k) => <button key={src} type="button" onClick={() => setI(k)} aria-label={`Ảnh ${k + 1}`} aria-current={k === i} className={cn('overflow-hidden rounded-lg', k === i ? 'ring-2 ring-primary ring-offset-2 ring-offset-card' : 'opacity-70 hover:opacity-100')}><Photo src={src} alt="" className="aspect-square" sizes="96px" /></button>)}
       </div>
     </Dialog>
   )
 }
 
-/** Widget đặt phòng: dính bên phải (desktop), thanh dưới (mobile). Đổi ngày → cập nhật URL. */
-function BookingWidget({ s, onChange, fromPrice }: { s: SearchState; onChange: (p: Partial<SearchState>) => void; fromPrice?: number }) {
+/** Khung đặt phòng: dính bên phải (desktop), sheet từ thanh dưới (mobile). */
+function BookingCard({ s, onChange, fromPrice, onDone }: { s: SearchState; onChange: (p: Partial<SearchState>) => void; fromPrice?: number; onDone?: () => void }) {
+  const party: Party = { adults: s.adults, children: s.children, ages: s.ages, rooms: s.rooms }
   return (
-    <Card className="space-y-3 p-4 shadow-sm">
-      <p className="text-sm text-muted">Giá từ</p>
-      <p className="text-2xl font-bold">{fromPrice ? fmtVND(fromPrice) : '—'}<span className="text-sm font-normal text-muted"> /đêm</span></p>
-      <div className="grid grid-cols-2 gap-2">
-        <label className="text-xs font-medium text-muted">Nhận phòng<input type="date" min={TODAY} value={s.checkin} onChange={e => e.target.value && onChange({ checkin: e.target.value, checkout: s.checkout > e.target.value ? s.checkout : addDays(e.target.value, 1) })} className="mt-1 h-10 w-full rounded-lg border border-border bg-surface px-2 text-sm text-fg" /></label>
-        <label className="text-xs font-medium text-muted">Trả phòng<input type="date" min={addDays(s.checkin, 1)} value={s.checkout} onChange={e => e.target.value && onChange({ checkout: e.target.value })} className="mt-1 h-10 w-full rounded-lg border border-border bg-surface px-2 text-sm text-fg" /></label>
+    <div className="space-y-4">
+      <div>
+        <p className="text-sm text-muted-foreground">Giá từ</p>
+        <p className="text-2xl font-semibold tabular-nums">{fromPrice ? fmtVND(fromPrice) : '—'}<span className="text-sm font-normal text-muted-foreground"> / đêm</span></p>
       </div>
-      <div className="grid grid-cols-3 gap-2">
-        {([['adults', 'Người lớn', 1, 8], ['children', 'Trẻ em', 0, 6], ['rooms', 'Phòng', 1, 6]] as const).map(([k, label, min, max]) => (
-          <label key={k} className="text-xs font-medium text-muted">{label}
-            <select value={s[k]} onChange={e => onChange({ [k]: Number(e.target.value), ...(k === 'children' ? { ages: Array(Number(e.target.value)).fill(6) } : {}) })} className="mt-1 h-10 w-full rounded-lg border border-border bg-surface px-2 text-sm text-fg">
-              {Array.from({ length: max - min + 1 }, (_, n) => <option key={n} value={n + min}>{n + min}</option>)}
-            </select>
-          </label>
-        ))}
-      </div>
-      <p className="text-xs text-muted">{diffDays(s.checkin, s.checkout)} đêm · {fmtRange(s.checkin, s.checkout)}</p>
-      <ButtonLink href="#phong" className="w-full" size="lg">Xem phòng trống</ButtonLink>
-      <p className="text-center text-xs text-muted">Đặt trực tiếp: giá tốt nhất · thêm xe sân bay & tour</p>
-    </Card>
+      <DateRangeField id="bk-dates" checkin={s.checkin} checkout={s.checkout} onChange={onChange} />
+      <GuestsField id="bk-guests" party={party} onChange={onChange} />
+      <a href="#phong" onClick={onDone} className={cn(buttonVariants({ variant: 'default', size: 'lg' }), 'w-full')}>Xem phòng trống</a>
+      <ul className="space-y-2 border-t border-border pt-4 text-sm text-muted-foreground">
+        <li className="flex gap-2"><ShieldCheck className="size-4 shrink-0 text-ok" aria-hidden />Giá đặt trực tiếp, không phí ẩn</li>
+        <li className="flex gap-2"><Car className="size-4 shrink-0 text-ok" aria-hidden />Thêm xe sân bay Rooty Trip khi đặt</li>
+        <li className="flex gap-2"><BadgePercent className="size-4 shrink-0 text-ok" aria-hidden />Thành viên giảm thêm 5%</li>
+      </ul>
+    </div>
   )
 }
 
@@ -69,135 +63,140 @@ export function HotelView({ slug }: { slug: string }) {
   const offers = useAsync(() => (h ? repo.hotelOffers(h.id, s) : Promise.resolve(null)), [h?.id, sp.toString()])
   const promos = useAsync(() => (h ? repo.listPromotions({ hotelId: h.id }) : Promise.resolve([])), [h?.id])
   const [light, setLight] = useState<number | null>(null)
+  const [sheet, setSheet] = useState(false)
 
   useEffect(() => {
     update(o => ({ recent: [slug, ...o.recent.filter(x => x !== slug)].slice(0, 4) }))
   }, [slug, update])
 
-  if (!h) return <div className="mx-auto max-w-7xl px-4 py-8"><Skeleton className="mb-4 h-8 w-1/3" /><Skeleton className="aspect-[3/1] w-full" /><SkeletonList className="mt-6" /></div>
+  if (!h) return <div className="mx-auto max-w-7xl space-y-4 px-4 py-8 sm:px-6"><Skeleton className="h-8 w-72" /><Skeleton className="aspect-[3/1] w-full" /><Skeleton className="h-64" /></div>
 
   const change = (p: Partial<SearchState>) => router.replace(`/${slug}?${searchToParams({ ...s, ...p, dest: undefined })}`, { scroll: false })
-  const sellable = offers.data?.filter(o => o.fits && o.left >= s.rooms) ?? []
+  const fit = offers.data?.filter(o => o.fits) ?? []
+  const sellable = fit.filter(o => o.left >= s.rooms)
   const fromPrice = sellable.length ? Math.min(...sellable.flatMap(o => o.plans.map(p => p.nightly))) : undefined
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6 pb-28 lg:pb-6">
-      <Breadcrumb items={[{ label: 'Trang chủ', href: '/' }, { label: 'Khách sạn & Resort', href: '/khach-san' }, { label: h.name }]} />
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <Stars n={h.stars} />
-          <h1 className="mt-1 text-3xl font-bold">{h.name}</h1>
-          <p className="mt-1 flex items-center gap-1 text-sm text-muted"><MapPin className="size-4" />{h.address} · {AREA_LABEL[h.area]}</p>
+    <div className="pb-24 lg:pb-0">
+      <div className="mx-auto max-w-7xl px-4 pt-6 sm:px-6">
+        <Breadcrumb items={[{ label: 'Trang chủ', href: '/' }, { label: 'Khách sạn', href: '/khach-san' }, { label: h.name }]} />
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground"><Stars n={h.stars} /><span className="flex items-center gap-1"><MapPin className="size-3.5" aria-hidden />{AREA_LABEL[h.area]} · {h.address}</span></div>
+            <h1 className="mt-1 text-2xl font-semibold text-foreground sm:text-3xl">{h.name}</h1>
+          </div>
+          <a href={`tel:${h.phone.replace(/\s/g, '')}`} className="flex min-h-8 items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"><Phone className="size-4" aria-hidden />{h.phone}</a>
         </div>
-        <p className="text-sm text-muted">rootyhospitality.com/<b className="text-fg">{h.slug}</b></p>
+
+        <div className="relative mt-5 grid h-64 grid-cols-4 grid-rows-2 gap-2 overflow-hidden rounded-2xl sm:h-[420px]">
+          {h.gallery.slice(0, 5).map((src, i) => (
+            <button key={src} type="button" onClick={() => setLight(i)} aria-label={`Mở ảnh ${i + 1}`} className={cn('relative', i === 0 ? 'col-span-4 row-span-2 md:col-span-2' : 'hidden md:block')}>
+              <Photo src={src} alt={`${h.name} ảnh ${i + 1}`} className="absolute inset-0 transition-opacity hover:opacity-90" sizes="(min-width:768px) 50vw, 100vw" priority={i === 0} />
+            </button>
+          ))}
+          <Button variant="outline" size="sm" onClick={() => setLight(0)} className="absolute right-3 bottom-3"><Images aria-hidden />Xem {h.gallery.length} ảnh</Button>
+        </div>
       </div>
 
-      <div className="mt-4 grid h-[260px] grid-cols-4 grid-rows-2 gap-2 overflow-hidden rounded-2xl md:h-[400px]">
-        {h.gallery.slice(0, 5).map((src, i) => (
-          <button key={src} type="button" onClick={() => setLight(i)} aria-label={`Mở ảnh ${i + 1}`} className={cn('relative', i === 0 ? 'col-span-4 row-span-2 md:col-span-2' : 'hidden md:block')}>
-            <Photo src={src} alt={`${h.name} ảnh ${i + 1}`} className="absolute inset-0" sizes="(min-width:768px) 50vw, 100vw" priority={i === 0} />
-            {i === 4 && <span className="absolute inset-0 grid place-items-center bg-black/40 text-sm font-semibold text-white"><span className="flex items-center gap-1"><Images className="size-4" />+{h.gallery.length - 5} ảnh</span></span>}
-          </button>
-        ))}
-      </div>
-
-      <nav aria-label="Mục khách sạn" className="sticky top-[100px] z-30 -mx-4 mt-4 overflow-x-auto border-b border-border bg-bg/95 px-4 backdrop-blur">
-        <ul className="flex gap-1 whitespace-nowrap">
-          {TABS.map(([id, label]) => <li key={id}><a href={`#${id}`} className="inline-block border-b-2 border-transparent px-3 py-3 text-sm font-medium text-muted hover:border-primary hover:text-fg">{label}</a></li>)}
+      <nav aria-label="Mục trong trang" className="sticky top-[100px] z-30 mt-6 border-b border-border bg-background">
+        <ul className="scrollbar-clean mx-auto flex max-w-7xl gap-1 overflow-x-auto px-4 sm:px-6">
+          {TABS.map(([id, label]) => <li key={id}><a href={`#${id}`} className="inline-flex h-11 items-center border-b-2 border-transparent px-3 text-sm font-medium whitespace-nowrap text-muted-foreground hover:border-border-strong hover:text-foreground">{label}</a></li>)}
         </ul>
       </nav>
 
-      <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <div className="space-y-12">
+      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="min-w-0 space-y-12">
           <section id="tong-quan">
-            <h2 className="text-xl font-bold">{h.tagline}</h2>
-            <p className="mt-3 leading-relaxed text-muted">{h.description}</p>
-            <div className="mt-4 flex flex-wrap gap-4 text-sm text-muted"><span className="flex items-center gap-1"><Phone className="size-4" />{h.phone}</span><span className="flex items-center gap-1"><Mail className="size-4" />{h.email}</span></div>
-          </section>
-
-          <section id="phong">
-            <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
-              <h2 className="text-xl font-bold">Phòng · {fmtRange(s.checkin, s.checkout)} · {guestsLabel(s.adults, s.children)}</h2>
-              <Link href={`/${slug}/phong?${searchToParams({ ...s, dest: undefined })}`} className="text-sm text-primary hover:underline">Tất cả hạng phòng →</Link>
+            <h2 className="text-lg font-semibold">{h.tagline}</h2>
+            <p className="mt-3 max-w-[75ch] leading-relaxed text-muted-foreground">{h.description}</p>
+            {/* Điểm khác biệt: hiện ngay trên trang KS, không chỉ ở bước dịch vụ thêm */}
+            <div className="mt-6 grid gap-3 rounded-2xl border border-border bg-card p-4 sm:grid-cols-3 sm:p-5">
+              {[[Car, 'Xe đón sân bay', 'Rooty Trip, 600.000đ/chiều'], [Compass, 'Tour đón tại sảnh', '4 đảo, Bắc đảo, câu mực'], [Ship, 'Du thuyền RIVUS', 'Cano riêng, hoàng hôn']].map(([Icon, t, d]) => {
+                const I = Icon as typeof Car
+                return <div key={t as string} className="flex items-start gap-3"><span className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent text-accent-foreground"><I className="size-5" aria-hidden /></span><span><span className="block text-sm font-semibold">{t as string}</span><span className="block text-sm text-muted-foreground">{d as string}</span></span></div>
+              })}
+              <p className="text-sm text-muted-foreground sm:col-span-3">Đặt cùng phòng ở bước <b className="font-medium text-foreground">Dịch vụ thêm</b>, thanh toán một lần — kèm xe + tour được ưu đãi Package −12%.</p>
             </div>
-            {!offers.data ? <SkeletonList /> : sellable.length === 0 ? (
+          </section>
+
+          <section id="phong" className="scroll-mt-40">
+            <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
+              <div>
+                <h2 className="text-lg font-semibold">Chọn phòng</h2>
+                <p className="text-sm text-muted-foreground">{fmtRange(s.checkin, s.checkout)} · {guestsLabel(s.adults, s.children)} · {s.rooms} phòng</p>
+              </div>
+              <Link href={`/${slug}/phong?${searchToParams({ ...s, dest: undefined })}`} className="h-8 text-sm font-medium text-foreground/70 hover:text-foreground hover:underline">Tất cả hạng phòng</Link>
+            </div>
+            {!offers.data ? <div className="space-y-4">{Array.from({ length: 2 }, (_, i) => <Skeleton key={i} className="h-64" />)}</div> : sellable.length === 0 ? (
               <Empty title="Hết phòng phù hợp cho ngày đã chọn">
-                Thử đổi ngày ở khung đặt phòng hoặc <Link href={`/tim-kiem?${searchToParams({ ...s, dest: '' })}`} className="text-primary underline">xem khách sạn khác còn phòng</Link>.
+                Đổi ngày ở khung đặt phòng, hoặc <Link href={`/tim-kiem?${searchToParams({ ...s, dest: '' })}`} className="font-medium text-foreground underline">xem khách sạn khác còn phòng</Link>.
               </Empty>
-            ) : <div className={cn('space-y-4', offers.loading && 'opacity-60')}>{offers.data.filter(o => o.fits).map(o => <RoomOfferCard key={o.rt.room_type_id} hotel={h} offer={o} s={s} />)}</div>}
+            ) : <div className={cn('space-y-4 transition-opacity', offers.loading && 'opacity-60')}>{fit.map(o => <RoomOfferCard key={o.rt.room_type_id} hotel={h} offer={o} s={s} />)}</div>}
           </section>
 
-          <section id="tien-ich">
-            <h2 className="mb-3 text-xl font-bold">Tiện ích</h2>
-            <ul className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-3">{h.amenities.map(a => <li key={a} className="flex items-center gap-2"><Check className="size-4 text-ok" />{a}</li>)}</ul>
+          <section id="tien-ich" className="scroll-mt-40">
+            <h2 className="mb-4 text-lg font-semibold">Tiện ích</h2>
+            <ul className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-3">{h.amenities.map(a => <li key={a} className="flex items-center gap-2"><Check className="size-4 shrink-0 text-ok" aria-hidden />{a}</li>)}</ul>
           </section>
 
-          <section id="nha-hang">
-            <h2 className="mb-3 text-xl font-bold">Nhà hàng</h2>
+          <section id="nha-hang" className="scroll-mt-40">
+            <h2 className="mb-4 text-lg font-semibold">Nhà hàng & bar</h2>
             <div className="grid gap-3 sm:grid-cols-2">
               {h.restaurants.map(r => (
-                <Card key={r.name} className="p-4"><p className="flex items-center gap-2 font-semibold"><Utensils className="size-4 text-primary" />{r.name}</p><p className="text-sm text-muted">{r.cuisine} · {r.hours}</p><p className="mt-1 text-sm">{r.desc}</p></Card>
+                <div key={r.name} className="flex gap-3 rounded-2xl border border-border bg-card p-4 sm:p-5">
+                  <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-muted text-muted-foreground"><Utensils className="size-5" aria-hidden /></span>
+                  <div className="min-w-0"><p className="text-base font-semibold">{r.name}</p><p className="text-sm text-muted-foreground">{r.cuisine} · {r.hours}</p><p className="mt-1 text-sm">{r.desc}</p></div>
+                </div>
               ))}
             </div>
           </section>
 
-          <section id="trai-nghiem">
-            <h2 className="mb-3 text-xl font-bold">Trải nghiệm quanh khách sạn</h2>
-            <div className="grid gap-3 sm:grid-cols-3">{h.experiences.map(e => <Card key={e.name} className="p-4"><p className="font-semibold">{e.name}</p><p className="mt-1 text-sm text-muted">{e.desc}</p></Card>)}</div>
-            <p className="mt-3 text-sm text-muted">Xe sân bay, tour Rooty Trip và du thuyền RIVUS đặt luôn ở bước <b>Dịch vụ thêm</b> khi đặt phòng. <Link href="/trai-nghiem" className="text-primary hover:underline">Xem tất cả trải nghiệm</Link></p>
-          </section>
-
-          <section id="gallery">
-            <h2 className="mb-3 text-xl font-bold">Gallery</h2>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {h.gallery.map((src, i) => <button key={src} type="button" onClick={() => setLight(i)} aria-label={`Mở ảnh ${i + 1}`} className="overflow-hidden rounded-lg"><Photo src={src} alt={`${h.name} ảnh ${i + 1}`} className="aspect-square transition-transform hover:scale-105" sizes="25vw" /></button>)}
+          <section id="trai-nghiem" className="scroll-mt-40">
+            <h2 className="mb-4 text-lg font-semibold">Trải nghiệm quanh khách sạn</h2>
+            <div className="divide-y divide-border rounded-2xl border border-border bg-card">
+              {h.experiences.map(e => <div key={e.name} className="px-4 py-3 sm:px-5"><p className="text-sm font-medium">{e.name}</p><p className="text-sm text-muted-foreground">{e.desc}</p></div>)}
             </div>
           </section>
 
-          <section id="chinh-sach">
-            <h2 className="mb-3 text-xl font-bold">Chính sách</h2>
-            <dl className="grid gap-3 text-sm sm:grid-cols-2">
-              {[[Clock, 'Nhận / trả phòng', `${h.policies.checkin} · ${h.policies.checkout}`], [Ban, 'Huỷ phòng', h.policies.cancel], [Baby, 'Trẻ em', h.policies.children], [PawPrint, 'Thú cưng', h.policies.pets]].map(([Icon, k, v]) => {
-                const I = Icon as typeof Clock
-                return <Card key={k as string} className="p-4"><dt className="flex items-center gap-2 font-semibold"><I className="size-4 text-primary" />{k as string}</dt><dd className="mt-1 text-muted">{v as string}</dd></Card>
-              })}
+          <section id="gallery" className="scroll-mt-40">
+            <h2 className="mb-4 text-lg font-semibold">Gallery</h2>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {h.gallery.map((src, i) => <button key={src} type="button" onClick={() => setLight(i)} aria-label={`Mở ảnh ${i + 1}`} className="overflow-hidden rounded-xl"><Photo src={src} alt={`${h.name} ảnh ${i + 1}`} className="aspect-square transition-transform duration-500 hover:scale-[1.04]" sizes="(min-width:640px) 25vw, 50vw" /></button>)}
+            </div>
+          </section>
+
+          <section id="chinh-sach" className="scroll-mt-40">
+            <h2 className="mb-4 text-lg font-semibold">Chính sách</h2>
+            <dl className="divide-y divide-border rounded-2xl border border-border bg-card text-sm">
+              {[['Nhận phòng', h.policies.checkin], ['Trả phòng', h.policies.checkout], ['Huỷ phòng', h.policies.cancel], ['Trẻ em', h.policies.children], ['Thú cưng', h.policies.pets]].map(([k, v]) => (
+                <div key={k} className="grid gap-1 px-4 py-3 sm:grid-cols-[160px_minmax(0,1fr)] sm:gap-4 sm:px-5"><dt className="text-muted-foreground">{k}</dt><dd>{v}</dd></div>
+              ))}
             </dl>
           </section>
 
-          <section id="uu-dai">
-            <h2 className="mb-3 text-xl font-bold">Ưu đãi tại {h.name}</h2>
+          <section id="uu-dai" className="scroll-mt-40">
+            <h2 className="mb-4 text-lg font-semibold">Ưu đãi tại {h.name}</h2>
             <div className="grid gap-4 sm:grid-cols-2">{(promos.data ?? []).map(p => <PromoCard key={p.id} promo={p} />)}</div>
-          </section>
-
-          <section id="dat-phong" className="rounded-2xl bg-mint p-6">
-            <h2 className="text-xl font-bold text-brand dark:text-accent">Đặt phòng {h.name}</h2>
-            <p className="mt-1 text-sm text-muted">Chọn hạng phòng ở mục Phòng phía trên, hoặc đi thẳng vào luồng đặt phòng.</p>
-            <ButtonLink href={`/${slug}/dat-phong?${searchToParams({ ...s, dest: undefined })}`} className="mt-4">Bắt đầu đặt phòng</ButtonLink>
           </section>
         </div>
 
-        <aside className="hidden lg:block"><div className="sticky top-40"><BookingWidget s={s} onChange={change} fromPrice={fromPrice} /></div></aside>
+        <aside className="hidden lg:block">
+          <div className="sticky top-40 rounded-2xl border border-border bg-card p-5"><BookingCard s={s} onChange={change} fromPrice={fromPrice} /></div>
+        </aside>
       </div>
 
-      <div className="no-print fixed inset-x-0 bottom-0 z-30 flex items-center gap-3 border-t border-border bg-surface px-4 py-3 lg:hidden">
-        <div className="min-w-0 flex-1"><p className="text-xs text-muted">{fmtRange(s.checkin, s.checkout)} · {guestsLabel(s.adults, s.children)}</p><p className="font-bold">{fromPrice ? `Từ ${fmtVND(fromPrice)}/đêm` : 'Hết phòng'}</p></div>
-        <MobileDates s={s} onChange={change} />
-        <ButtonLink href="#phong">Đặt phòng</ButtonLink>
+      <div className="no-print fixed inset-x-0 bottom-0 z-30 flex items-center gap-3 border-t border-border bg-card px-4 py-3 lg:hidden">
+        <button type="button" onClick={() => setSheet(true)} className="min-w-0 flex-1 text-left">
+          <span className="block truncate text-xs text-muted-foreground underline-offset-2">{fmtRange(s.checkin, s.checkout)} · {guestsLabel(s.adults, s.children)} · Đổi</span>
+          <span className="block font-semibold tabular-nums">{fromPrice ? `Từ ${fmtVND(fromPrice)} / đêm` : 'Hết phòng ngày này'}</span>
+        </button>
+        <a href="#phong" className={buttonVariants({ variant: 'default' })}>Chọn phòng</a>
       </div>
+      <Dialog open={sheet} onClose={() => setSheet(false)} title="Ngày & khách" side="bottom">
+        <BookingCard s={s} onChange={change} fromPrice={fromPrice} onDone={() => setSheet(false)} />
+      </Dialog>
 
       <Lightbox key={light ?? -1} images={h.gallery} index={light} onClose={() => setLight(null)} title={h.name} />
     </div>
-  )
-}
-
-function MobileDates({ s, onChange }: { s: SearchState; onChange: (p: Partial<SearchState>) => void }) {
-  const [open, setOpen] = useState(false)
-  return (
-    <>
-      <Button variant="secondary" onClick={() => setOpen(true)}>Đổi ngày</Button>
-      <Dialog open={open} onClose={() => setOpen(false)} title="Ngày & khách" side="bottom">
-        <BookingWidget s={s} onChange={onChange} />
-      </Dialog>
-    </>
   )
 }

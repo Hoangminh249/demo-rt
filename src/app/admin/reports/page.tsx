@@ -27,16 +27,16 @@ export default function ReportsAdmin() {
         </Button>
       </PageTitle>
       <Segmented label="Nhóm theo" value={g} onChange={setG} options={[{ value: 'day', label: 'Ngày' }, { value: 'month', label: 'Tháng' }, { value: 'year', label: 'Năm' }, { value: 'hotel', label: 'Khách sạn' }, { value: 'channel', label: 'Kênh' }, { value: 'agent', label: 'Đại lý' }]} />
-      {(g === 'month' || g === 'year') && <p className="text-xs text-muted">Theo tháng/năm dùng toàn bộ dữ liệu 07–12/2026; các nhóm khác dùng kỳ ở thanh trên.</p>}
+      {(g === 'month' || g === 'year') && <p className="text-xs text-muted-foreground">Theo tháng/năm dùng toàn bộ dữ liệu 07–12/2026; các nhóm khác dùng kỳ ở thanh trên.</p>}
       {!data ? <SkeletonList rows={5} /> : (
         <>
           <Card className="h-72 p-4">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'var(--muted)' }} interval={g === 'day' ? 2 : 0} />
-                <YAxis tickFormatter={v => fmtAxis(v)} tick={{ fontSize: 11, fill: 'var(--muted)' }} width={70} />
-                <Tooltip formatter={v => fmtVND(Number(v))} contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--fg)' }} />
+                <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }} interval={g === 'day' ? 2 : 0} />
+                <YAxis tickFormatter={v => fmtAxis(v)} tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }} width={70} />
+                <Tooltip formatter={v => fmtVND(Number(v))} contentStyle={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--foreground)' }} />
                 <Bar isAnimationActive={false} dataKey="revenue" name="Doanh thu phòng" fill="var(--primary)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>

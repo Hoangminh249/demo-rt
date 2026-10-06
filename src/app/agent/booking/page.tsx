@@ -33,7 +33,7 @@ export default function AgentBookings() {
             {rows.slice(0, limit).map(b => (
               <tr key={b.code}>
                 <td><Link href={`/agent/booking/${b.code}`} className="font-mono text-primary hover:underline">{b.code}</Link></td>
-                <td>{b.hotel.name}<div className="text-xs text-muted">{b.booking_rooms.length} × {b.rt.name}</div></td>
+                <td>{b.hotel.name}<div className="text-xs text-muted-foreground">{b.booking_rooms.length} × {b.rt.name}</div></td>
                 <td className="whitespace-nowrap">{fmtRange(b.checkin_date, b.checkout_date)}</td>
                 <td>{b.guest.name}</td>
                 <td><Badge tone={STATUS[b.status][1]}>{STATUS[b.status][0]}</Badge></td>

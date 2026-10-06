@@ -21,7 +21,7 @@ export default function DestinationPage({ params }: PageProps<'/diem-den/[khu]'>
           <Photo src={d.image} alt={d.name} className="aspect-[16/10] rounded-2xl" sizes="50vw" priority />
           <div>
             <h1 className="text-3xl font-bold">{d.name}</h1>
-            <p className="mt-3 text-muted">{d.desc}</p>
+            <p className="mt-3 text-muted-foreground">{d.desc}</p>
             <ul className="mt-4 space-y-2">{d.highlights.map(h => <li key={h} className="flex items-center gap-2"><Check className="size-4 text-ok" />{h}</li>)}</ul>
             <ButtonLink href={`/tim-kiem?${searchToParams({ ...DEFAULT_SEARCH, dest: khu })}`} className="mt-5">Tìm phòng tại {d.name}</ButtonLink>
           </div>

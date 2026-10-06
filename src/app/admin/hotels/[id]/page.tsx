@@ -27,7 +27,7 @@ function HotelForm({ h, canEdit }: { h: Hotel; canEdit: boolean }) {
         <Field label="Email"><Input disabled={!canEdit} value={f.email} onChange={e => setF({ ...f, email: e.target.value })} /></Field>
       </Card>
       <Card className="grid gap-3 p-5 sm:grid-cols-2">
-        <p className="font-semibold sm:col-span-2">Chính sách <span className="text-xs font-normal text-muted">(Gohost API không có chính sách huỷ → Rooty giữ ở CMS)</span></p>
+        <p className="font-semibold sm:col-span-2">Chính sách <span className="text-xs font-normal text-muted-foreground">(Gohost API không có chính sách huỷ → Rooty giữ ở CMS)</span></p>
         <Field label="Nhận phòng"><Textarea rows={2} disabled={!canEdit} value={f.policies.checkin} onChange={pol('checkin')} /></Field>
         <Field label="Trả phòng"><Textarea rows={2} disabled={!canEdit} value={f.policies.checkout} onChange={pol('checkout')} /></Field>
         <Field label="Huỷ phòng"><Textarea rows={3} disabled={!canEdit} value={f.policies.cancel} onChange={pol('cancel')} /></Field>

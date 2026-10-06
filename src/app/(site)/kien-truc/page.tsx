@@ -11,17 +11,17 @@ interface Block { title: string; href: string; items?: string[]; owner: Owner[];
 
 function Node({ b, big }: { b: Block; big?: boolean }) {
   return (
-    <Link href={b.href} className={`group block rounded-xl border-2 border-border bg-surface p-3 transition hover:border-primary hover:shadow-md ${big ? 'md:p-4' : ''}`}>
-      <p className="flex items-center justify-between gap-2 text-sm font-bold uppercase tracking-wide text-brand dark:text-accent">
+    <Link href={b.href} className={`group block rounded-xl border-2 border-border bg-card p-3 transition hover:border-primary hover:shadow-md ${big ? 'md:p-4' : ''}`}>
+      <p className="flex items-center justify-between gap-2 text-sm font-bold uppercase tracking-wide text-brand dark:text-brand-accent">
         {b.title}<ExternalLink className="size-3.5 opacity-0 transition group-hover:opacity-100" />
       </p>
-      {b.items && <ul className="mt-1 text-xs text-muted">{b.items.map(i => <li key={i}>{i}</li>)}</ul>}
+      {b.items && <ul className="mt-1 text-xs text-muted-foreground">{b.items.map(i => <li key={i}>{i}</li>)}</ul>}
       <div className="mt-2 flex flex-wrap gap-1">{b.owner.map(o => <Badge key={o} tone={OWNER_TONE[o]}>Ngoài đời: {o}</Badge>)}</div>
-      <p className="mt-1 text-[11px] leading-snug text-muted">{b.note}</p>
+      <p className="mt-1 text-[11px] leading-snug text-muted-foreground">{b.note}</p>
     </Link>
   )
 }
-const Down = () => <div className="flex justify-center py-1 text-muted" aria-hidden><ArrowDown className="size-5" /></div>
+const Down = () => <div className="flex justify-center py-1 text-muted-foreground" aria-hidden><ArrowDown className="size-5" /></div>
 
 const ROW1: Block[] = [
   { title: 'Website khách', href: '/', items: ['Tìm khách sạn', 'Xem phòng / giá', 'Đặt phòng', 'Thanh toán'], owner: ['Rooty'], note: 'Rooty làm web nội dung; nút Đặt phòng: MVP dùng Website đặt phòng của Gohost hoặc checkout riêng qua backend Rooty.' },
@@ -66,7 +66,7 @@ export default function ArchitecturePage() {
         <p className="mt-1">Demo vẽ đủ khối như PDF v4 để lấy góp ý UX. Bản review 06/10/2026 kết luận <b>không tự xây</b> Rooms / Rates / Inventory / Channel Manager — các khối này do Gohost đảm nhận; dữ liệu khách & giao dịch về TourWell.</p>
       </div>
 
-      <div className="rounded-2xl bg-surface-2 p-4 md:p-6">
+      <div className="rounded-2xl bg-muted p-4 md:p-6">
         <p className="mx-auto w-fit rounded-xl bg-brand px-6 py-3 text-center font-bold tracking-wide text-white">ROOTY HOSPITALITY</p>
         <Down />
         <div className="grid gap-3 md:grid-cols-2">{ROW1.map(b => <Node key={b.title} b={b} big />)}</div>
@@ -80,19 +80,19 @@ export default function ArchitecturePage() {
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">{ROW5.map(b => <Node key={b.title} b={b} />)}</div>
         <Down />
         <div className="rounded-xl border-2 border-dashed border-primary/50 p-3">
-          <p className="mb-2 text-center text-sm font-bold uppercase tracking-wide text-brand dark:text-accent">Rooty Ecosystem</p>
+          <p className="mb-2 text-center text-sm font-bold uppercase tracking-wide text-brand dark:text-brand-accent">Rooty Ecosystem</p>
           <div className="grid gap-3 sm:grid-cols-2">{ECO.map(b => <Node key={b.title} b={b} />)}</div>
         </div>
       </div>
 
       <h2 className="mb-3 mt-10 text-xl font-bold">Ghi chú tích hợp Gohost</h2>
-      <p className="mb-4 text-sm text-muted">Trích từ <code>docs/context/04-gohost-api.md</code> — đọc từ OpenAPI spec ngày 05/10/2026, <b>chưa gọi thử API thật</b> (CONFIRMED theo spec, hành vi runtime UNKNOWN).</p>
+      <p className="mb-4 text-sm text-muted-foreground">Trích từ <code>docs/context/04-gohost-api.md</code> — đọc từ OpenAPI spec ngày 05/10/2026, <b>chưa gọi thử API thật</b> (CONFIRMED theo spec, hành vi runtime UNKNOWN).</p>
       <div className="grid gap-3 md:grid-cols-2">
-        {NOTES.map(([k, v]) => <Card key={k} className="p-4"><p className="font-semibold">{k}</p><p className="mt-1 text-sm text-muted">{v}</p></Card>)}
+        {NOTES.map(([k, v]) => <Card key={k} className="p-4"><p className="font-semibold">{k}</p><p className="mt-1 text-sm text-muted-foreground">{v}</p></Card>)}
       </div>
       <Card className="mt-6 p-4 text-sm">
         <p className="font-semibold">Lớp dữ liệu trong demo</p>
-        <p className="mt-1 text-muted">Mọi màn hình gọi qua <code>src/lib/repo</code>. Khi Gohost mở API dùng thử: viết repo mới cùng kiểu <code>Repo</code> gọi backend Rooty, đổi 1 dòng ở <code>src/lib/repo/index.ts</code>. Tên field đã bám Gohost: room_type_id, rate_plan_id, days_breakdown, source_name, payment_collect, checkin_date, checkout_date.</p>
+        <p className="mt-1 text-muted-foreground">Mọi màn hình gọi qua <code>src/lib/repo</code>. Khi Gohost mở API dùng thử: viết repo mới cùng kiểu <code>Repo</code> gọi backend Rooty, đổi 1 dòng ở <code>src/lib/repo/index.ts</code>. Tên field đã bám Gohost: room_type_id, rate_plan_id, days_breakdown, source_name, payment_collect, checkin_date, checkout_date.</p>
       </Card>
     </div>
   )

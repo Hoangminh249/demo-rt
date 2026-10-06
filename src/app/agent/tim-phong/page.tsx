@@ -50,14 +50,14 @@ export default function AgentSearch() {
                     <Card key={r.rt.room_type_id} className="p-4 font-mono text-sm">
                       <p className="text-xs font-bold tracking-wider text-warn">AGENT {agent?.name.toUpperCase()}</p>
                       <p className="mt-1 font-sans text-base font-semibold">{hotel.name} | {r.rt.name}</p>
-                      <p className="font-sans text-xs text-muted">{fmtRange(q.checkin, q.checkout)} · {r.nights} đêm · tối đa {r.rt.max_adults} NL + {r.rt.max_children} TE/phòng</p>
+                      <p className="font-sans text-xs text-muted-foreground">{fmtRange(q.checkin, q.checkout)} · {r.nights} đêm · tối đa {r.rt.max_adults} NL + {r.rt.max_children} TE/phòng</p>
                       <dl className="mt-2 space-y-0.5">
-                        <div className="flex justify-between"><dt>Public Rate:</dt><dd className="text-muted line-through decoration-1">{fmtNumber(r.public_rate)}</dd></div>
+                        <div className="flex justify-between"><dt>Public Rate:</dt><dd className="text-muted-foreground line-through decoration-1">{fmtNumber(r.public_rate)}</dd></div>
                         <div className="flex justify-between"><dt>Agent Net Rate:</dt><dd className="font-bold text-primary">{fmtNumber(r.net_rate)}</dd></div>
                         <div className="flex justify-between"><dt>Availability:</dt><dd><Badge tone={lvl === 'out' ? 'danger' : lvl === 'low' ? 'warn' : 'ok'}>{r.left} rooms</Badge></dd></div>
                       </dl>
                       <div className="mt-3 flex items-center justify-between font-sans">
-                        <span className="text-xs text-muted">Tổng net {q.rooms} phòng: <b className="text-fg">{fmtNumber(r.net_rate * r.nights * q.rooms)}</b></span>
+                        <span className="text-xs text-muted-foreground">Tổng net {q.rooms} phòng: <b className="text-foreground">{fmtNumber(r.net_rate * r.nights * q.rooms)}</b></span>
                         <ButtonLink size="sm" href={ok ? `/agent/dat-phong?room=${r.rt.room_type_id}&in=${q.checkin}&out=${q.checkout}&r=${q.rooms}` : '#'} className={cn(!ok && 'pointer-events-none opacity-40')} aria-disabled={!ok}>BOOK</ButtonLink>
                       </div>
                     </Card>
@@ -66,7 +66,7 @@ export default function AgentSearch() {
               </div>
             </section>
           ))}
-          <p className="text-xs text-muted">Giá net đại lý do Rooty quản lý (Gohost API không có net rate). <Link href="/kien-truc" className="underline">Xem ghi chú kiến trúc</Link>.</p>
+          <p className="text-xs text-muted-foreground">Giá net đại lý do Rooty quản lý (Gohost API không có net rate). <Link href="/kien-truc" className="underline">Xem ghi chú kiến trúc</Link>.</p>
         </div>
       )}
     </>

@@ -1,82 +1,78 @@
 'use client'
-// Dialog / Sheet dùng <dialog> gốc của trình duyệt (bẫy focus, Esc, backdrop sẵn) + Toast.
-import { useEffect, useRef, useSyncExternalStore, type ReactNode } from 'react'
-import { X, CheckCircle2, AlertTriangle, Info } from 'lucide-react'
-import { Button, cn } from '.'
+// Dialog / panel trượt / hộp xác nhận / toast trên nền shadcn (Radix + sonner), giữ API cũ.
+import type { ReactNode } from 'react'
+import { TriangleAlert } from 'lucide-react'
+import { toast as sonner } from 'sonner'
+import { cn } from 'cn'
+import { Button } from './button'
+import { Dialog as UIDialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './dialog'
+import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from './sheet'
+import { Toaster as SonnerToaster } from './sonner'
 
 export function Dialog({ open, onClose, title, children, footer, side, wide }: {
-  open: boolean; onClose: () => void; title: string; children: ReactNode; footer?: ReactNode; side?: 'bottom' | 'right'; wide?: boolean
+  open: boolean; onClose: () => void; title: string; children: ReactNode; footer?: ReactNode; side?: 'bottom' | 'right' | 'left'; wide?: boolean
 }) {
-  const ref = useRef<HTMLDialogElement>(null)
-  useEffect(() => {
-    const d = ref.current
-    if (!d) return
-    if (open && !d.open) d.showModal()
-    if (!open && d.open) d.close()
-  }, [open])
+  const onOpenChange = (o: boolean) => { if (!o) onClose() }
+  if (side) {
+    return (
+      <Sheet open={open} onOpenChange={onOpenChange}>
+        {/* Panel trượt: vào 500ms, ra 350ms (luật khoá 12) */}
+        <SheetContent side={side} className={cn('gap-0 bg-card data-closed:duration-350 data-open:duration-500',
+          side === 'bottom' ? 'max-h-[88vh] rounded-t-2xl' : 'w-full sm:max-w-md')}>
+          <SheetHeader className="border-b border-border px-5 py-4">
+            <SheetTitle className="text-base font-semibold">{title}</SheetTitle>
+            <SheetDescription className="sr-only">{title}</SheetDescription>
+          </SheetHeader>
+          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">{children}</div>
+          {footer && <SheetFooter className="flex-row justify-end gap-2 border-t border-border px-5 py-3">{footer}</SheetFooter>}
+        </SheetContent>
+      </Sheet>
+    )
+  }
   return (
-    <dialog
-      ref={ref}
-      onClose={onClose}
-      onClick={e => { if (e.target === ref.current) onClose() }}
-      aria-label={title}
-      className={cn(
-        'bg-surface text-fg shadow-2xl backdrop:backdrop-blur-[1px] p-0 m-auto max-h-[90vh] w-[calc(100%-2rem)] rounded-2xl',
-        wide ? 'max-w-4xl' : 'max-w-lg',
-        side === 'bottom' && 'mb-0 w-full max-w-none rounded-b-none max-h-[85vh]',
-        side === 'right' && 'mr-0 h-full max-h-none w-full max-w-md rounded-none',
-      )}
-    >
-      {open && (
-        <div className="flex max-h-[inherit] flex-col">
-          <div className="flex items-center justify-between border-b border-border px-5 py-3">
-            <h2 className="font-semibold">{title}</h2>
-            <button type="button" onClick={onClose} aria-label="Đóng" className="rounded-md p-1 text-muted hover:bg-surface-2"><X className="size-5" /></button>
-          </div>
-          <div className="overflow-y-auto px-5 py-4">{children}</div>
-          {footer && <div className="flex justify-end gap-2 border-t border-border px-5 py-3">{footer}</div>}
-        </div>
-      )}
-    </dialog>
+    <UIDialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className={cn('max-h-[90vh] gap-0 overflow-hidden rounded-2xl border border-border bg-card p-0 shadow-modal ring-0', wide ? 'sm:max-w-4xl' : 'sm:max-w-lg')}>
+        <DialogHeader className="border-b border-border px-5 py-4">
+          <DialogTitle className="text-base font-semibold">{title}</DialogTitle>
+          <DialogDescription className="sr-only">{title}</DialogDescription>
+        </DialogHeader>
+        <div className="max-h-[70vh] overflow-y-auto px-5 py-4">{children}</div>
+        {footer && <DialogFooter className="border-t border-border px-5 py-3">{footer}</DialogFooter>}
+      </DialogContent>
+    </UIDialog>
   )
 }
 
+/** Hộp xác nhận. Việc nguy hiểm (huỷ, xoá) tô đỏ như hộp xoá (luật khoá 3). */
 export function ConfirmDialog({ open, title, message, confirmLabel = 'Xác nhận', danger, onConfirm, onClose, children }: {
   open: boolean; title: string; message: ReactNode; confirmLabel?: string; danger?: boolean; onConfirm: () => void; onClose: () => void; children?: ReactNode
 }) {
   return (
-    <Dialog open={open} onClose={onClose} title={title}
-      footer={<><Button variant="secondary" onClick={onClose}>Quay lại</Button><Button variant={danger ? 'danger' : 'primary'} onClick={onConfirm}>{confirmLabel}</Button></>}>
-      <div className="text-sm text-muted">{message}</div>
-      {children}
-    </Dialog>
+    <UIDialog open={open} onOpenChange={o => { if (!o) onClose() }}>
+      <DialogContent showCloseButton={false} className="rounded-2xl border border-border bg-card p-5 shadow-modal ring-0 sm:max-w-md">
+        <DialogHeader className="flex-row items-start gap-3 text-left">
+          {danger && <span className="grid size-10 shrink-0 place-items-center rounded-full bg-rose-500/10 text-rose-700"><TriangleAlert className="size-5" aria-hidden /></span>}
+          <div className="min-w-0 space-y-1">
+            <DialogTitle className="text-base font-semibold">{title}</DialogTitle>
+            <DialogDescription asChild><div className="text-sm text-muted-foreground">{message}</div></DialogDescription>
+          </div>
+        </DialogHeader>
+        {children}
+        <DialogFooter className="mt-2 gap-2">
+          <Button variant="outline" onClick={onClose}>Quay lại</Button>
+          <Button variant={danger ? 'destructive' : 'default'} onClick={onConfirm}>{confirmLabel}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </UIDialog>
   )
 }
 
-// ---- toast ----
-type ToastItem = { id: number; text: string; kind: 'ok' | 'error' | 'info' }
-let toasts: ToastItem[] = []
-let tid = 0
-const subs = new Set<() => void>()
-const emit = () => subs.forEach(s => s())
-export function toast(text: string, kind: ToastItem['kind'] = 'ok') {
-  const id = ++tid
-  toasts = [...toasts, { id, text, kind }]
-  emit()
-  setTimeout(() => { toasts = toasts.filter(t => t.id !== id); emit() }, 3500)
+export function toast(text: string, kind: 'ok' | 'error' | 'info' = 'ok') {
+  if (kind === 'error') sonner.error(text)
+  else if (kind === 'info') sonner.info(text)
+  else sonner.success(text)
 }
-const EMPTY: ToastItem[] = []
 
 export function Toaster() {
-  const list = useSyncExternalStore(fn => { subs.add(fn); return () => { subs.delete(fn) } }, () => toasts, () => EMPTY)
-  return (
-    <div aria-live="polite" className="no-print pointer-events-none fixed bottom-4 left-1/2 z-[100] flex w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 flex-col gap-2">
-      {list.map(t => (
-        <div key={t.id} className="pointer-events-auto flex items-start gap-2 rounded-xl border border-border bg-surface px-4 py-3 text-sm text-fg shadow-lg">
-          {t.kind === 'ok' ? <CheckCircle2 className="size-5 shrink-0 text-ok" /> : t.kind === 'error' ? <AlertTriangle className="size-5 shrink-0 text-danger" /> : <Info className="size-5 shrink-0 text-info" />}
-          <span>{t.text}</span>
-        </div>
-      ))}
-    </div>
-  )
+  return <SonnerToaster position="bottom-center" />
 }

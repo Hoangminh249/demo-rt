@@ -24,9 +24,9 @@ export default function AgentReport() {
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-            <XAxis dataKey="label" tick={{ fontSize: 12, fill: 'var(--muted)' }} />
-            <YAxis tickFormatter={v => fmtAxis(v)} tick={{ fontSize: 11, fill: 'var(--muted)' }} width={70} />
-            <Tooltip formatter={v => fmtVND(Number(v))} contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8 }} />
+            <XAxis dataKey="label" tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }} />
+            <YAxis tickFormatter={v => fmtAxis(v)} tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }} width={70} />
+            <Tooltip formatter={v => fmtVND(Number(v))} contentStyle={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8 }} />
             <Bar isAnimationActive={false} dataKey="revenue" name="Doanh thu net" fill="var(--primary)" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>

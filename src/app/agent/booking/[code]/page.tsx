@@ -16,7 +16,7 @@ export default function AgentBookingDetail({ params }: PageProps<'/agent/booking
     <div className="mx-auto max-w-3xl">
       <Breadcrumb items={[{ label: 'Booking của tôi', href: '/agent/booking' }, { label: code }]} />
       <BookingSummary b={b.data} />
-      {b.data.guests_list && b.data.guests_list.length > 0 && <p className="mt-3 text-sm text-muted">Danh sách khách: {b.data.guests_list.join(', ')}</p>}
+      {b.data.guests_list && b.data.guests_list.length > 0 && <p className="mt-3 text-sm text-muted-foreground">Danh sách khách: {b.data.guests_list.join(', ')}</p>}
       <ButtonLink href={`/voucher/${code}`} target="_blank" className="mt-4"><FileDown className="size-4" /> Tải voucher</ButtonLink>
     </div>
   )

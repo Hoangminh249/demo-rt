@@ -21,7 +21,7 @@ export default function AgentRegister() {
     <Card className="mx-auto max-w-lg p-8 text-center">
       <Clock className="mx-auto size-12 text-warn" />
       <h1 className="mt-3 text-xl font-bold">Hồ sơ đang chờ duyệt</h1>
-      <p className="mt-2 text-sm text-muted">{f.company} đã gửi hồ sơ hợp tác. Trạng thái: <b className="text-warn">Chờ duyệt</b>. Demo: chuyển vai trò sang <b>Lãnh đạo</b> → Admin › Agents / B2B để duyệt.</p>
+      <p className="mt-2 text-sm text-muted-foreground">{f.company} đã gửi hồ sơ hợp tác. Trạng thái: <b className="text-warn">Chờ duyệt</b>. Demo: chuyển vai trò sang <b>Lãnh đạo</b> → Admin › Agents / B2B để duyệt.</p>
       <Link href="/agent" className="mt-4 inline-block text-sm font-medium text-primary underline">Về trang đăng nhập</Link>
     </Card>
   )

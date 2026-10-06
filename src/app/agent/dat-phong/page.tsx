@@ -53,7 +53,7 @@ function AgentBook() {
       <Card className="mx-auto max-w-2xl p-6">
         <CheckCircle2 className="size-12 text-ok" />
         <h1 className="mt-2 text-xl font-bold">Booking {done.booking.code} đã vào hệ thống Rooty</h1>
-        <p className="mt-3 rounded-lg bg-surface-2 p-3 font-mono text-sm">Source: {done.message.source} | Revenue: {fmtNumber(done.message.revenue)} | Payment: {done.message.payment} | Status: {done.message.status}</p>
+        <p className="mt-3 rounded-lg bg-muted p-3 font-mono text-sm">Source: {done.message.source} | Revenue: {fmtNumber(done.message.revenue)} | Payment: {done.message.payment} | Status: {done.message.status}</p>
         <p className="mt-3 text-sm">Tồn {room.rt.name} đêm {fmtRange(checkin, checkout)} giờ còn <b className="text-primary">{leftNow ?? '…'} phòng</b> — website và lễ tân cũng thấy con số này ngay.</p>
         <div className="mt-5 flex flex-wrap gap-2">
           <ButtonLink href={`/voucher/${done.booking.code}`} target="_blank">Tải voucher</ButtonLink>
@@ -84,9 +84,9 @@ function AgentBook() {
             <fieldset className="grid gap-2 sm:grid-cols-2">
               <legend className="mb-1 text-sm font-semibold">Thanh toán</legend>
               {([['credit', 'Ghi công nợ', 'Đối soát cuối tháng'], ['now', 'Thanh toán ngay', 'Chuyển khoản (giả lập)']] as const).map(([v, t, d]) => (
-                <label key={v} className={cn('flex cursor-pointer items-center gap-3 rounded-xl border p-3', payment === v ? 'border-primary bg-mint/60' : 'border-border')}>
+                <label key={v} className={cn('flex cursor-pointer items-center gap-3 rounded-xl border p-3', payment === v ? 'border-primary bg-accent/60' : 'border-border')}>
                   <input type="radio" name="pay" className="accent-[var(--primary)]" checked={payment === v} onChange={() => setPayment(v)} />
-                  <span><span className="block text-sm font-semibold">{t}</span><span className="text-xs text-muted">{d}</span></span>
+                  <span><span className="block text-sm font-semibold">{t}</span><span className="text-xs text-muted-foreground">{d}</span></span>
                 </label>
               ))}
             </fieldset>
@@ -99,7 +99,7 @@ function AgentBook() {
       <aside className="space-y-3">
         <Card className="space-y-1 p-4 text-sm">
           <p className="font-semibold">Tóm tắt giá net</p>
-          <p className="flex justify-between text-muted"><span>Public {fmtNumber(room.public_rate)} × {nights} đêm × {rooms}</span><span className="line-through">{fmtNumber(room.public_rate * nights * rooms)}</span></p>
+          <p className="flex justify-between text-muted-foreground"><span>Public {fmtNumber(room.public_rate)} × {nights} đêm × {rooms}</span><span className="line-through">{fmtNumber(room.public_rate * nights * rooms)}</span></p>
           <p className="flex justify-between"><span>Net {fmtNumber(room.net_rate)} × {nights} đêm × {rooms}</span><b>{fmtNumber(total)}</b></p>
           <p className="flex justify-between text-ok"><span>Lợi nhuận đại lý</span><span>{fmtNumber((room.public_rate - room.net_rate) * nights * rooms)}</span></p>
         </Card>
@@ -108,9 +108,9 @@ function AgentBook() {
           <p className="flex justify-between"><span>Đã phát sinh</span><span>{fmtVND(st.data.debt)}</span></p>
           <p className="flex justify-between"><span>Hạn mức đã dùng</span><span>{fmtVND(st.data.exposure)}</span></p>
           <p className="flex justify-between"><span>Sau booking (nếu ghi nợ)</span><span className={cn(after > st.data.agent.credit_limit && 'text-danger')}>{fmtVND(after)}</span></p>
-          <p className="flex justify-between text-muted"><span>Hạn mức</span><span>{fmtVND(st.data.agent.credit_limit)}</span></p>
+          <p className="flex justify-between text-muted-foreground"><span>Hạn mức</span><span>{fmtVND(st.data.agent.credit_limit)}</span></p>
         </Card>
-        <p className="text-xs text-muted">Còn {room.left} phòng. <Link href="/agent/tim-phong" className="underline">Đổi phòng/ngày</Link></p>
+        <p className="text-xs text-muted-foreground">Còn {room.left} phòng. <Link href="/agent/tim-phong" className="underline">Đổi phòng/ngày</Link></p>
       </aside>
     </div>
   )

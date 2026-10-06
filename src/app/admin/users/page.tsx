@@ -35,20 +35,20 @@ export default function UsersAdmin() {
         <h2 className="mb-2 font-semibold">Ma trận vai trò × quyền</h2>
         <Card className="overflow-x-auto">
           <table className="w-full min-w-[720px] text-sm">
-            <thead><tr className="bg-surface-2"><th className="p-2 text-left text-xs uppercase text-muted">Module</th>{ROLES.map(r => <th key={r} className="p-2 text-xs uppercase text-muted">{ROLE_LABEL[r]}</th>)}</tr></thead>
+            <thead><tr className="bg-muted"><th className="p-2 text-left text-xs uppercase text-muted-foreground">Module</th>{ROLES.map(r => <th key={r} className="p-2 text-xs uppercase text-muted-foreground">{ROLE_LABEL[r]}</th>)}</tr></thead>
             <tbody>{ADMIN_MODULES.map(m => (
               <tr key={m.key} className="border-t border-border">
                 <td className="p-2 font-medium">{m.label}</td>
                 {ROLES.map(r => {
                   const v = PERMISSIONS[r][m.key]
-                  return <td key={r} className="p-2 text-center">{v === 'full' ? <Check className="mx-auto size-4 text-ok" aria-label="Toàn quyền" /> : v === 'view' ? <Eye className="mx-auto size-4 text-info" aria-label="Chỉ xem" /> : <Minus className="mx-auto size-4 text-muted" aria-label="Không có quyền" />}</td>
+                  return <td key={r} className="p-2 text-center">{v === 'full' ? <Check className="mx-auto size-4 text-ok" aria-label="Toàn quyền" /> : v === 'view' ? <Eye className="mx-auto size-4 text-info" aria-label="Chỉ xem" /> : <Minus className="mx-auto size-4 text-muted-foreground" aria-label="Không có quyền" />}</td>
                 })}
               </tr>
             ))}</tbody>
           </table>
         </Card>
-        <p className="mt-2 flex flex-wrap gap-4 text-xs text-muted"><span className="flex items-center gap-1"><Check className="size-3.5 text-ok" />Toàn quyền</span><span className="flex items-center gap-1"><Eye className="size-3.5 text-info" />Chỉ xem</span><span className="flex items-center gap-1"><Minus className="size-3.5" />Ẩn</span></p>
-        <p className="mt-2 text-sm text-muted">Thử: chọn vai trò <b>Quản trị khách sạn</b> ở banner demo → bộ chọn khách sạn bị khoá vào PITO Hòn Thơm, dashboard/booking/tồn chỉ còn số liệu PITO, module Agents & Users bị ẩn.</p>
+        <p className="mt-2 flex flex-wrap gap-4 text-xs text-muted-foreground"><span className="flex items-center gap-1"><Check className="size-3.5 text-ok" />Toàn quyền</span><span className="flex items-center gap-1"><Eye className="size-3.5 text-info" />Chỉ xem</span><span className="flex items-center gap-1"><Minus className="size-3.5" />Ẩn</span></p>
+        <p className="mt-2 text-sm text-muted-foreground">Thử: chọn vai trò <b>Quản trị khách sạn</b> ở banner demo → bộ chọn khách sạn bị khoá vào PITO Hòn Thơm, dashboard/booking/tồn chỉ còn số liệu PITO, module Agents & Users bị ẩn.</p>
       </section>
     </div>
   )

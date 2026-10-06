@@ -29,14 +29,14 @@ function Customers() {
           <thead><tr><th>Khách</th><th>Hạng</th><th className="text-right">Booking</th><th className="text-right">Room nights</th><th className="text-right">Tổng chi</th><th>Lần ở gần nhất</th><th>Sở thích</th></tr></thead>
           <tbody>
             {list.data.map(c => (
-              <tr key={c.id} className="cursor-pointer hover:bg-surface-2" onClick={() => router.push(`/admin/customers/${c.id}`)}>
-                <td><Link href={`/admin/customers/${c.id}`} className="font-medium text-primary hover:underline" onClick={e => e.stopPropagation()}>{c.name}</Link><div className="text-xs text-muted">{c.phone} · {c.nationality}</div></td>
+              <tr key={c.id} className="cursor-pointer hover:bg-muted" onClick={() => router.push(`/admin/customers/${c.id}`)}>
+                <td><Link href={`/admin/customers/${c.id}`} className="font-medium text-primary hover:underline" onClick={e => e.stopPropagation()}>{c.name}</Link><div className="text-xs text-muted-foreground">{c.phone} · {c.nationality}</div></td>
                 <td><Badge tone={c.tier === 'Platinum' || c.tier === 'Gold' ? 'warn' : 'neutral'}>{c.tier}</Badge></td>
                 <td className="text-right">{c.stats.bookings}</td>
                 <td className="text-right">{c.stats.roomNights}</td>
                 <td className="text-right">{fmtVND(c.stats.spend)}</td>
                 <td>{c.stats.lastStay ? fmtDate(c.stats.lastStay) : '—'}</td>
-                <td className="text-xs text-muted">{c.preferences.join(', ')}</td>
+                <td className="text-xs text-muted-foreground">{c.preferences.join(', ')}</td>
               </tr>
             ))}
           </tbody>

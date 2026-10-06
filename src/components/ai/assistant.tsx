@@ -85,12 +85,12 @@ export function AiAssistant() {
   return (
     <>
       {!open && (
-        <button type="button" onClick={() => setOpen(true)} className="no-print fixed bottom-5 right-5 z-40 flex items-center gap-2 rounded-full bg-brand px-4 py-3 text-sm font-semibold text-white shadow-xl hover:opacity-95">
-          <Sparkles className="size-5" /> Trợ lý AI
+        <button type="button" onClick={() => setOpen(true)} className="no-print fixed right-4 bottom-24 z-40 lg:right-5 lg:bottom-5 flex items-center gap-2 rounded-full bg-brand p-3 text-sm font-semibold text-white shadow-popover hover:opacity-95 sm:px-4" aria-label="Mở trợ lý AI">
+          <Sparkles className="size-5" aria-hidden /><span className="hidden sm:inline">Trợ lý AI</span>
         </button>
       )}
       {open && (
-        <section aria-label="AI Hospitality Assistant" className="no-print fixed inset-x-2 bottom-2 z-50 flex h-[min(680px,calc(100vh-3.5rem))] flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-2xl sm:inset-x-auto sm:right-5 sm:bottom-5 sm:w-[420px]">
+        <section aria-label="AI Hospitality Assistant" className="no-print fixed inset-x-2 bottom-2 z-50 flex h-[min(680px,calc(100vh-3.5rem))] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl sm:inset-x-auto sm:right-5 sm:bottom-5 sm:w-[420px]">
           <header className="flex items-center gap-2 bg-brand px-4 py-3 text-white">
             <Sparkles className="size-5" />
             <div className="min-w-0 flex-1">
@@ -102,12 +102,12 @@ export function AiAssistant() {
 
           <div className="flex-1 space-y-3 overflow-y-auto p-4 text-sm">
             {msgs.map((m, i) => (
-              <p key={i} className={cn('max-w-[88%] rounded-2xl px-3 py-2', m.from === 'user' ? 'ml-auto bg-primary text-white' : 'bg-surface-2')}>{m.text}</p>
+              <p key={i} className={cn('max-w-[88%] rounded-2xl px-3 py-2', m.from === 'user' ? 'ml-auto bg-primary text-white' : 'bg-muted')}>{m.text}</p>
             ))}
 
             {intent && (
               <div className="space-y-2 rounded-xl border border-border p-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted">AI đã hiểu</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">AI đã hiểu</p>
                 <div className="flex flex-wrap gap-1.5">
                   <Chip icon={<CalendarDays className="size-3.5" />} onClick={() => setEdit(edit === 'dates' ? null : 'dates')}>
                     {fmtRange(intent.checkin ?? DEFAULT_SEARCH.checkin, intent.checkout ?? addDays(intent.checkin ?? DEFAULT_SEARCH.checkin, 3))}
@@ -119,7 +119,7 @@ export function AiAssistant() {
                   {intent.area && <Chip icon={<MapPin className="size-3.5" />} onRemove={() => patch({ area: undefined })}>{AREA_LABEL[intent.area]}</Chip>}
                   {intent.oceanView && <Chip icon={<Eye className="size-3.5" />} onRemove={() => patch({ oceanView: false })}>View biển</Chip>}
                   {intent.tags.map(t => <Chip key={t} onRemove={() => patch({ tags: intent.tags.filter(x => x !== t) })}>{TAG_LABEL[t]}</Chip>)}
-                  <label className="inline-flex items-center rounded-full border border-dashed border-border px-2 text-xs text-muted">
+                  <label className="inline-flex items-center rounded-full border border-dashed border-border px-2 text-xs text-muted-foreground">
                     <Plus className="size-3" /><span className="sr-only">Thêm tiêu chí</span>
                     <select value="" onChange={e => e.target.value && patch({ tags: [...intent.tags, e.target.value as HotelTag] })} className="bg-transparent py-1 text-xs">
                       <option value="">Tiêu chí</option>
@@ -129,8 +129,8 @@ export function AiAssistant() {
                 </div>
                 {edit === 'dates' && (
                   <div className="grid grid-cols-2 gap-2">
-                    <input aria-label="Nhận phòng" type="date" value={intent.checkin ?? DEFAULT_SEARCH.checkin} onChange={e => e.target.value && patch({ checkin: e.target.value, checkout: intent.checkout && intent.checkout > e.target.value ? intent.checkout : addDays(e.target.value, 1) })} className="h-9 rounded-md border border-border bg-surface px-2 text-xs" />
-                    <input aria-label="Trả phòng" type="date" value={intent.checkout ?? addDays(intent.checkin ?? DEFAULT_SEARCH.checkin, 3)} min={addDays(intent.checkin ?? DEFAULT_SEARCH.checkin, 1)} onChange={e => e.target.value && patch({ checkout: e.target.value })} className="h-9 rounded-md border border-border bg-surface px-2 text-xs" />
+                    <input aria-label="Nhận phòng" type="date" value={intent.checkin ?? DEFAULT_SEARCH.checkin} onChange={e => e.target.value && patch({ checkin: e.target.value, checkout: intent.checkout && intent.checkout > e.target.value ? intent.checkout : addDays(e.target.value, 1) })} className="h-9 rounded-md border border-border bg-card px-2 text-xs" />
+                    <input aria-label="Trả phòng" type="date" value={intent.checkout ?? addDays(intent.checkin ?? DEFAULT_SEARCH.checkin, 3)} min={addDays(intent.checkin ?? DEFAULT_SEARCH.checkin, 1)} onChange={e => e.target.value && patch({ checkout: e.target.value })} className="h-9 rounded-md border border-border bg-card px-2 text-xs" />
                   </div>
                 )}
                 {edit === 'guests' && (
@@ -146,7 +146,7 @@ export function AiAssistant() {
                 )}
                 {edit === 'budget' && (
                   <label className="flex items-center gap-2 text-xs">Tổng tối đa (triệu)
-                    <input type="number" min={0} step={0.5} value={intent.budget ? intent.budget / 1e6 : ''} placeholder="bất kỳ" onChange={e => patch({ budget: e.target.value ? Number(e.target.value) * 1e6 : undefined, budgetPerNight: undefined })} className="h-8 w-24 rounded-md border border-border bg-surface px-2" />
+                    <input type="number" min={0} step={0.5} value={intent.budget ? intent.budget / 1e6 : ''} placeholder="bất kỳ" onChange={e => patch({ budget: e.target.value ? Number(e.target.value) * 1e6 : undefined, budgetPerNight: undefined })} className="h-8 w-24 rounded-md border border-border bg-card px-2" />
                   </label>
                 )}
               </div>
@@ -165,7 +165,7 @@ export function AiAssistant() {
                       {personal && (p.offer.rt.ocean_view || p.offer.rt.family) && <Badge tone="info" className="mb-1"><Sparkles className="size-3" /> Gợi ý dựa trên lần ở trước</Badge>}
                       <p className="font-semibold">{p.res.hotel.name} – {p.offer.rt.name}</p>
                       <p>{nights} đêm – <b>{fmtVND(p.plan.total)}</b>{s.rooms > 1 ? ` (${s.rooms} phòng)` : ''}</p>
-                      <p className="text-xs text-muted">{p.reasons.slice(0, 4).join(' – ')}</p>
+                      <p className="text-xs text-muted-foreground">{p.reasons.slice(0, 4).join(' – ')}</p>
                       <p className="text-xs font-medium text-ok">{roomsLeft(p.offer.left, "available")}{p.plan.promo ? ` · Ưu đãi ${p.plan.promo.name.split('–')[0].trim()} −${p.plan.promo.discount_pct}%` : ''}</p>
                       <div className="mt-2 flex flex-wrap gap-1.5">
                         <ButtonLink size="sm" variant="secondary" href={`/${p.res.hotel.slug}?${searchToParams(s)}`}>View Hotel</ButtonLink>
@@ -177,9 +177,9 @@ export function AiAssistant() {
                   )
                 })}
                 {personal && (
-                  <div className="rounded-xl border border-dashed border-primary/40 bg-mint p-3 text-xs">
-                    <p className="font-semibold text-brand dark:text-accent">Tour phù hợp cho gia đình anh A</p>
-                    <p className="mt-1 text-muted">Lần trước đã đi Tour 4 đảo → gợi ý <b>Tour Bắc đảo – Grand World & Safari</b> (950.000đ/người lớn) và xe sân bay như mọi lần.</p>
+                  <div className="rounded-xl border border-dashed border-primary/40 bg-accent p-3 text-xs">
+                    <p className="font-semibold text-brand dark:text-brand-accent">Tour phù hợp cho gia đình anh A</p>
+                    <p className="mt-1 text-muted-foreground">Lần trước đã đi Tour 4 đảo → gợi ý <b>Tour Bắc đảo – Grand World & Safari</b> (950.000đ/người lớn) và xe sân bay như mọi lần.</p>
                     <Link href="/trai-nghiem/tour" className="mt-1 inline-block font-medium text-primary hover:underline">Xem tour →</Link>
                   </div>
                 )}
@@ -191,14 +191,14 @@ export function AiAssistant() {
           <div className="border-t border-border p-3">
             <div className="mb-2 flex gap-1.5 overflow-x-auto pb-1">
               {SAMPLE_PROMPTS.map(p => (
-                <button key={p} type="button" onClick={() => ask(p)} className="shrink-0 rounded-full border border-border px-3 py-1 text-xs text-muted hover:border-primary hover:text-primary">
+                <button key={p} type="button" onClick={() => ask(p)} className="shrink-0 rounded-full border border-border px-3 py-1 text-xs text-muted-foreground hover:border-primary hover:text-primary">
                   {p.length > 42 ? p.slice(0, 42) + '…' : p}
                 </button>
               ))}
             </div>
             <form onSubmit={e => { e.preventDefault(); ask(input) }} className="flex gap-2">
               <label htmlFor="ai-input" className="sr-only">Nhập nhu cầu</label>
-              <input id="ai-input" value={input} onChange={e => setInput(e.target.value)} placeholder="VD: 20–23/10, 2 lớn 2 trẻ, gần biển, dưới 10 triệu" className="h-10 min-w-0 flex-1 rounded-lg border border-border bg-surface px-3 text-sm" />
+              <input id="ai-input" value={input} onChange={e => setInput(e.target.value)} placeholder="VD: 20–23/10, 2 lớn 2 trẻ, gần biển, dưới 10 triệu" className="h-10 min-w-0 flex-1 rounded-lg border border-border bg-card px-3 text-sm" />
               <Button type="submit" aria-label="Gửi"><Send className="size-4" /></Button>
             </form>
           </div>
@@ -210,7 +210,7 @@ export function AiAssistant() {
 
 function Chip({ children, icon, onClick, onRemove }: { children: React.ReactNode; icon?: React.ReactNode; onClick?: () => void; onRemove?: () => void }) {
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-mint px-2.5 py-1 text-xs font-medium text-brand dark:text-accent">
+    <span className="inline-flex items-center gap-1 rounded-full bg-accent px-2.5 py-1 text-xs font-medium text-brand dark:text-brand-accent">
       {onClick ? <button type="button" onClick={onClick} className="inline-flex items-center gap-1 underline-offset-2 hover:underline">{icon}{children}</button> : <>{icon}{children}</>}
       {onRemove && <button type="button" onClick={onRemove} aria-label="Bỏ tiêu chí" className="ml-0.5 rounded-full hover:bg-white/50"><X className="size-3" /></button>}
     </span>

@@ -35,9 +35,9 @@ export default function InventoryPage() {
         <Badge tone="info" className="h-8 px-3"><RefreshCw className="size-3.5" /> OTA đồng bộ từ Channel Manager (giả lập)</Badge>
       </PageTitle>
 
-      <Card className="mb-4 border-primary/30 bg-mint p-4 text-sm">
-        <p className="font-semibold text-brand dark:text-accent">Ví dụ PDF §6 · PITO Hòn Thơm (Hotel A) · Deluxe Ocean View 30 phòng · đêm 20/10</p>
-        <p className="mt-1 text-muted">Website 7 · Agent 5 · OTA 8 · Offline 3 → <b className="text-fg">còn 7</b>. Vào Agent Portal đặt thêm 2 phòng → ô 20/10 còn 5, website cũng còn 5. Tồn = tổng − đã bán từ mọi kênh − đóng bán; không có nơi nhập tồn thứ hai.</p>
+      <Card className="mb-4 border-primary/30 bg-accent p-4 text-sm">
+        <p className="font-semibold text-brand dark:text-brand-accent">Ví dụ PDF §6 · PITO Hòn Thơm (Hotel A) · Deluxe Ocean View 30 phòng · đêm 20/10</p>
+        <p className="mt-1 text-muted-foreground">Website 7 · Agent 5 · OTA 8 · Offline 3 → <b className="text-foreground">còn 7</b>. Vào Agent Portal đặt thêm 2 phòng → ô 20/10 còn 5, website cũng còn 5. Tồn = tổng − đã bán từ mọi kênh − đóng bán; không có nơi nhập tồn thứ hai.</p>
       </Card>
 
       <div className="mb-3 flex flex-wrap items-center gap-2">
@@ -45,7 +45,7 @@ export default function InventoryPage() {
         <Input type="date" value={from} onChange={e => e.target.value && setFrom(e.target.value)} className="h-8 w-40" aria-label="Từ ngày" />
         <Button variant="secondary" size="sm" onClick={() => setFrom(addDays(from, 7))} aria-label="Tiến 7 ngày"><ChevronRight className="size-4" /></Button>
         <Button variant="ghost" size="sm" onClick={() => setFrom(TODAY)}>Hôm nay</Button>
-        <div className="ml-auto flex flex-wrap items-center gap-3 text-xs text-muted">
+        <div className="ml-auto flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
           <span className="flex items-center gap-1"><span className="size-3 rounded bg-ok-bg ring-1 ring-ok/40" />Còn nhiều</span>
           <span className="flex items-center gap-1"><span className="size-3 rounded bg-warn-bg ring-1 ring-warn/40" />Sắp hết</span>
           <span className="flex items-center gap-1"><span className="size-3 rounded bg-danger-bg ring-1 ring-danger/40" />Hết / đóng</span>
@@ -54,27 +54,27 @@ export default function InventoryPage() {
       </div>
 
       {!grid.data ? <Skeleton className="h-96" /> : (
-        <div className={cn('overflow-x-auto rounded-xl border border-border bg-surface', grid.loading && 'opacity-60')}>
+        <div className={cn('overflow-x-auto rounded-xl border border-border bg-card', grid.loading && 'opacity-60')}>
           <table className="w-full min-w-[1100px] border-collapse text-xs">
             <thead>
-              <tr className="bg-surface-2">
-                <th className="sticky left-0 z-10 bg-surface-2 p-2 text-left font-semibold">Hạng phòng</th>
-                {grid.data.dates.map(d => <th key={d} className={cn('p-2 font-semibold', d === '2026-10-20' && 'bg-mint')}>{fmtWeekday(d)}<br />{fmtDayMonth(d)}</th>)}
+              <tr className="bg-muted">
+                <th className="sticky left-0 z-10 bg-muted p-2 text-left font-semibold">Hạng phòng</th>
+                {grid.data.dates.map(d => <th key={d} className={cn('p-2 font-semibold', d === '2026-10-20' && 'bg-accent')}>{fmtWeekday(d)}<br />{fmtDayMonth(d)}</th>)}
               </tr>
             </thead>
             <tbody>
               {grid.data.rows.map(({ rt, cells }) => (
                 <tr key={rt.room_type_id} className="border-t border-border">
-                  <th className="sticky left-0 z-10 bg-surface p-2 text-left align-top font-medium">{rt.name}<div className="font-normal text-muted">Tổng {rt.quantity}</div></th>
+                  <th className="sticky left-0 z-10 bg-card p-2 text-left align-top font-medium">{rt.name}<div className="font-normal text-muted-foreground">Tổng {rt.quantity}</div></th>
                   {cells.map(c => {
                     const lvl = c.closed ? 'out' : stockLevel(c.left, c.total)
                     return (
                       <td key={c.day} className="p-1">
                         <button type="button" onClick={() => setSel({ rt, c })} aria-label={`${rt.name} ${fmtDate(c.day)}: còn ${c.left}`}
                           className={cn('w-full rounded-md p-1.5 text-left ring-1 hover:ring-2', lvl === 'out' ? 'bg-danger-bg ring-danger/30' : lvl === 'low' ? 'bg-warn-bg ring-warn/30' : 'bg-ok-bg ring-ok/30')}>
-                          <span className="flex items-center justify-between text-sm font-bold">{c.closed ? <Lock className="size-3.5" /> : c.left}<span className="text-[10px] font-normal text-muted">/{c.total}</span></span>
-                          <span className="block leading-tight text-muted">W{c.website} A{c.agent}</span>
-                          <span className="block leading-tight text-muted">O{c.ota} Off{c.offline}</span>
+                          <span className="flex items-center justify-between text-sm font-bold">{c.closed ? <Lock className="size-3.5" /> : c.left}<span className="text-[10px] font-normal text-muted-foreground">/{c.total}</span></span>
+                          <span className="block leading-tight text-muted-foreground">W{c.website} A{c.agent}</span>
+                          <span className="block leading-tight text-muted-foreground">O{c.ota} Off{c.offline}</span>
                         </button>
                       </td>
                     )
@@ -110,7 +110,7 @@ export default function InventoryPage() {
               <Button variant={sel.c.closed ? 'secondary' : 'danger'} onClick={() => toggle(sel.rt.room_type_id, [sel.c.day], !sel.c.closed)} className="w-full">
                 {sel.c.closed ? <><Unlock className="size-4" /> Mở bán ngày này</> : <><Lock className="size-4" /> Đóng bán ngày này</>}
               </Button>
-            ) : <p className="text-xs text-muted">Vai trò hiện tại chỉ xem.</p>}
+            ) : <p className="text-xs text-muted-foreground">Vai trò hiện tại chỉ xem.</p>}
           </div>
         )}
       </Dialog>

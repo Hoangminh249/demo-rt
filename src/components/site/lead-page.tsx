@@ -27,11 +27,11 @@ export function LeadPage({ kind, title, intro, image, points, venues }: { kind: 
         <div>
           <ul className="space-y-2">{points.map(p => <li key={p} className="flex gap-2"><Check className="mt-0.5 size-4 shrink-0 text-ok" />{p}</li>)}</ul>
           <h2 className="mb-3 mt-8 text-xl font-bold">Địa điểm gợi ý</h2>
-          <div className="grid gap-3 sm:grid-cols-2">{venues.map(v => <Card key={v.name} className="p-4"><p className="font-semibold">{v.name}</p><p className="text-sm text-muted">{v.desc}</p></Card>)}</div>
+          <div className="grid gap-3 sm:grid-cols-2">{venues.map(v => <Card key={v.name} className="p-4"><p className="font-semibold">{v.name}</p><p className="text-sm text-muted-foreground">{v.desc}</p></Card>)}</div>
         </div>
         <Card className="h-fit p-5">
           {sent ? (
-            <div className="py-8 text-center"><CheckCircle2 className="mx-auto size-12 text-ok" /><p className="mt-3 font-semibold">Đã gửi yêu cầu báo giá</p><p className="mt-1 text-sm text-muted">Đội Sales sẽ liên hệ trong 24h (giả lập). Yêu cầu đã vào danh sách lead trong Admin › Content.</p><Button variant="secondary" className="mt-4" onClick={() => setSent(false)}>Gửi yêu cầu khác</Button></div>
+            <div className="py-8 text-center"><CheckCircle2 className="mx-auto size-12 text-ok" /><p className="mt-3 font-semibold">Đã gửi yêu cầu báo giá</p><p className="mt-1 text-sm text-muted-foreground">Đội Sales sẽ liên hệ trong 24h (giả lập). Yêu cầu đã vào danh sách lead trong Admin › Content.</p><Button variant="secondary" className="mt-4" onClick={() => setSent(false)}>Gửi yêu cầu khác</Button></div>
           ) : (
             <form onSubmit={submit} className="space-y-3">
               <h2 className="text-lg font-bold">Yêu cầu báo giá</h2>

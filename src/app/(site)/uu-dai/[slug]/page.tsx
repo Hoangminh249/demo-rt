@@ -27,10 +27,10 @@ export default function OfferPage({ params }: PageProps<'/uu-dai/[slug]'>) {
         <div>
           <Badge tone="brand">−{x.discount_pct}%</Badge>
           <h1 className="mt-2 text-3xl font-bold">{x.name}</h1>
-          <p className="mt-3 text-muted">{x.description}</p>
+          <p className="mt-3 text-muted-foreground">{x.description}</p>
           <ul className="mt-4 space-y-2">{x.perks.map(k => <li key={k} className="flex items-center gap-2"><Check className="size-4 text-ok" />{k}</li>)}</ul>
           <h2 className="mt-6 font-semibold">Điều kiện</h2>
-          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-muted">
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-muted-foreground">
             {x.min_advance_days && <li>Đặt trước ít nhất {x.min_advance_days} ngày</li>}
             {x.min_nights && <li>Ở tối thiểu {x.min_nights} đêm</li>}
             {x.min_children && <li>Có ít nhất {x.min_children} trẻ em</li>}

@@ -18,7 +18,7 @@ export default function HotelsPage() {
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {!res.data ? <Skeleton className="h-80" /> : res.data.filter(r => r.hotel.area === area).map(r => (
               <HotelCard key={r.hotel.id} hotel={r.hotel} fromPrice={r.fromPrice} href={`/${r.hotel.slug}?${searchToParams({ ...DEFAULT_SEARCH })}`}>
-                <p className="text-xs text-muted">rootyhospitality.com/{r.hotel.slug}</p>
+                <p className="text-xs text-muted-foreground">rootyhospitality.com/{r.hotel.slug}</p>
               </HotelCard>
             ))}
           </div>

@@ -50,9 +50,9 @@ export default function AdminBookingDetail({ params }: PageProps<'/admin/booking
         <Breadcrumb items={[{ label: 'Bookings', href: '/admin/bookings' }, { label: code }]} />
         <BookingSummary b={bk} />
         <Card className="mt-4 grid gap-3 p-4 text-sm sm:grid-cols-3">
-          <div><p className="text-xs text-muted">Đại lý</p><p className="font-medium">{bk.agentName ? <Link href={`/admin/agents/${bk.agent_id}`} className="text-primary hover:underline">{bk.agentName}</Link> : '—'}</p></div>
-          <div><p className="text-xs text-muted">Hồ sơ khách (CRM)</p><p className="font-medium">{bk.customer_id ? <Link href={`/admin/customers/${bk.customer_id}`} className="text-primary hover:underline">{bk.customer_id}</Link> : 'Chưa định danh (OTA/đại lý)'}</p></div>
-          <div><p className="text-xs text-muted">payment_collect · source_name</p><p className="font-mono text-xs">{bk.payment_collect || '""'} · {bk.source_name}</p></div>
+          <div><p className="text-xs text-muted-foreground">Đại lý</p><p className="font-medium">{bk.agentName ? <Link href={`/admin/agents/${bk.agent_id}`} className="text-primary hover:underline">{bk.agentName}</Link> : '—'}</p></div>
+          <div><p className="text-xs text-muted-foreground">Hồ sơ khách (CRM)</p><p className="font-medium">{bk.customer_id ? <Link href={`/admin/customers/${bk.customer_id}`} className="text-primary hover:underline">{bk.customer_id}</Link> : 'Chưa định danh (OTA/đại lý)'}</p></div>
+          <div><p className="text-xs text-muted-foreground">payment_collect · source_name</p><p className="font-mono text-xs">{bk.payment_collect || '""'} · {bk.source_name}</p></div>
         </Card>
       </div>
       <aside className="space-y-4">
@@ -60,8 +60,8 @@ export default function AdminBookingDetail({ params }: PageProps<'/admin/booking
           <h2 className="mb-3 flex items-center gap-2 font-semibold"><History className="size-4" /> Dòng thời gian</h2>
           <ol className="space-y-3 border-l-2 border-border pl-4 text-sm">
             {[...bk.timeline].reverse().map((t, i) => (
-              <li key={i} className="relative"><span className="absolute -left-[22px] top-1 size-3 rounded-full border-2 border-surface bg-primary" />
-                <p className="font-medium">{t.text}</p><p className="text-xs text-muted">{fmtDateTime(t.at)} · {t.by}</p></li>
+              <li key={i} className="relative"><span className="absolute -left-[22px] top-1 size-3 rounded-full border-2 border-card bg-primary" />
+                <p className="font-medium">{t.text}</p><p className="text-xs text-muted-foreground">{fmtDateTime(t.at)} · {t.by}</p></li>
             ))}
           </ol>
         </Card>
@@ -79,7 +79,7 @@ export default function AdminBookingDetail({ params }: PageProps<'/admin/booking
             </Card>
             <Card className="space-y-3 p-4">
               <h2 className="flex items-center gap-2 font-semibold"><Wallet className="size-4" /> Ghi thanh toán</h2>
-              <p className="text-xs text-muted">Còn lại: {fmtVND(bk.balance)}</p>
+              <p className="text-xs text-muted-foreground">Còn lại: {fmtVND(bk.balance)}</p>
               <div className="grid grid-cols-2 gap-2">
                 <Select value={pay.method} onChange={e => setPay({ ...pay, method: e.target.value as PaymentMethod })} aria-label="Phương thức">
                   {(['transfer', 'cash', 'card', 'qr'] as PaymentMethod[]).map(m => <option key={m} value={m}>{METHOD[m]}</option>)}
@@ -90,7 +90,7 @@ export default function AdminBookingDetail({ params }: PageProps<'/admin/booking
             </Card>
             {bk.status !== 'cancelled' && <Button variant="danger" className="w-full" onClick={() => setCancel(true)}><XCircle className="size-4" /> Huỷ booking</Button>}
           </>
-        ) : <p className="text-sm text-muted">Vai trò hiện tại chỉ được xem booking này.</p>}
+        ) : <p className="text-sm text-muted-foreground">Vai trò hiện tại chỉ được xem booking này.</p>}
         <ButtonLink variant="ghost" href={`/voucher/${code}`} target="_blank" className="w-full"><FileDown className="size-4" /> Voucher</ButtonLink>
       </aside>
       <ConfirmDialog open={cancel} onClose={() => setCancel(false)} title={`Huỷ booking ${code}?`} danger confirmLabel="Huỷ booking" onConfirm={doCancel}

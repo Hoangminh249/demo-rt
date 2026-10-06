@@ -23,8 +23,8 @@ export default function RoomsAdmin() {
                 <Photo src={r.image} alt={r.name} className="size-24 shrink-0 rounded-lg" sizes="96px" />
                 <div className="min-w-0 text-sm">
                   <Link href={`/${h.slug}/phong/${r.slug}`} target="_blank" className="font-semibold hover:text-primary">{r.name}</Link>
-                  <p className="text-muted">{r.quantity} phòng · {r.size_m2} m² · {r.max_adults} NL + {r.max_children} TE</p>
-                  <p className="text-muted">{r.beds} · {r.view}</p>
+                  <p className="text-muted-foreground">{r.quantity} phòng · {r.size_m2} m² · {r.max_adults} NL + {r.max_children} TE</p>
+                  <p className="text-muted-foreground">{r.beds} · {r.view}</p>
                   <p className="mt-1">Giá gốc {fmtVND(r.base_price)} · niêm yết ĐL {fmtVND(r.public_rate)}</p>
                   <Badge className="mt-1 font-mono">{r.room_type_id}</Badge>
                 </div>
@@ -33,7 +33,7 @@ export default function RoomsAdmin() {
           </div>
         </section>
       ))}
-      <p className="text-xs text-muted">Ngoài đời: số phòng, sức chứa, rate plan ở Gohost (API chỉ đọc). CMS Rooty chỉ bổ sung ảnh, mô tả, tiện nghi theo room_type_id.</p>
+      <p className="text-xs text-muted-foreground">Ngoài đời: số phòng, sức chứa, rate plan ở Gohost (API chỉ đọc). CMS Rooty chỉ bổ sung ảnh, mô tả, tiện nghi theo room_type_id.</p>
     </>
   )
 }
