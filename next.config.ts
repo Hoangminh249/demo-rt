@@ -1,7 +1,8 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
-  /* config options here */
-};
+  // Ảnh demo là SVG placeholder trong /public/images — không cần tối ưu.
+  images: { unoptimized: true },
+}
 
-export default nextConfig;
+export default nextConfig

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800">
+<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="hsl(202 45% 38%)"/><stop offset="1" stop-color="hsl(227 55% 70%)"/></linearGradient></defs>
+<rect width="1200" height="800" fill="url(#g)"/>
+<circle cx="880" cy="250" r="90" fill="hsl(45 90% 85% / .55)"/>
+<path d="M0 560 Q 200 530 400 560 T 800 560 T 1200 560 V800 H0Z" fill="hsl(202 50% 25% / .35)"/>
+<path d="M0 640 Q 250 590 500 640 T 1000 640 T 1500 640 V800 H0Z" fill="hsl(202 50% 18% / .35)"/>
+<text x="60" y="690" font-family="Be Vietnam Pro, Segoe UI, Arial, sans-serif" font-size="56" font-weight="700" fill="#fff">Calista Phú Quốc</text>
+<text x="60" y="740" font-family="Be Vietnam Pro, Segoe UI, Arial, sans-serif" font-size="26" fill="#fff" fill-opacity=".85">Sảnh đón · Ảnh minh hoạ — thay bằng ảnh thật</text>
+</svg>
