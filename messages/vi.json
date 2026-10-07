@@ -1,87 +1,90 @@
 {
   "Meta": {
     "title": "Rooty Hospitality — Khách sạn Rooty tại Phú Quốc",
-    "description": "Khách sạn của Rooty tại Phú Quốc. Đặt trực tiếp để có giá tốt và xe đón sân bay. (Bản demo, dữ liệu mẫu)"
+    "description": "Khách sạn của Rooty tại Phú Quốc. Giá phòng đã gồm ăn sáng và xe đón tiễn sân bay; đặt phòng qua Zalo hoặc hotline."
   },
   "Common": {
-    "stars": "{n} sao",
-    "noPhoto": "Chưa có ảnh",
+    "noPhoto": "Ảnh đang cập nhật",
     "from": "Giá từ",
     "perNight": "/đêm",
     "nights": "{n} đêm",
     "guests": "{adults} người lớn{children, plural, =0 {} other {, # trẻ em}}",
     "capacity": "{adults} người lớn{children, plural, =0 {} other { + # trẻ em}}",
-    "callBook": "Gọi đặt phòng",
-    "seeRooms": "Xem phòng trống"
+    "seeRooms": "Xem phòng trống",
+    "opening": "Khai trương {date}"
   },
   "Header": {
     "home": "Rooty Hospitality, trang chủ",
     "mainNav": "Chính",
     "hotels": "Khách sạn",
-    "direct": "Đặt trực tiếp",
+    "direct": "Đã gồm",
     "experiences": "Trải nghiệm",
     "contact": "Liên hệ",
     "openMenu": "Mở menu",
     "menu": "Menu",
-    "menuDesc": "Điều hướng chính",
-    "account": "Tài khoản"
+    "menuDesc": "Điều hướng chính"
   },
   "Picker": {
-    "trigger": "Ngôn ngữ và tiền tệ: {lang}, {currency}",
-    "title": "Ngôn ngữ và tiền tệ",
-    "language": "Ngôn ngữ",
-    "currency": "Tiền tệ",
-    "rateNote": "Giá ngoại tệ quy đổi theo tỷ giá tham khảo. Thanh toán bằng VND.",
-    "VND": "Việt Nam Đồng",
-    "USD": "Đô la Mỹ",
-    "EUR": "Euro",
-    "KRW": "Won Hàn Quốc"
+    "trigger": "Ngôn ngữ: {lang}",
+    "title": "Ngôn ngữ"
   },
   "Footer": {
     "contactTitle": "Liên hệ Rooty Hospitality",
-    "booking": "Đặt phòng · tư vấn",
-    "city": "Phú Quốc",
-    "care": "Chăm sóc khách hàng",
+    "booking": "Đặt phòng",
+    "hotline": "hotline",
     "email": "Email",
     "hotels": "Khách sạn",
-    "policies": "Chính sách",
-    "policyItems": ["Chính sách huỷ và hoàn tiền", "Chính sách bảo mật thông tin", "Điều khoản đặt phòng"],
-    "connect": "Kết nối với chúng tôi",
-    "payWith": "Thanh toán bằng:",
-    "payMethods": ["thẻ quốc tế", "ATM/QR", "chuyển khoản"],
     "ecosystem": "Hệ sinh thái Rooty",
     "rootyTrip": "Rooty Trip · tour, combo, vé",
     "rivus": "RIVUS · cano, du thuyền",
-    "company": "Công ty Cổ phần Rooty Trip Phú Quốc",
-    "address": "Trụ sở: 191 Trần Hưng Đạo, Khu phố Cửa Lấp, Đặc khu Phú Quốc, An Giang",
-    "copyright": "© 2026 Rooty Hospitality · thuộc Rooty Trip Phú Quốc · Bản demo, dữ liệu mẫu"
+    "companyId": "MSDN {id}",
+    "address": "Trụ sở: {address}",
+    "copyright": "© {year} Rooty Hospitality · thuộc Công ty Cổ phần Rooty Trip Phú Quốc"
   },
   "Home": {
     "eyebrow": "Rooty Hospitality · Phú Quốc",
     "h1a": "Nghỉ dưỡng Phú Quốc",
     "h1b": "cùng Rooty",
-    "sub": "Khách sạn của người Phú Quốc, đặt trực tiếp để có giá tốt và xe đón sân bay.",
+    "sub": "Khách sạn của Rooty tại Phú Quốc — giá phòng đã gồm ăn sáng và xe đón tiễn sân bay.",
     "slides": "Ảnh banner",
     "slideN": "Ảnh {n}",
-    "slidePhuQuoc": "Phú Quốc",
     "pause": "Tạm dừng chạy ảnh",
     "play": "Chạy ảnh",
-    "whyAria": "Vì sao đặt trực tiếp",
+    "whyAria": "Đã gồm khi ở khách sạn Rooty",
     "promises": [
-      ["Đón sân bay miễn phí", "khi đặt trực tiếp từ 2 đêm"],
-      ["Huỷ miễn phí", "với gói giá linh hoạt"],
-      ["Hỗ trợ 7:30 – 21:00", "người Phú Quốc, nghe máy ngay"],
-      ["Trọn chuyến đi", "tour, cano, du thuyền Rooty"]
+      [
+        "Đón tiễn sân bay miễn phí",
+        "theo khung giờ cố định"
+      ],
+      [
+        "Ăn sáng mỗi ngày",
+        "đã gồm trong giá phòng"
+      ],
+      [
+        "Giá đã gồm VAT",
+        "và phí phục vụ"
+      ],
+      [
+        "Đặt qua Zalo, hotline",
+        "khách sạn xác nhận phòng trống"
+      ]
     ],
     "hotelsLead": "Khách sạn của",
-    "count": "{n} khách sạn tại Phú Quốc",
     "viewHotel": "Xem khách sạn",
+    "priceByDate": "Xem phòng và giá theo ngày",
     "ecoLead": "Trọn chuyến đi cùng",
     "ecoSub": "Khách sạn của Rooty nằm trong cùng hệ sinh thái với tour, cano và du thuyền ở Phú Quốc.",
     "eco": [
-      ["Xe đón sân bay", "Tặng khi đặt phòng trực tiếp từ 2 đêm. Tài xế Rooty Trip đón tận cửa ra.", "Gọi đặt xe"],
-      ["Tour cano 4 đảo + cáp treo", "Rooty Trip đón tại sảnh khách sạn, đi Nam đảo trong ngày.", "Xem tour trên Rooty Trip"],
-      ["Du thuyền RIVUS", "Cano riêng, du thuyền ngắm hoàng hôn cho gia đình và nhóm bạn.", "Xem trên RIVUS"]
+      [
+        "Tour, combo, vé tham quan",
+        "Rooty Trip: tour Phú Quốc, combo và vé tham quan.",
+        "Xem trên Rooty Trip"
+      ],
+      [
+        "Cano riêng, du thuyền",
+        "RIVUS: cano riêng, du thuyền và sự kiện trên biển.",
+        "Xem trên RIVUS"
+      ]
     ]
   },
   "Fields": {
@@ -106,50 +109,46 @@
     "tabs": {
       "tong-quan": "Tổng quan",
       "phong": "Phòng",
-      "tien-ich": "Tiện ích",
-      "an-uong": "Ăn uống",
-      "trai-nghiem-ks": "Trải nghiệm",
-      "vi-tri": "Vị trí",
+      "tien-ich": "Đã gồm",
+      "di-lai": "Đi lại",
       "chinh-sach": "Chính sách",
       "hoi-dap": "Hỏi đáp"
     },
     "highlights": "Điểm nổi bật",
-    "amenities": "Tiện ích",
-    "dining": "Ăn uống",
-    "around": "Trải nghiệm quanh khách sạn",
-    "bookWith": "Đặt cùng {brand}",
-    "location": "Vị trí",
-    "mapAlt": "Bản đồ Phú Quốc",
+    "operator": "Vận hành bởi {name}",
+    "included": "Đã gồm trong kỳ nghỉ",
+    "notAvailable": "Khách sạn không có",
+    "gettingHere": "Đi lại & vị trí",
     "directions": "Chỉ đường Google Maps",
     "policies": "Chính sách",
     "faq": "Hỏi đáp",
     "bookAria": "Đặt phòng",
     "chooseRoom": "Chọn phòng",
+    "priceByDate": "Xem phòng và giá theo ngày",
+    "bookVia": "Đặt qua Zalo/hotline {phone}",
     "viewAll": "Xem {n} ảnh",
-    "photoN": "{name} — ảnh {n}",
-    "gift": "Đặt trực tiếp từ 2 đêm: tặng xe đón sân bay",
-    "onlyRooty": "Chỉ có khi đặt với Rooty",
-    "onlyItems": ["Xe Rooty Trip đón tận cửa ra sân bay", "Đặt kèm tour cano, cáp treo, du thuyền RIVUS", "Hotline người Phú Quốc 7:30 – 21:00"]
+    "photoN": "{name} — ảnh {n}"
   },
   "Rooms": {
     "title": "Chọn phòng",
     "change": "Đổi ngày, số khách",
     "loading": "Đang tải giá phòng",
+    "offlineTitle": "Giá trực tuyến đang được cập nhật",
+    "offlineBody": "Liên hệ khách sạn để nhận giá và kiểm tra phòng trống {range}.",
     "errorTitle": "Chưa tải được giá phòng",
-    "errorBody": "Thử lại sau ít phút, hoặc gọi 0886 068 886 / nhắn Zalo để đặt ngay.",
+    "errorBody": "Thử lại sau ít phút, hoặc liên hệ khách sạn để đặt phòng.",
     "retry": "Thử lại",
     "soldOut": "Hết phòng {range}",
-    "nearest": "Các ngày gần nhất còn phòng ({nights}):",
-    "holdCall": "Gọi 0886 068 886 để được giữ chỗ khi có phòng trả lại.",
-    "notFit": "Không hạng phòng nào nhận đủ {party} trong một phòng. Đổi số khách để đặt từng phòng, hoặc gọi 0886 068 886 để đặt nhiều phòng.",
+    "soldOutBody": "Chọn ngày khác, hoặc liên hệ khách sạn để được báo khi có phòng trả lại.",
+    "notFit": "Không hạng phòng nào nhận đủ {party} trong một phòng. Đổi số khách để xem từng phòng, hoặc liên hệ khách sạn để đặt nhiều phòng.",
     "lowStock": "Chỉ còn {n} phòng",
-    "otherDates": "Xem ngày khác",
-    "roomMax": "Phòng này nhận tối đa {max}. Đoàn {party} nên chọn hạng rộng hơn hoặc đặt 2 phòng.",
-    "freeCancel": "Huỷ miễn phí trước {date}",
-    "nonRefund": "Không hoàn huỷ",
+    "otherDates": "Chọn ngày khác",
+    "roomMax": "Phòng này nhận tối đa {max}. Đoàn {party} nên đặt 2 phòng.",
+    "askPrice": "Liên hệ khách sạn để nhận giá hạng phòng này.",
+    "breakfast": "Có ăn sáng",
     "total": "Tổng {total} · {nights}",
-    "book": "Đặt phòng",
-    "checkoutTitle": "Sang bước thanh toán",
+    "book": "Liên hệ đặt phòng",
+    "contactTitle": "Liên hệ đặt phòng",
     "rowHotel": "Khách sạn",
     "rowRoom": "Hạng phòng",
     "rowPlan": "Gói giá",
@@ -157,8 +156,9 @@
     "rowGuests": "Số khách",
     "rowTotal": "Tổng tiền",
     "back": "Chọn lại",
-    "payInVnd": "Thanh toán bằng VND: {amount}. Giá {code} chỉ là quy đổi tham khảo.",
-    "gohostNote": "Bản chính thức: nút này mở trang đặt phòng của Gohost với đúng phòng và gói trên để khách nhập thông tin và thanh toán. Bản demo dừng ở đây."
+    "contactNote": "Gửi các thông tin trên qua Zalo, điện thoại hoặc email. Khách sạn kiểm tra phòng trống và gửi hướng dẫn thanh toán; đặt phòng chỉ có hiệu lực khi khách sạn gửi xác nhận có mã đặt phòng.",
+    "zalo": "Nhắn Zalo",
+    "mailSubject": "Yêu cầu đặt phòng — {hotel}"
   },
   "NotFound": {
     "title": "Không tìm thấy trang",

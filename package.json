@@ -7,11 +7,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "check-data": "tsx scripts/check-data.ts",
-    "images": "tsx scripts/gen-images.ts",
-    "photos": "tsx scripts/fetch-photos.ts"
+    "photos": "tsx scripts/fetch-photos.ts",
+    "test": "tsx scripts/check.ts"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.104.1",
+    "axios": "^1.20.0",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.4.0",
     "date-fns": "^4.4.0",

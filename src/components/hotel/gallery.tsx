@@ -1,6 +1,6 @@
 'use client'
 // Bộ ảnh đầu trang: 1 ảnh lớn + 4 ảnh nhỏ (điện thoại chỉ ảnh lớn). Bấm ảnh nào mở lightbox đúng ảnh đó
-// (yet-another-react-lightbox: vuốt, phím mũi tên, phóng to, dải ảnh nhỏ, bộ đếm).
+// (yet-another-react-lightbox: vuốt, phím mũi tên, phóng to, dải ảnh nhỏ, bộ đếm). Chưa có ảnh thì một khung "Ảnh đang cập nhật".
 import { useState } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import { Images } from 'lucide-react'
@@ -24,6 +24,7 @@ export function Gallery({ name, images }: { name: string; images: string[] }) {
   const alt = (i: number) => t('photoN', { name, n: i + 1 })
   const more = <><Images className="size-4" aria-hidden />{t('viewAll', { n: images.length })}</>
   const zoom = 'transition-transform duration-500 group-hover:scale-[1.03]'
+  if (!images.length) return <Photo src={null} alt={name} className="aspect-[4/3] w-full rounded-xl sm:aspect-auto sm:h-[300px]" />
 
   return (
     <>

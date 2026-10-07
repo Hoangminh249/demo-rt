@@ -5,7 +5,7 @@ import { Slot } from "radix-ui"
 
 // Dáng theo skill evon (I1, button.md): outline là mặc định · default (= primary) · secondary · ghost,
 // + destructive nền đỏ mờ (luật khoá 2). Cao 40px, bo 12px; nút thấp hơn 40px bo 8px (luật khoá 10). Không bóng.
-const buttonVariants = cva(
+const variants = cva(
   "inline-flex max-w-full shrink-0 cursor-pointer items-center justify-center gap-2 rounded-xl border border-transparent text-center text-sm leading-tight font-medium transition-colors outline-none select-none [overflow-wrap:anywhere] disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
@@ -34,6 +34,10 @@ const buttonVariants = cva(
     },
   }
 )
+
+// Luôn qua tailwind-merge: phần chung có border-transparent, variant outline đè bằng border-border-strong.
+// Dùng thẳng cva trên <a>/<Link> thì cả hai class cùng nằm đó và thứ tự CSS cho transparent thắng → nút viền mất viền.
+const buttonVariants = (...args: Parameters<typeof variants>) => cn(variants(...args))
 
 function Button({
   className,

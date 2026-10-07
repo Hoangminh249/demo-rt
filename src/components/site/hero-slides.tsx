@@ -11,7 +11,8 @@ import { cn } from 'cn'
 import { Link } from '@/i18n/navigation'
 import { CONTAINER } from './kit'
 
-export interface Slide { src: string; label: string; href?: string }
+/** focus: object-position — điểm giữ lại khi ảnh bị cắt vào khung banner (ngang ở máy tính, dọc ở điện thoại). */
+export interface Slide { src: string; focus: string; label: string; href?: string }
 
 export function HeroSlides({ slides, intro, bar }: { slides: Slide[]; intro: ReactNode; bar: ReactNode }) {
   const t = useTranslations('Home')
@@ -41,7 +42,7 @@ export function HeroSlides({ slides, intro, bar }: { slides: Slide[]; intro: Rea
         <div className="flex h-full touch-pan-y">
           {slides.map((s, i) => (
             <div key={s.src} className="relative h-full min-w-0 flex-[0_0_100%]" role="group" aria-roledescription="slide" aria-label={`${i + 1} / ${slides.length}: ${s.label}`}>
-              <Image src={s.src} alt="" fill priority={i === 0} sizes="100vw" className="object-cover" />
+              <Image src={s.src} alt="" fill priority={i === 0} sizes="100vw" className="object-cover" style={{ objectPosition: s.focus }} />
             </div>
           ))}
         </div>

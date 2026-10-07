@@ -8,7 +8,8 @@ import type { DateRange } from 'react-day-picker'
 import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { TODAY, diffDays, fmtRange } from '@/lib/format'
+import { addDays, diffDays, fmtRange, today } from '@/lib/format'
+import { MAX_NIGHTS } from '@/lib/stay'
 import type { Stay } from '@/lib/types'
 import { EYEBROW } from './kit'
 
@@ -41,13 +42,18 @@ export function HotelField({ id, value, hotels, onChange }: { id: string; value:
   )
 }
 
-export function DateRangeField({ id, label, stay, onChange }: { id: string; label?: string; stay: Stay; onChange: (s: Stay) => void }) {
+/** `min`: ngày nhận sớm nhất (mặc định hôm nay; khách sạn chưa khai trương thì là ngày khai trương). */
+export function DateRangeField({ id, label, stay, min, onChange }: { id: string; label?: string; stay: Stay; min?: string; onChange: (s: Stay) => void }) {
   const t = useTranslations()
   const locale = useLocale()
   const [open, setOpen] = useState(false)
   const [draft, setDraft] = useState<DateRange | undefined>()
   const range = draft ?? { from: toDate(stay.checkin), to: toDate(stay.checkout) }
   const step = !draft ? t('Fields.pickCheckin') : t('Fields.pickCheckout')
+  const first = min ?? today()
+  const last = addDays(today(), 365)
+  // Đã chọn ngày nhận thì chỉ cho ngày trả trong 30 đêm (giới hạn của Gohost).
+  const until = draft?.from ? [addDays(toISO(draft.from), MAX_NIGHTS), last].sort()[0] : last
 
   // Bấm lần 1 = ngày nhận (luôn bắt đầu khoảng mới), lần 2 = ngày trả; đủ hai đầu thì lưu và đóng.
   function pick(day: Date) {
@@ -75,8 +81,9 @@ export function DateRangeField({ id, label, stay, onChange }: { id: string; labe
             defaultMonth={range.from}
             selected={range}
             onSelect={(_, day) => pick(day)}
-            disabled={{ before: toDate(TODAY) }}
-            startMonth={toDate(TODAY)}
+            disabled={[{ before: toDate(first) }, { after: toDate(until) }]}
+            startMonth={toDate(first)}
+            endMonth={toDate(last)}
           />
           <p className="border-t border-border px-1 pt-3 text-sm text-muted-foreground" aria-live="polite">{step}</p>
         </PopoverContent>

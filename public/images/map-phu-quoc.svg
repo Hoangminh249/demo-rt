@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 600" width="400" height="600">
-<rect width="400" height="600" fill="#cfe8f0"/>
-<polygon points="163,21 237,62 313,103 344,186 337,310 325,414 300,486 250,528 231,476 213,393 188,290 125,186 62,124 50,83 100,41" fill="#e7f0d8" stroke="#9fbf8a" stroke-width="3"/>
-<ellipse cx="275" cy="559" rx="12" ry="7" fill="#e7f0d8" stroke="#9fbf8a" stroke-width="2"/>
-<text x="20" y="580" font-family="Arial" font-size="13" fill="#4b6b73">Bản đồ minh hoạ — không theo tỉ lệ</text>
-</svg>

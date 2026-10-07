@@ -1,10 +1,7 @@
 // Mảnh dùng chung của website, theo nhận diện rootytrip.com (chép từ wireframe phương án A).
 import Image from 'next/image'
 import type { ReactNode } from 'react'
-import {
-  Baby, CableCar, Car, Check, Clock, DoorOpen, Dumbbell, Flower2, ImageOff, MapPin, Martini, Plane, SquareParking, Star, Store,
-  Umbrella, Utensils, Waves, Wifi, type LucideIcon,
-} from 'lucide-react'
+import { Bus, CableCar, Check, Clock, Coffee, DoorOpen, FerrisWheel, ImageOff, MapPin, Plane, Receipt, Shirt, WashingMachine, Wifi, type LucideIcon } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { cn } from 'cn'
 import type { IconKey } from '@/lib/types'
@@ -17,17 +14,8 @@ export const EYEBROW = 'text-[13px] font-semibold uppercase tracking-wide text-o
 export const TEXT_LINK = 'inline-flex min-h-8 items-center gap-1 text-[15px] font-semibold text-primary underline-offset-4 hover:underline'
 
 export const ICONS: Record<IconKey, LucideIcon> = {
-  'map-pin': MapPin, clock: Clock, 'cable-car': CableCar, 'door-open': DoorOpen, plane: Plane, waves: Waves, umbrella: Umbrella,
-  baby: Baby, flower: Flower2, dumbbell: Dumbbell, utensils: Utensils, martini: Martini, wifi: Wifi, car: Car, parking: SquareParking, store: Store,
-}
-
-export function Stars({ n }: { n: number }) {
-  const t = useTranslations('Common')
-  return (
-    <span className="inline-flex text-star" role="img" aria-label={t('stars', { n })}>
-      {Array.from({ length: n }, (_, i) => <Star key={i} className="size-4 fill-current" aria-hidden />)}
-    </span>
-  )
+  'map-pin': MapPin, clock: Clock, 'cable-car': CableCar, 'door-open': DoorOpen, plane: Plane, bus: Bus, 'ferris-wheel': FerrisWheel,
+  coffee: Coffee, wifi: Wifi, shirt: Shirt, receipt: Receipt, 'washing-machine': WashingMachine,
 }
 
 /** Tiêu đề section kiểu rootytrip: xanh rêu đậm, chữ cuối xanh ngọc. */
@@ -40,7 +28,7 @@ export const CheckItem = ({ children }: { children: ReactNode }) => (
 )
 
 /** Ảnh trong /public/images. Không có ảnh thì hiện khung "Chưa có ảnh". */
-export function Photo({ src, alt, className, sizes = '100vw', priority }: { src?: string; alt: string; className?: string; sizes?: string; priority?: boolean }) {
+export function Photo({ src, alt, className, sizes = '100vw', priority }: { src?: string | null; alt: string; className?: string; sizes?: string; priority?: boolean }) {
   const t = useTranslations('Common')
   return (
     <div className={cn('relative overflow-hidden bg-muted', className)}>
