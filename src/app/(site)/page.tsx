@@ -1,128 +1,102 @@
-'use client'
+// Trang chủ — wireframe phương án A: banner + thanh chọn nhanh · cam kết · lưới thẻ khách sạn · hệ sinh thái Rooty.
+import Image from 'next/image'
 import Link from 'next/link'
-import { Car, Compass, Ship, BadgePercent, Sparkles } from 'lucide-react'
+import { ArrowRight, ArrowUpRight, CalendarX, Headset, PlaneLanding, Ship } from 'lucide-react'
 import { repo } from '@/lib/repo'
-import { useAsync, useDemo } from '@/store/provider'
-import { DEFAULT_SEARCH, searchToParams } from '@/lib/search-params'
-import { SearchBar } from '@/components/site/search-bar'
-import { HotelCard, PromoCard, RoomOfferCard } from '@/components/site/cards'
-import { Photo, Skeleton } from '@/components/ui'
+import { fmtPrice } from '@/lib/format'
+import { hotelHref } from '@/lib/stay'
+import type { Hotel } from '@/lib/types'
+import { BTN, CheckItem, CONTAINER, EYEBROW, Photo, SectionTitle, Stars, TEXT_LINK } from '@/components/site/kit'
+import { QuickBar } from '@/components/site/quick-bar'
 
-function Section({ title, href, sub, children }: { title: string; href?: string; sub?: string; children: React.ReactNode }) {
+export const metadata = { title: { absolute: 'Rooty Hospitality — Khách sạn Rooty tại Phú Quốc' } }
+
+const PROMISES = [
+  [PlaneLanding, 'Đón sân bay miễn phí', 'khi đặt trực tiếp từ 2 đêm'],
+  [CalendarX, 'Huỷ miễn phí', 'với gói giá linh hoạt'],
+  [Headset, 'Hỗ trợ 7:30 – 21:00', 'người Phú Quốc, nghe máy ngay'],
+  [Ship, 'Trọn chuyến đi', 'tour, cano, du thuyền Rooty'],
+] as const
+
+const ECOSYSTEM = [
+  ['/images/addons/transfer.jpg', 'Xe đón sân bay', 'Tặng khi đặt phòng trực tiếp từ 2 đêm. Tài xế Rooty Trip đón tận cửa ra.', 'Gọi đặt xe', 'tel:0886068886'],
+  ['/images/addons/cau-muc.jpg', 'Tour cano 4 đảo + cáp treo', 'Rooty Trip đón tại sảnh khách sạn, đi Nam đảo trong ngày.', 'Xem tour trên Rooty Trip', 'https://rootytrip.com/san-pham/tour-cano-dao-cap-treo-va-buffet-hon-thom/'],
+  ['/images/experiences/rivus.jpg', 'Du thuyền RIVUS', 'Cano riêng, du thuyền ngắm hoàng hôn cho gia đình và nhóm bạn.', 'Xem trên RIVUS', 'https://rivusyacht.com'],
+] as const
+
+function HotelCard({ h }: { h: Hotel }) {
+  const href = hotelHref(h.slug)
   return (
-    <section className="mx-auto max-w-7xl px-4 pt-14 sm:px-6">
-      <div className="mb-5 flex items-end justify-between gap-4">
-        <div className="min-w-0">
-          <h2 className="text-lg font-semibold text-foreground sm:text-xl">{title}</h2>
-          {sub && <p className="mt-1 text-sm text-muted-foreground">{sub}</p>}
+    <article className="group flex flex-col">
+      <Link href={href} className="block overflow-hidden rounded-xl" tabIndex={-1} aria-hidden>
+        <Photo src={h.cover} alt="" sizes="(min-width: 768px) 50vw, 100vw" className="aspect-[16/10] w-full transition-transform duration-500 group-hover:scale-[1.03]" />
+      </Link>
+      <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-1"><span className={EYEBROW}>{h.area}</span><Stars n={h.stars} /></div>
+      <h3 className="mt-2 text-2xl font-bold text-brand"><Link href={href} className="hover:text-primary">{h.name}</Link></h3>
+      <p className="mt-1 text-[15px] text-muted-foreground">{h.tagline}</p>
+      <ul className="mt-4 grid gap-2.5">{h.highlights.slice(0, 3).map(t => <CheckItem key={t}>{t}</CheckItem>)}</ul>
+      <div className="mt-auto pt-6">
+        <div className="flex flex-wrap items-end justify-between gap-4 border-t border-border pt-5">
+          <p>
+            <span className="block text-[13px] text-muted-foreground">Giá từ</span>
+            <span className="text-2xl font-semibold text-foreground">{fmtPrice(repo.fromPrice(h.id))}</span>
+            <span className="text-[14px] text-muted-foreground"> /đêm</span>
+          </p>
+          <Link href={href} className={BTN}>Xem khách sạn <ArrowRight className="size-4" aria-hidden /></Link>
         </div>
-        {href && <Link href={href} className="h-8 shrink-0 text-sm font-medium text-foreground/70 hover:text-foreground hover:underline">Xem tất cả</Link>}
       </div>
-      {children}
-    </section>
+    </article>
   )
 }
 
-// Điểm khác biệt (brief U1): đặt trực tiếp là thêm được xe, tour, du thuyền trong một lần.
-const PERKS = [
-  { Icon: Car, title: 'Xe đón sân bay', text: 'Rooty Trip đón tận sân bay, đặt cùng phòng' },
-  { Icon: Compass, title: 'Tour đón tại khách sạn', text: '4 đảo, Bắc đảo, câu mực đêm' },
-  { Icon: Ship, title: 'Du thuyền RIVUS', text: 'Cano riêng, du thuyền hoàng hôn' },
-  { Icon: BadgePercent, title: 'Giá thành viên −5%', text: 'Khi đăng nhập, cộng với ưu đãi' },
-]
-
 export default function HomePage() {
-  const { overlay } = useDemo()
-  const personal = overlay.session.customerId === 'C001'
-  const s = { ...DEFAULT_SEARCH, dest: '' }
-  const banner = useAsync(() => repo.getBanner(), [])
-  const hotels = useAsync(() => repo.search({ ...s, sort: 'stars' }), [])
-  const promos = useAsync(() => repo.listPromotions(), [])
-  const dests = useAsync(() => repo.listDestinations(), [])
-  const exps = useAsync(() => repo.listExperiences(), [])
-  const forYou = useAsync(() => (personal ? repo.search({ ...s, children: 1, sort: 'recommended' }) : Promise.resolve([])), [personal])
-  const recent = repo.hotelsSync().filter(h => overlay.recent.includes(h.slug))
-
+  const hotels = repo.listHotels()
   return (
     <>
-      <section className="relative isolate">
-        <Photo src="/images/hero.jpg" alt="" className="absolute inset-0 -z-10" priority />
-        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-brand/80 via-brand/45 to-brand/20" />
-        <div className="mx-auto max-w-7xl px-4 pt-14 pb-10 sm:px-6 md:pt-24 md:pb-16">
-          <h1 className="max-w-2xl text-2xl font-semibold text-white sm:text-3xl md:text-4xl">{banner.data?.headline ?? 'Ở đâu tại Phú Quốc?'}</h1>
-          <p className="mt-3 max-w-xl text-white/85 sm:text-lg">{banner.data?.sub ?? ' '}</p>
-          <div className="mt-8 rounded-2xl border border-border bg-card p-4 sm:p-5">
-            <SearchBar />
+      <section className="relative">
+        <Image src="/images/hero.jpg" alt="" fill priority sizes="100vw" className="object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-black/5" />
+        <div className={`${CONTAINER} relative flex min-h-[520px] flex-col justify-end pt-24 pb-10 lg:min-h-[600px]`}>
+          <p className="text-[14px] font-semibold tracking-[0.12em] text-yellow uppercase">Rooty Hospitality · Phú Quốc</p>
+          <h1 className="mt-3 max-w-2xl text-[36px] leading-[1.1] font-bold text-white sm:text-[52px]">Nghỉ dưỡng Phú Quốc <br className="hidden sm:block" />cùng Rooty</h1>
+          <p className="mt-4 max-w-xl text-[17px] text-white/90">Khách sạn của người Phú Quốc, đặt trực tiếp để có giá tốt và xe đón sân bay.</p>
+          <div className="mt-8"><QuickBar hotels={hotels.map(h => ({ slug: h.slug, name: h.name }))} /></div>
+        </div>
+      </section>
+
+      <section id="vi-sao" aria-label="Vì sao đặt trực tiếp" className={`${CONTAINER} grid scroll-mt-24 grid-cols-1 gap-6 py-10 sm:grid-cols-2 lg:grid-cols-4`}>
+        {PROMISES.map(([Icon, t, s]) => (
+          <div key={t} className="flex items-start gap-3">
+            <Icon className="size-9 shrink-0 text-orange" strokeWidth={1.75} aria-hidden />
+            <div><p className="font-semibold text-brand">{t}</p><p className="text-[14px] text-muted-foreground italic">{s}</p></div>
           </div>
+        ))}
+      </section>
+
+      <section id="khach-san" className="scroll-mt-16 bg-gradient-to-b from-mint to-white py-16">
+        <div className={CONTAINER}>
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <SectionTitle lead="Khách sạn của" accent="Rooty" />
+            <p className="text-[15px] text-muted-foreground">{hotels.length} khách sạn tại Phú Quốc</p>
+          </div>
+          <div className="mt-10 grid gap-10 md:grid-cols-2 md:gap-8">{hotels.map(h => <HotelCard key={h.slug} h={h} />)}</div>
         </div>
       </section>
 
-      <section className="border-b border-border bg-card">
-        <ul className="mx-auto grid max-w-7xl grid-cols-1 gap-4 px-4 py-5 sm:grid-cols-2 sm:px-6 lg:grid-cols-4">
-          {PERKS.map(({ Icon, title, text }) => (
-            <li key={title} className="flex items-start gap-3">
-              <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent text-accent-foreground"><Icon className="size-5" aria-hidden /></span>
-              <span className="min-w-0"><span className="block text-sm font-semibold">{title}</span><span className="block text-sm text-muted-foreground">{text}</span></span>
-            </li>
+      <section id="trai-nghiem" className={`${CONTAINER} scroll-mt-20 pt-16`}>
+        <SectionTitle lead="Trọn chuyến đi cùng" accent="Rooty" />
+        <p className="mt-2 max-w-2xl text-[16px] text-muted-foreground">Khách sạn của Rooty nằm trong cùng hệ sinh thái với tour, cano và du thuyền ở Phú Quốc.</p>
+        <div className="mt-8 grid gap-8 md:grid-cols-3">
+          {ECOSYSTEM.map(([img, t, d, l, href]) => (
+            <article key={t}>
+              <Photo src={img} alt={t} sizes="(min-width: 768px) 33vw, 100vw" className="aspect-[4/3] w-full rounded-xl" />
+              <h3 className="mt-4 text-lg font-bold text-brand">{t}</h3>
+              <p className="mt-1 text-[15px] text-muted-foreground">{d}</p>
+              <a href={href} className={`mt-2 ${TEXT_LINK}`}>{l} <ArrowUpRight className="size-4" aria-hidden /></a>
+            </article>
           ))}
-        </ul>
+        </div>
       </section>
-
-      {personal && (
-        <Section title="Dành cho anh Nguyễn Văn A" sub="Theo 4 lần ở trước: hướng biển, phòng gia đình, có ăn sáng">
-          {!forYou.data ? <Skeleton className="h-64" /> : (
-            <div className="grid gap-4 xl:grid-cols-2">
-              {forYou.data.flatMap(r => r.offers.filter(o => o.personalized && o.left > 0).slice(0, 1).map(o => (
-                <RoomOfferCard key={o.rt.room_type_id} hotel={r.hotel} offer={{ ...o, plans: o.plans.filter(p => p.plan.has_breakfast) }} s={{ ...s, children: 1, ages: [6] }} />
-              ))).slice(0, 2)}
-            </div>
-          )}
-          <p className="mt-3 flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground"><Sparkles className="size-4 text-info" aria-hidden />Tour gợi ý: Bắc đảo – Grand World & Safari (lần trước anh đã đi tour 4 đảo). <Link href="/trai-nghiem/tour" className="font-medium text-foreground underline-offset-4 hover:underline">Xem tour</Link></p>
-        </Section>
-      )}
-
-      <Section title="Khách sạn & resort" href="/khach-san" sub="Giá tham khảo 12–15/10/2026, 2 người lớn + 1 trẻ em">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {!hotels.data ? Array.from({ length: 3 }, (_, i) => <Skeleton key={i} className="h-96" />)
-            : hotels.data.map(r => <HotelCard key={r.hotel.id} hotel={r.hotel} fromPrice={r.fromPrice} href={`/${r.hotel.slug}?${searchToParams(s)}`} />)}
-        </div>
-      </Section>
-
-      <Section title="Ưu đãi" href="/uu-dai">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {!promos.data ? Array.from({ length: 3 }, (_, i) => <Skeleton key={i} className="h-72" />) : promos.data.slice(0, 3).map(p => <PromoCard key={p.id} promo={p} />)}
-        </div>
-      </Section>
-
-      <Section title="Điểm đến" href="/diem-den">
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          {(dests.data ?? []).map(d => (
-            <Link key={d.slug} href={`/diem-den/${d.slug}`} className="group relative block overflow-hidden rounded-2xl">
-              <Photo src={d.image} alt="" className="aspect-[3/4] transition-transform duration-500 group-hover:scale-[1.03]" sizes="25vw" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
-              <span className="absolute inset-x-4 bottom-4 text-base font-semibold text-white">{d.name}</span>
-            </Link>
-          ))}
-          {!dests.data && Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="aspect-[3/4]" />)}
-        </div>
-      </Section>
-
-      <Section title="Trải nghiệm" href="/trai-nghiem" sub="Đặt cùng phòng ở bước dịch vụ thêm, thanh toán một lần">
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
-          {(exps.data ?? []).map(e => (
-            <Link key={e.slug} href={`/trai-nghiem/${e.slug}`} className="group overflow-hidden rounded-2xl border border-border bg-card">
-              <Photo src={e.image} alt="" className="aspect-square" sizes="(min-width:1024px) 14vw, 25vw" />
-              <p className="px-3 py-2.5 text-sm font-medium group-hover:text-primary">{e.name}</p>
-            </Link>
-          ))}
-        </div>
-      </Section>
-
-      {recent.length > 0 && (
-        <Section title="Bạn đã xem gần đây">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{recent.map(h => <HotelCard key={h.id} hotel={h} />)}</div>
-        </Section>
-      )}
     </>
   )
 }

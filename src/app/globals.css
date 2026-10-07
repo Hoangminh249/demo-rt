@@ -2,126 +2,53 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-/* `dark:` theo class `.dark` (admin có nút tối), không theo máy. */
-@custom-variant dark (&:where(.dark, .dark *));
-
-/* ===== TOKEN — tên theo shadcn (background, card, muted-foreground…) + vài token của skill evon.
-   ĐỔI THƯƠNG HIỆU: màu nhấn ở `--primary` (2 chỗ: :root và .dark), font ở `--font-sans` (layout.tsx).
-   Bộ nhận diện Rooty: xanh rêu #144A40 · xanh ngọc #2A9683 · mint #E3F1EE · chữ #1F2A2A.
-   Nút chính dùng #23806F (đậm hơn #2A9683 một nấc) để chữ trắng đạt AA 4.79:1. */
+/* ===== TOKEN — theo nhận diện rootytrip.com (đo ngày 07/10/2026), tên biến theo shadcn.
+   ĐỔI THƯƠNG HIỆU: màu nhấn ở `--primary`, font ở layout.tsx.
+   rootytrip: tiêu đề #065749 · nút #299683 · vàng #FDE800 · cam #E65C00.
+   Nút chính và chữ nhỏ dùng bản đậm hơn một nấc để chữ đạt AA (4.5:1). */
 :root {
   color-scheme: light;
 
-  /* màu nhấn — CHỖ 1/2 */
-  --primary: #23806f;
-  --primary-hover: #1b6a5c;
-  --primary-foreground: #ffffff;
-  --primary-light: rgb(35 128 111 / 0.08);
-
-  --brand: #144a40;          /* xanh rêu: banner demo, nền hero, tiêu đề lớn */
-  --brand-foreground: #ffffff;
-  --brand-accent: #2a9683;   /* xanh ngọc: chữ nhấn trang trí, không làm nút */
-
-  --background: #f4f7f6;     /* nền trang, không trắng */
-  --foreground: #1f2a2a;
+  --background: #ffffff;
+  --foreground: #24302d;          /* chữ thân bài, rootytrip rgb(36,48,45) */
   --card: #ffffff;
-  --card-foreground: #1f2a2a;
+  --card-foreground: #24302d;
   --popover: #ffffff;
-  --popover-foreground: #1f2a2a;
-  --secondary: #e8eeec;
-  --secondary-hover: #dce5e2;
-  --secondary-foreground: #1f2a2a;
-  --muted: #eef3f1;          /* nền phụ (shadcn) */
-  --muted-foreground: #5b6866; /* chữ phụ: 5.6:1 trên card, 5.2:1 trên nền trang */
-  --accent: #e3f1ee;         /* mint: chip, khối nhấn nhẹ, nền rê mục menu */
-  --accent-foreground: #144a40;
+  --popover-foreground: #24302d;
+  --muted: #f4f8f7;
+  --muted-foreground: #5b6866;
+  --secondary: #eef4f2;
+  --secondary-hover: #e3ecea;
+  --secondary-foreground: #24302d;
+  --accent: #eaf5f3;
+  --accent-foreground: #065749;
   --destructive: #c70036;
 
-  --border: #e9efed;         /* đường tóc: viền card, đường chia (~1.1:1 trên trắng, M14) */
-  --border-strong: #d2dcd9;  /* viền ô nhập, nút viền */
+  --brand: #065749;               /* tiêu đề xanh rêu đậm */
+  --brand-accent: #299683;        /* chữ nhấn trong tiêu đề lớn ("… Rooty"), không dùng cho chữ nhỏ */
+  --primary: #23806f;             /* nút chính, link: #299683 đậm một nấc (4.8:1 với chữ trắng) */
+  --primary-hover: #1b6a5c;
+  --primary-foreground: #ffffff;
+  --mint: #eaf5f3;                /* dải nền section, chip */
+  --orange: #b44700;              /* nhãn nhỏ in hoa, icon cam kết */
+  --yellow: #fde800;              /* chỉ làm nền nhãn, chữ tối */
+  --yellow-foreground: #3d3400;
+  --star: #f5b400;
+
+  --border: #e3ecea;
+  --border-strong: #cddad6;
   --input: var(--border-strong);
-  --ring: #2a9683;
+  --ring: #23806f;
   --border-focus: #23806f;
-  --ring-focus: rgb(35 128 111 / 0.14);
+  --ring-focus: rgb(35 128 111 / 0.16);
+  --item-hover: #f1f6f5;
+  --button-hover: #eaf5f3;
 
-  --item-hover: #f1f5f4;     /* nền rê mục menu, dải giữa khoảng ngày */
-  --surface-hover: #f8faf9;  /* nền rê dòng bảng */
-  --button-hover: #edf2f0;   /* nền rê nút viền */
-
-  /* trạng thái: chữ -700, nền nhạt cùng sắc */
-  --ok: #007a55;
-  --ok-bg: #e7f7ef;
-  --warn: #a14400;
-  --warn-bg: #fff4e0;
-  --danger: #c70036;
-  --danger-bg: rgb(255 32 86 / 0.1);
-  --info: #1e5aa8;
-  --info-bg: #eaf2fc;
-
-  --chart-1: #23806f;
-  --chart-2: #8cc5ba;
-  --chart-3: #d9822b;
-  --chart-4: #3b6fb6;
-  --chart-5: #144a40;
-
+  --elevation-card: 0 6px 28px rgb(6 87 73 / 0.1);   /* thẻ giá, thanh chọn nhanh (như rootytrip) */
   --elevation-popover: 0 10px 15px -3px rgb(16 40 36 / 0.1), 0 4px 6px -4px rgb(16 40 36 / 0.1);
   --elevation-modal: 0 20px 25px -5px rgb(16 40 36 / 0.12), 0 8px 10px -6px rgb(16 40 36 / 0.12);
 
   --radius: 0.75rem;
-}
-
-/* Admin có chế độ tối (nút mặt trăng). Website khách chỉ có nền sáng. */
-.dark {
-  color-scheme: dark;
-
-  /* màu nhấn — CHỖ 2/2: xanh ngọc sáng hơn hai bậc */
-  --primary: #3fb8a1;
-  --primary-hover: #34a08c;
-  --primary-foreground: #06201b;
-  --primary-light: rgb(63 184 161 / 0.12);
-
-  --brand: #0c2d27;
-  --brand-accent: #5fd1bb;
-
-  --background: #0b1311;
-  --foreground: #e4eeeb;
-  --card: #121c1a;
-  --card-foreground: #e4eeeb;
-  --popover: #18241f;
-  --popover-foreground: #e4eeeb;
-  --secondary: rgb(255 255 255 / 0.08);
-  --secondary-hover: rgb(255 255 255 / 0.13);
-  --secondary-foreground: #e4eeeb;
-  --muted: rgb(255 255 255 / 0.05);
-  --muted-foreground: #9bb1ac;
-  --accent: #173530;
-  --accent-foreground: #bfe9df;
-  --destructive: #ff637e;
-
-  --border: rgb(160 220 205 / 0.12);
-  --border-strong: rgb(160 220 205 / 0.18);
-  --ring: #3fb8a1;
-  --border-focus: rgb(63 184 161 / 0.6);
-  --ring-focus: rgb(63 184 161 / 0.16);
-
-  --item-hover: rgb(255 255 255 / 0.05);
-  --surface-hover: #16221f;
-  --button-hover: rgb(255 255 255 / 0.08);
-
-  --ok: #4fd99a;
-  --ok-bg: rgb(0 188 125 / 0.15);
-  --warn: #ff9b3d;
-  --warn-bg: rgb(254 154 0 / 0.15);
-  --danger: #ff637e;
-  --danger-bg: rgb(255 32 86 / 0.12);
-  --info: #8db8f5;
-  --info-bg: rgb(59 111 182 / 0.2);
-
-  --chart-1: #3fb8a1;
-  --chart-5: #bfe9df;
-
-  --elevation-popover: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.5);
-  --elevation-modal: 0 20px 25px -5px rgb(0 0 0 / 0.6), 0 8px 10px -6px rgb(0 0 0 / 0.6);
 }
 
 @theme inline {
@@ -134,51 +61,39 @@
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-hover: var(--primary-hover);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary-light: var(--primary-light);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-hover: var(--secondary-hover);
   --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-brand: var(--brand);
+  --color-brand-accent: var(--brand-accent);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-mint: var(--mint);
+  --color-orange: var(--orange);
+  --color-yellow: var(--yellow);
+  --color-yellow-foreground: var(--yellow-foreground);
+  --color-star: var(--star);
   --color-border: var(--border);
   --color-border-strong: var(--border-strong);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --color-brand: var(--brand);
-  --color-brand-foreground: var(--brand-foreground);
-  --color-brand-fg: var(--brand-foreground);
-  --color-brand-accent: var(--brand-accent);
   --color-item-hover: var(--item-hover);
-  --color-surface-hover: var(--surface-hover);
   --color-button-hover: var(--button-hover);
-  --color-ok: var(--ok);
-  --color-ok-bg: var(--ok-bg);
-  --color-warn: var(--warn);
-  --color-warn-bg: var(--warn-bg);
-  --color-danger: var(--danger);
-  --color-danger-bg: var(--danger-bg);
-  --color-info: var(--info);
-  --color-info-bg: var(--info-bg);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
 
   /* border-focus và ring-focus: hai màu khác nhau, tách namespace */
   --border-color-focus: var(--border-focus);
   --ring-color-focus: var(--ring-focus);
 
+  --shadow-card: var(--elevation-card);
   --shadow-popover: var(--elevation-popover);
   --shadow-modal: var(--elevation-modal);
 
-  /* bo góc theo luật evon: ≥40px cao thì 12px (rounded-xl), dưới 40px thì 8px (rounded-lg) */
   --radius-sm: 0.375rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.5rem;
@@ -193,7 +108,6 @@
   }
   html {
     scroll-behavior: smooth;
-    scroll-padding-top: 8rem;
     @apply font-sans;
   }
   body {
@@ -201,13 +115,12 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
-  p, li, dd { text-wrap: pretty; } /* tránh chữ đơn côi ở dòng cuối (T10) */
+  p, li, dd { text-wrap: pretty; }
   h1, h2, h3 { text-wrap: balance; }
   button:not(:disabled),
   [role="button"]:not(:disabled) {
     cursor: pointer;
   }
-  /* Đề (prompt 02) yêu cầu điều hướng bàn phím ở form đặt phòng → giữ vòng focus khi Tab (ngoại lệ I14). */
   :focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: 2px;
@@ -217,6 +130,16 @@
   [role="combobox"]:focus-visible {
     outline: none;
   }
+}
+
+/* Logo Rooty Trip (bản trắng) tô xanh bằng đúng filter rootytrip.com đang dùng */
+.logo-green {
+  filter: invert(0.51) sepia(0.2) saturate(6.67) hue-rotate(127deg) brightness(0.95) contrast(0.94);
+}
+
+/* Trang khách sạn trên điện thoại có thanh đặt phòng dính đáy: chừa chỗ để không che chân trang */
+@media (width < 64rem) {
+  body:has(#mobile-book-bar) footer { padding-bottom: 72px; }
 }
 
 /* ===== THANH CUỘN TỰ ẨN (evon, luật I18) ===== */
@@ -233,22 +156,3 @@
 }
 .scrollbar-clean { scrollbar-width: none; }
 .scrollbar-clean::-webkit-scrollbar { display: none; }
-
-dialog::backdrop {
-  background: rgb(10 25 22 / 0.55);
-}
-
-@keyframes shimmer {
-  0% { background-position: -400px 0; }
-  100% { background-position: 400px 0; }
-}
-.skeleton {
-  background: linear-gradient(90deg, var(--muted) 0, var(--border) 50%, var(--muted) 100%);
-  background-size: 800px 100%;
-  animation: shimmer 1.2s infinite linear;
-}
-
-@media print {
-  .no-print { display: none !important; }
-  body { background: #fff; }
-}

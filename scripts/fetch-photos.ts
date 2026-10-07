@@ -67,6 +67,7 @@ async function get(id: string, w: number) {
 async function main() {
   const failed: string[] = []
   for (const [path, cat, pref] of MAP) {
+    if (!/^(hero|pito-hon-thom|calista|addons|experiences)/.test(path)) continue // chỉ ảnh 2 trang đang dùng
     const file = join(OUT, `${path}.jpg`)
     if (existsSync(file)) { continue }
     const ids = [...P[cat].slice(pref), ...P[cat].slice(0, pref)]
