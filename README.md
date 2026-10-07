@@ -7,11 +7,24 @@ Website chung cho các khách sạn của Rooty, giao diện theo nhận diện 
 | `/` | Banner + thanh chọn nhanh (khách sạn, ngày, số khách) · 4 cam kết đặt trực tiếp · thẻ các khách sạn · hệ sinh thái Rooty (xe sân bay, tour, RIVUS) |
 | `/hotel/[slug]` | Bộ ảnh · thanh mục lục dính · tổng quan · **chọn phòng** (giá theo ngày, gói ăn sáng / không hoàn huỷ, còn mấy phòng, hết phòng) · tiện ích · ăn uống · trải nghiệm · vị trí · chính sách · hỏi đáp · thẻ giá dính bên phải |
 
-Khách sạn: `/hotel/pito-hon-thom`, `/hotel/calista`. **Mọi nội dung, giá, ảnh là mẫu.**
+Khách sạn: `/hotel/pito-hon-thom`, `/hotel/calista` (tiếng Anh: `/en/hotel/…`). **Mọi nội dung, giá, ảnh là mẫu.**
 
 **Dữ liệu là giả lập:** không có backend và không gọi Gohost. Bấm "Đặt phòng" sẽ mở một hộp tóm tắt: bản chính thức thay bằng trang đặt phòng + thanh toán của Gohost (điểm D2 trong `reviews/2026-10-06-yeu-cau-website-rooty-hospitality.docx`).
 
-Stack: Next.js 16 (App Router) · TypeScript · Tailwind CSS 4 · shadcn/ui (Radix) · lucide-react · react-day-picker · font Be Vietnam Pro.
+Stack: Next.js 16 (App Router) · TypeScript · Tailwind CSS 4 · shadcn/ui (Radix) · lucide-react · react-day-picker · next-intl · Embla Carousel · yet-another-react-lightbox · font Be Vietnam Pro.
+
+## Ngôn ngữ, tiền tệ, header, banner
+
+| Phần | Cách làm | Sửa ở đâu |
+|---|---|---|
+| **Ngôn ngữ** (vi, en) | next-intl. Tiếng Việt giữ URL gốc (`/`, `/hotel/calista`), tiếng Anh thêm `/en`. Không tự đổi theo ngôn ngữ trình duyệt. | Chữ giao diện: `messages/vi.json`, `messages/en.json`. Nội dung khách sạn tiếng Anh: `src/data/hotels.en.ts`. Cấu hình: `src/i18n/routing.ts` |
+| **Tiền tệ** (VND, USD, EUR, KRW) | Nút "🌐 VI · VND" trên header (khuôn Klook), nhớ trong trình duyệt. Giá gốc luôn VND; ngoại tệ là quy đổi tham khảo, hộp đặt phòng ghi rõ "thanh toán bằng VND". | Danh sách + tỷ giá demo: `src/components/site/currency.tsx` |
+| **Header** | Như rootytrip.com: trang chủ trong suốt đè lên banner, cuộn thì nền trắng. Thêm: cuộn xuống thì ẩn, kéo lên thì hiện (thanh mục lục trang khách sạn dời lên theo). Icon tài khoản chưa nối gì, chờ CMS. | `src/components/site/header.tsx` |
+| **Banner** | Embla Carousel, tự chuyển 5 giây, vuốt được, có nút tạm dừng; máy bật "giảm chuyển động" thì không tự chạy. | `src/components/site/hero-slides.tsx`, danh sách ảnh ở `src/app/[locale]/(site)/page.tsx` |
+| **Lightbox** | Bộ ảnh trang khách sạn: bấm ảnh nào mở ảnh đó, vuốt / phím mũi tên, phóng to, dải ảnh nhỏ. | `src/components/hotel/gallery.tsx` |
+| **Thanh cuộn** | Chép rootytrip.com: 5px, thanh xanh #299683, rãnh #f1f1f1. | `src/app/globals.css` |
+
+Không dùng plugin `createNextIntlPlugin`: plugin kéo theo `@swc/core`, mà bản native của nó trên máy này lỗi quyền thư mục `AppData\Local\swc`. Thay bằng một dòng alias `next-intl/config` trong `next.config.ts` (đúng việc plugin làm).
 
 ## Chạy
 
@@ -48,8 +61,9 @@ Ngày "hôm nay" của demo cố định là **07/10/2026** (`src/lib/format.ts`
 ## Kiến trúc mã
 
 ```
-src/app/(site)/page.tsx              trang chủ
-src/app/(site)/hotel/[slug]/page.tsx trang khách sạn (dựng tĩnh theo từng slug)
+src/app/[locale]/(site)/page.tsx              trang chủ
+src/app/[locale]/(site)/hotel/[slug]/page.tsx trang khách sạn (dựng tĩnh theo từng ngôn ngữ × slug)
+src/i18n/, src/proxy.ts, messages/           ngôn ngữ (next-intl)
 src/components/site/                 header, footer, ô chọn ngày/khách, mảnh dùng chung (kit.tsx)
 src/components/hotel/                bộ ảnh, mục lục, chọn phòng, thẻ giá
 src/lib/repo/                        cửa duy nhất lấy dữ liệu (mock.ts) — UI không import src/data

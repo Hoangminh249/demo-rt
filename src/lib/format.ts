@@ -19,16 +19,18 @@ export function nightsBetween(checkin: string, checkout: string): string[] {
   return out
 }
 
-/** 16/10 – 19/10/2026 · 30/12/2026 – 02/01/2027 */
-export function fmtRange(from: string, to: string) {
-  const [y1, m1, d1] = from.split('-')
-  const [y2, m2, d2] = to.split('-')
-  return y1 === y2 ? `${d1}/${m1} – ${d2}/${m2}/${y2}` : `${d1}/${m1}/${y1} – ${d2}/${m2}/${y2}`
+const MONTHS_EN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+/** vi: 16/10 · en: 16 Oct */
+export const fmtDayMonth = (iso: string, locale = 'vi') =>
+  locale === 'en' ? `${Number(iso.slice(8, 10))} ${MONTHS_EN[Number(iso.slice(5, 7)) - 1]}` : `${iso.slice(8, 10)}/${iso.slice(5, 7)}`
+
+/** vi: 16/10 – 19/10/2026 · 30/12/2026 – 02/01/2027 — en: 16 Oct – 19 Oct 2026 */
+export function fmtRange(from: string, to: string, locale = 'vi') {
+  const sameYear = from.slice(0, 4) === to.slice(0, 4)
+  if (locale === 'en') return `${fmtDayMonth(from, 'en')}${sameYear ? '' : ` ${from.slice(0, 4)}`} – ${fmtDayMonth(to, 'en')} ${to.slice(0, 4)}`
+  return `${fmtDayMonth(from)}${sameYear ? '' : `/${from.slice(0, 4)}`} – ${fmtDayMonth(to)}/${to.slice(0, 4)}`
 }
-export const fmtDayMonth = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`
 
-/** Giá kiểu rootytrip.com: "đ 2,850,000" */
+/** Giá kiểu rootytrip.com: "đ 2,850,000". Hiển thị theo tiền tệ khách chọn: dùng <Price> (components/site/currency.tsx). */
 export const fmtPrice = (n: number) => `đ ${Math.round(n).toLocaleString('en-US')}`
-
-export const guestsLabel = (adults: number, children: number) =>
-  `${adults} người lớn${children ? `, ${children} trẻ em` : ''}`

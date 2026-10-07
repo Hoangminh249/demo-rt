@@ -2,12 +2,13 @@
 // Ô chọn khách sạn, khoảng ngày, số khách — dáng ô nhập của wireframe (cao 48px, viền, icon xanh, nhãn cam in hoa).
 import { useState, type ReactNode } from 'react'
 import { CalendarDays, ChevronDown, Hotel as HotelIcon, Minus, Plus, Users } from 'lucide-react'
-import { vi } from 'react-day-picker/locale'
+import { enUS, vi } from 'react-day-picker/locale'
+import { useLocale, useTranslations } from 'next-intl'
 import type { DateRange } from 'react-day-picker'
 import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { TODAY, diffDays, fmtRange, guestsLabel } from '@/lib/format'
+import { TODAY, diffDays, fmtRange } from '@/lib/format'
 import type { Stay } from '@/lib/types'
 import { EYEBROW } from './kit'
 
@@ -26,8 +27,9 @@ function Field({ id, label, children }: { id: string; label: string; children: R
 }
 
 export function HotelField({ id, value, hotels, onChange }: { id: string; value: string; hotels: { slug: string; name: string }[]; onChange: (slug: string) => void }) {
+  const t = useTranslations('Fields')
   return (
-    <Field id={id} label="Khách sạn">
+    <Field id={id} label={t('hotel')}>
       <Select value={value} onValueChange={onChange}>
         <SelectTrigger id={id} className={`${FIELD} !h-12 justify-start`}>
           <HotelIcon className="size-5 shrink-0 text-brand" aria-hidden />
@@ -39,11 +41,13 @@ export function HotelField({ id, value, hotels, onChange }: { id: string; value:
   )
 }
 
-export function DateRangeField({ id, label = 'Nhận phòng – Trả phòng', stay, onChange }: { id: string; label?: string; stay: Stay; onChange: (s: Stay) => void }) {
+export function DateRangeField({ id, label, stay, onChange }: { id: string; label?: string; stay: Stay; onChange: (s: Stay) => void }) {
+  const t = useTranslations()
+  const locale = useLocale()
   const [open, setOpen] = useState(false)
   const [draft, setDraft] = useState<DateRange | undefined>()
   const range = draft ?? { from: toDate(stay.checkin), to: toDate(stay.checkout) }
-  const step = !draft ? 'Chọn ngày nhận phòng' : 'Chọn ngày trả phòng'
+  const step = !draft ? t('Fields.pickCheckin') : t('Fields.pickCheckout')
 
   // Bấm lần 1 = ngày nhận (luôn bắt đầu khoảng mới), lần 2 = ngày trả; đủ hai đầu thì lưu và đóng.
   function pick(day: Date) {
@@ -54,17 +58,17 @@ export function DateRangeField({ id, label = 'Nhận phòng – Trả phòng', s
   }
 
   return (
-    <Field id={id} label={label}>
+    <Field id={id} label={label ?? t('Fields.dates')}>
       <Popover open={open} onOpenChange={o => { setOpen(o); if (!o) setDraft(undefined) }}>
         <PopoverTrigger id={id} className={FIELD}>
           <CalendarDays className="size-5 shrink-0 text-brand" aria-hidden />
-          <span className="min-w-0 flex-1 truncate tabular-nums">{fmtRange(stay.checkin, stay.checkout)}</span>
-          <span className="shrink-0 text-[13px] text-muted-foreground">{diffDays(stay.checkin, stay.checkout)} đêm</span>
+          <span className="min-w-0 flex-1 truncate tabular-nums">{fmtRange(stay.checkin, stay.checkout, locale)}</span>
+          <span className="shrink-0 text-[13px] text-muted-foreground">{t('Common.nights', { n: diffDays(stay.checkin, stay.checkout) })}</span>
         </PopoverTrigger>
         <PopoverContent align="start" collisionPadding={16} className="w-auto max-w-[calc(100vw-2rem)] p-3">
           <Calendar
             mode="range"
-            locale={vi}
+            locale={locale === 'en' ? enUS : vi}
             weekStartsOn={1}
             numberOfMonths={typeof window !== 'undefined' && window.innerWidth >= 768 ? 2 : 1}
             showOutsideDays={false}
@@ -82,31 +86,33 @@ export function DateRangeField({ id, label = 'Nhận phòng – Trả phòng', s
 }
 
 function Counter({ label, sub, value, min, max, onChange }: { label: string; sub?: string; value: number; min: number; max: number; onChange: (n: number) => void }) {
+  const t = useTranslations('Fields')
   const btn = 'm-1 grid size-8 place-items-center rounded-md text-brand hover:bg-mint disabled:cursor-not-allowed disabled:text-muted-foreground disabled:opacity-40'
   return (
     <div className="flex items-center justify-between gap-4 py-3">
       <div><p className="text-[15px] font-medium">{label}</p>{sub && <p className="text-[13px] text-muted-foreground">{sub}</p>}</div>
       <div className="flex h-10 items-center rounded-lg border border-border-strong bg-white">
-        <button type="button" aria-label={`Bớt ${label.toLowerCase()}`} disabled={value <= min} onClick={() => onChange(value - 1)} className={btn}><Minus className="size-4" /></button>
+        <button type="button" aria-label={t('less', { label: label.toLowerCase() })} disabled={value <= min} onClick={() => onChange(value - 1)} className={btn}><Minus className="size-4" /></button>
         <span className="w-6 text-center text-[15px] font-semibold tabular-nums" aria-live="polite">{value}</span>
-        <button type="button" aria-label={`Thêm ${label.toLowerCase()}`} disabled={value >= max} onClick={() => onChange(value + 1)} className={btn}><Plus className="size-4" /></button>
+        <button type="button" aria-label={t('more', { label: label.toLowerCase() })} disabled={value >= max} onClick={() => onChange(value + 1)} className={btn}><Plus className="size-4" /></button>
       </div>
     </div>
   )
 }
 
 export function GuestsField({ id, stay, onChange }: { id: string; stay: Stay; onChange: (s: Stay) => void }) {
+  const t = useTranslations()
   return (
-    <Field id={id} label="Số khách">
+    <Field id={id} label={t('Fields.guests')}>
       <Popover>
         <PopoverTrigger id={id} className={FIELD}>
           <Users className="size-5 shrink-0 text-brand" aria-hidden />
-          <span className="min-w-0 flex-1 truncate">{guestsLabel(stay.adults, stay.children)}</span>
+          <span className="min-w-0 flex-1 truncate">{t('Common.guests', { adults: stay.adults, children: stay.children })}</span>
           <ChevronDown className="size-4 shrink-0 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" aria-hidden />
         </PopoverTrigger>
         <PopoverContent align="start" collisionPadding={16} className="w-72 max-w-[calc(100vw-2rem)] divide-y divide-border px-4 py-1">
-          <Counter label="Người lớn" value={stay.adults} min={1} max={6} onChange={adults => onChange({ ...stay, adults })} />
-          <Counter label="Trẻ em" sub="Dưới 12 tuổi" value={stay.children} min={0} max={4} onChange={children => onChange({ ...stay, children })} />
+          <Counter label={t('Fields.adults')} value={stay.adults} min={1} max={6} onChange={adults => onChange({ ...stay, adults })} />
+          <Counter label={t('Fields.children')} sub={t('Fields.under12')} value={stay.children} min={0} max={4} onChange={children => onChange({ ...stay, children })} />
         </PopoverContent>
       </Popover>
     </Field>

@@ -5,6 +5,7 @@ import {
   Baby, CableCar, Car, Check, Clock, DoorOpen, Dumbbell, Flower2, ImageOff, MapPin, Martini, Plane, SquareParking, Star, Store,
   Umbrella, Utensils, Waves, Wifi, type LucideIcon,
 } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { cn } from 'cn'
 import type { IconKey } from '@/lib/types'
 
@@ -21,8 +22,9 @@ export const ICONS: Record<IconKey, LucideIcon> = {
 }
 
 export function Stars({ n }: { n: number }) {
+  const t = useTranslations('Common')
   return (
-    <span className="inline-flex text-star" role="img" aria-label={`${n} sao`}>
+    <span className="inline-flex text-star" role="img" aria-label={t('stars', { n })}>
       {Array.from({ length: n }, (_, i) => <Star key={i} className="size-4 fill-current" aria-hidden />)}
     </span>
   )
@@ -39,11 +41,12 @@ export const CheckItem = ({ children }: { children: ReactNode }) => (
 
 /** Ảnh trong /public/images. Không có ảnh thì hiện khung "Chưa có ảnh". */
 export function Photo({ src, alt, className, sizes = '100vw', priority }: { src?: string; alt: string; className?: string; sizes?: string; priority?: boolean }) {
+  const t = useTranslations('Common')
   return (
     <div className={cn('relative overflow-hidden bg-muted', className)}>
       {src
         ? <Image src={src} alt={alt} fill sizes={sizes} priority={priority} className="object-cover" />
-        : <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-sm text-muted-foreground"><ImageOff className="size-6" aria-hidden />Chưa có ảnh</div>}
+        : <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-sm text-muted-foreground"><ImageOff className="size-6" aria-hidden />{t('noPhoto')}</div>}
     </div>
   )
 }

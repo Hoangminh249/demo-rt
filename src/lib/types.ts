@@ -58,3 +58,5 @@ export interface RatePlan {
 export interface DayPrice { day: string; price: number } // Gohost days_breakdown
 
 export interface Stay { checkin: string; checkout: string; adults: number; children: number }
+
+export type Locale = 'vi' | 'en'
