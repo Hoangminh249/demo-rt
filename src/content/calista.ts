@@ -126,6 +126,7 @@ export const CALISTA: HotelContent = {
   ],
   cover: null,
   gallery: [],
+  hero: [],
   en_review: true,
   pending: [
     'Bếp tầng 5: PDF ghi dành cho khách lưu trú, bảng giá đại lý ghi chỉ phòng 501, 502, 503 — web ghi chỉ 3 phòng tầng 5.',

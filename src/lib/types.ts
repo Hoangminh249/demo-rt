@@ -27,6 +27,8 @@ export interface RoomContent {
   images: string[] // ảnh đầu là ảnh thẻ; [] = khung "Chưa có ảnh"
 }
 
+export interface HeroImage { src: string; focus: string }
+
 export interface HotelContent {
   slug: string // rootyhospitality.com/hotel/{slug} — vĩnh viễn, không đổi
   code: string // mã Rooty (review §4.5), vd PITO
@@ -50,6 +52,8 @@ export interface HotelContent {
   faq: [q: L, a: L][]
   cover: string | null
   gallery: string[]
+  /** Banner trang chủ: ảnh hợp khung ngang + điểm lấy nét (object-position) để không cắt mất chủ thể */
+  hero: HeroImage[]
   rooms: RoomContent[]
   en_review?: boolean // bản tiếng Anh chưa được Marketing duyệt — admin báo
   pending: string[] // chỗ tài liệu mâu thuẫn chờ khách sạn xác nhận — chỉ admin hiện (docs/2026-10-07-du-lieu-that-va-admin.md §3)
@@ -106,6 +110,7 @@ export interface Hotel {
   faq: [q: string, a: string][]
   cover: string | null
   gallery: string[]
+  hero: HeroImage[]
   rooms: Room[]
 }
 
@@ -135,9 +140,13 @@ export interface Stay { checkin: string; checkout: string; adults: number; child
 
 // ---------- Booking (Gohost GET /bookings, /bookings/{id}) — chỉ admin, chỉ các field được phép (không CCCD, ảnh giấy tờ) ----------
 
+/** Trạng thái booking Gohost (spec + gọi thật). Dùng cho bộ lọc và kiểm tham số ở /api/admin/bookings. */
+export const BOOKING_STATUSES = ['new', 'confirmed', 'in_progress', 'finished', 'no_show', 'cancelled', 'merged'] as const
+
 export interface BookingRow {
-  code: string // mã booking Gohost, dùng cho trang chi tiết
+  code: string // mã booking Gohost (field `id`, 8 ký tự), dùng cho trang chi tiết
   status: string // new | confirmed | in_progress | finished | no_show | cancelled | merged
+  payment_status: string | null // not_pay | … (mới thấy not_pay)
   checkin: string | null
   checkout: string | null
   amount: number | null
@@ -149,12 +158,13 @@ export interface BookingRow {
 }
 
 export interface BookingDetail extends BookingRow {
+  booked_at: string | null
   arrival_hour: string | null
   departure_hour: string | null
   payment_collect: string | null
   ota_code: string | null // source_reservation_code
   notes: string | null
   email: string | null // đã che phần trước @
-  room_list: { room_type: string; unit: string | null; adults: number; children: number; infants: number; breakfast: boolean; guests: { name: string; primary: boolean }[] }[]
+  room_list: { room_type: string; unit: string | null; nights: number | null; adults: number; children: number; infants: number; breakfast: boolean; guests: { name: string; primary: boolean }[] }[]
   payments: number
 }

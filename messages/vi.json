@@ -52,20 +52,39 @@
     "play": "Chạy ảnh",
     "whyAria": "Đã gồm khi ở khách sạn Rooty",
     "promises": [
-      ["Đón tiễn sân bay miễn phí", "theo khung giờ cố định"],
-      ["Ăn sáng mỗi ngày", "đã gồm trong giá phòng"],
-      ["Giá đã gồm VAT", "và phí phục vụ"],
-      ["Đặt qua Zalo, hotline", "khách sạn xác nhận phòng trống"]
+      [
+        "Đón tiễn sân bay miễn phí",
+        "theo khung giờ cố định"
+      ],
+      [
+        "Ăn sáng mỗi ngày",
+        "đã gồm trong giá phòng"
+      ],
+      [
+        "Giá đã gồm VAT",
+        "và phí phục vụ"
+      ],
+      [
+        "Đặt qua Zalo, hotline",
+        "khách sạn xác nhận phòng trống"
+      ]
     ],
     "hotelsLead": "Khách sạn của",
-    "count": "{n} khách sạn tại Phú Quốc",
     "viewHotel": "Xem khách sạn",
     "priceByDate": "Xem phòng và giá theo ngày",
     "ecoLead": "Trọn chuyến đi cùng",
     "ecoSub": "Khách sạn của Rooty nằm trong cùng hệ sinh thái với tour, cano và du thuyền ở Phú Quốc.",
     "eco": [
-      ["Tour, combo, vé tham quan", "Rooty Trip: tour Phú Quốc, combo và vé tham quan.", "Xem trên Rooty Trip"],
-      ["Cano riêng, du thuyền", "RIVUS: cano riêng, du thuyền và sự kiện trên biển.", "Xem trên RIVUS"]
+      [
+        "Tour, combo, vé tham quan",
+        "Rooty Trip: tour Phú Quốc, combo và vé tham quan.",
+        "Xem trên Rooty Trip"
+      ],
+      [
+        "Cano riêng, du thuyền",
+        "RIVUS: cano riêng, du thuyền và sự kiện trên biển.",
+        "Xem trên RIVUS"
+      ]
     ]
   },
   "Fields": {
@@ -127,7 +146,6 @@
     "roomMax": "Phòng này nhận tối đa {max}. Đoàn {party} nên đặt 2 phòng.",
     "askPrice": "Liên hệ khách sạn để nhận giá hạng phòng này.",
     "breakfast": "Có ăn sáng",
-    "noBreakfast": "Không gồm ăn sáng",
     "total": "Tổng {total} · {nights}",
     "book": "Liên hệ đặt phòng",
     "contactTitle": "Liên hệ đặt phòng",

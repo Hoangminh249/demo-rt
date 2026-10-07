@@ -63,8 +63,8 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
   const now = today()
   const promises = t.raw('promises') as [string, string][]
   const eco = t.raw('eco') as [string, string, string][]
-  // Banner: 3 ảnh đầu bộ ảnh của mỗi khách sạn có ảnh (khách sạn chưa có ảnh thì chưa lên banner).
-  const slides = hotels.flatMap(h => h.gallery.slice(0, 3).map(src => ({ src, label: h.name, href: hotelHref(h.slug) })))
+  // Banner: bộ ảnh banner riêng của từng khách sạn (src/content, có điểm lấy nét). Chưa có ảnh thì chưa lên banner.
+  const slides = hotels.flatMap(h => h.hero.map(x => ({ ...x, label: h.name, href: hotelHref(h.slug) })))
 
   return (
     <>
@@ -92,10 +92,7 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
 
       <section id="khach-san" className="scroll-mt-16 bg-gradient-to-b from-mint to-white py-16">
         <div className={CONTAINER}>
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <SectionTitle lead={t('hotelsLead')} accent="Rooty" />
-            <p className="text-[15px] text-muted-foreground">{t('count', { n: hotels.length })}</p>
-          </div>
+          <SectionTitle lead={t('hotelsLead')} accent="Rooty" />
           <div className="mt-10 grid gap-10 md:grid-cols-2 md:gap-8">{hotels.map((h, i) => <HotelCard key={h.slug} h={h} from={prices[i]} now={now} />)}</div>
         </div>
       </section>

@@ -8,6 +8,9 @@ import { cn } from 'cn'
 import { buttonVariants } from '@/components/ui/button'
 import type { GohostErrorCode } from '@/lib/repo/admin'
 
+/** Cookie nhớ sidebar thu gọn (đọc ở server để dựng đúng ngay lần đầu). Ở đây vì file 'use client' không export hằng số cho server được. */
+export const SIDEBAR_COOKIE = 'rh_admin_sidebar'
+
 export const CARD = 'rounded-2xl border border-border bg-card'
 export const TEXT_LINK = 'inline-flex h-8 cursor-pointer items-center text-sm font-medium text-foreground/70 underline-offset-4 hover:text-foreground hover:underline'
 export const ROW_LINK = 'group flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-item-hover'
@@ -61,6 +64,7 @@ const ERROR_TEXT: Record<GohostErrorCode, string> = {
   NOT_CONFIGURED: 'Thiếu GOHOST_API_KEY hoặc GOHOST_API_SECRET trong .env.local.',
   RATE_LIMITED: 'Đã dùng hết lượt gọi (Gohost cho 60 lượt / 5 phút cho cả key). Thử lại sau ít phút.',
   UPSTREAM: 'Gohost không phản hồi hoặc trả lỗi. Thử lại sau ít phút.',
+  NOT_FOUND: 'Gohost không có bản ghi này.',
 }
 
 /** Thanh báo lỗi (banner tông Lỗi, không ✕): đứng đó tới khi xử lý xong. */
@@ -72,6 +76,17 @@ export function GohostError({ code, note }: { code: GohostErrorCode; note?: stri
         <p className="text-sm font-medium text-red-700">Chưa đọc được dữ liệu Gohost</p>
         <p className="mt-0.5 text-sm text-pretty text-foreground/80">{ERROR_TEXT[code]}{note && ` ${note}`}</p>
       </div>
+    </div>
+  )
+}
+
+/** Không gọi được /api/admin (mạng, lỗi server Rooty) — khác GohostError (server chạy, Gohost lỗi). Có nút thử lại. */
+export function LoadFailed({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div role="alert" className="flex flex-wrap items-center gap-3 rounded-2xl border border-red-200 bg-red-50 p-4">
+      <CircleAlert className="size-5 shrink-0 text-red-600" aria-hidden />
+      <p className="min-w-0 flex-1 text-sm text-pretty"><span className="font-medium text-red-700">Không tải được dữ liệu.</span> Kiểm tra mạng rồi thử lại.</p>
+      <button type="button" onClick={onRetry} className={buttonVariants({ size: 'sm' })}>Thử lại</button>
     </div>
   )
 }

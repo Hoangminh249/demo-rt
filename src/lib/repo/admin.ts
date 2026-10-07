@@ -128,7 +128,9 @@ export async function hotelCheck(slug: string) {
   const h = HOTELS.find(x => x.slug === slug)
   if (!h) return null
   const [c, { properties, error }] = await Promise.all([check(h), readCatalog()])
-  return { check: c, error, content: h, properties: properties?.map(p => ({ id: p.id, title: p.title })) ?? null }
+  // Khách sạn chưa nối: liệt kê mọi property key đọc được, kèm hạng phòng, để chọn đúng property mà chép ID.
+  const options = properties?.map(p => ({ id: p.id, title: p.title, prefix: p.prefix, rooms: (p.room_types ?? []).map(r => ({ id: r.id, title: r.title, quantity: r.quantity })) }))
+  return { check: c, error, content: h, properties: options ?? null }
 }
 
 // ---------- Tab Nội dung: từng mục, đủ / thiếu theo ngôn ngữ ----------
@@ -157,7 +159,15 @@ export async function availabilityCheck(slug: string, checkin: string, checkout:
 }
 
 // ---------- Booking ----------
-export const connectedHotels = () => HOTELS.filter(h => h.gohost_tenant_id).map(h => ({ slug: h.slug, name: h.name, tenant: h.gohost_tenant_id! }))
+// Booking là dữ liệu Gohost: lọc theo property Gohost mà key đọc được (kể cả property chưa gắn khách sạn Rooty nào).
+export interface GohostPropertyOption { id: string; title: string; prefix: string; hotel: string | null }
+export async function gohostProperties(): Promise<{ properties: GohostPropertyOption[] | null; error: GohostErrorCode | null }> {
+  const { properties, error } = await readCatalog()
+  return {
+    properties: properties?.map(p => ({ id: p.id, title: p.title, prefix: p.prefix, hotel: HOTELS.find(h => h.gohost_tenant_id === p.id)?.name ?? null })) ?? null,
+    error,
+  }
+}
 
 export async function bookingList(tenant: string, q: { start: string; end: string; status?: string; page?: number }) {
   try {

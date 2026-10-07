@@ -1,15 +1,12 @@
+'use client'
 // Tổng quan (wireframe A · "Việc cần xử lý trước"): dải trạng thái Gohost · việc cần xử lý theo mức chặn · thẻ từng khách sạn.
-import { Suspense } from 'react'
 import Link from 'next/link'
-import { ChevronRight, CircleAlert, ExternalLink, TriangleAlert } from 'lucide-react'
-import { buttonVariants } from '@/components/ui/button'
-import { AdminShell } from '@/components/admin/shell'
+import { ChevronRight, CircleAlert, TriangleAlert } from 'lucide-react'
 import { ApiStatus, ConnectBadge } from '@/components/admin/status'
-import { CARD, Dl, Empty, GROUP_LABEL, Photo, ROW_LINK, Skel, TEXT_LINK, vnd } from '@/components/admin/ui'
+import { CARD, Dl, Empty, GROUP_LABEL, LoadFailed, Photo, ROW_LINK, Skel, TEXT_LINK, vnd } from '@/components/admin/ui'
 import { fmtDate, today } from '@/lib/format'
-import { overview, type HotelCheck, type Issue } from '@/lib/repo/admin'
-
-export const metadata = { title: 'Tổng quan' }
+import { useAdminOverview } from '@/hooks/use-admin'
+import type { HotelCheck, Issue } from '@/lib/repo/admin'
 
 function IssueRow({ x }: { x: Issue }) {
   const chan = x.level === 'chan'
@@ -79,17 +76,6 @@ function HotelCard({ c, issueCount }: { c: HotelCheck; issueCount: number }) {
   )
 }
 
-async function Body() {
-  const { status, error, checks, issues } = await overview()
-  return (
-    <>
-      <ApiStatus status={status} error={error} />
-      <Issues issues={issues} />
-      <div className="grid gap-4 md:grid-cols-2">{checks.map(c => <HotelCard key={c.slug} c={c} issueCount={issues.filter(x => x.hotel === c.name).length} />)}</div>
-    </>
-  )
-}
-
 function Loading() {
   return (
     <>
@@ -103,13 +89,17 @@ function Loading() {
   )
 }
 
-export default function AdminOverviewPage() {
+export function OverviewView() {
+  const { data, isPending, isError, refetch } = useAdminOverview()
   return (
-    <AdminShell active="overview" title="Tổng quan"
-      headerRight={<span className="hidden sm:block"><a href="/" target="_blank" rel="noopener" className={buttonVariants()}><ExternalLink aria-hidden />Xem website</a></span>}>
-      <div className="grid max-w-[1200px] grid-cols-1 gap-4">
-        <Suspense fallback={<Loading />}><Body /></Suspense>
-      </div>
-    </AdminShell>
+    <div className="grid max-w-[1200px] grid-cols-1 gap-4">
+      {isPending ? <Loading /> : isError || !data ? <LoadFailed onRetry={() => refetch()} /> : (
+        <>
+          <ApiStatus status={data.status} error={data.error} />
+          <Issues issues={data.issues} />
+          <div className="grid gap-4 md:grid-cols-2">{data.checks.map(c => <HotelCard key={c.slug} c={c} issueCount={data.issues.filter(x => x.hotel === c.name).length} />)}</div>
+        </>
+      )}
+    </div>
   )
 }

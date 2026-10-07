@@ -1,30 +1,24 @@
+'use client'
 // Khách sạn (wireframe A · "Đầu trang + 4 tab"): tab đầu là ánh xạ hạng phòng Gohost ↔ nội dung (có nút chép ID),
 // sau đó Giá & phòng trống (cùng lời gọi web đang dùng), Nội dung (VI/EN), Ảnh. Chỉ xem: sửa ở src/content hoặc trong Gohost.
-import { Suspense } from 'react'
+import type { FormEvent } from 'react'
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { ExternalLink, Link2, TriangleAlert } from 'lucide-react'
 import { cn } from 'cn'
 import { Button, buttonVariants } from '@/components/ui/button'
-import { AdminShell } from '@/components/admin/shell'
 import { ConnectBadge } from '@/components/admin/status'
 import { CopyId } from '@/components/admin/copy-id'
 import { DateRangeInput } from '@/components/admin/date-range'
-import { Badge, CARD, Empty, GohostError, Photo, Skel, shortVnd, vndPlain } from '@/components/admin/ui'
+import { Badge, CARD, Empty, GohostError, LoadFailed, Photo, Skel, shortVnd, vndPlain } from '@/components/admin/ui'
 import { fmtDayMonth, today } from '@/lib/format'
 import { defaultStay, firstCheckin, validRange } from '@/lib/stay'
-import { repo } from '@/lib/repo'
-import { availabilityCheck, contentRows, hotelCheck, type HotelCheck } from '@/lib/repo/admin'
-import type { HotelContent } from '@/lib/types'
+import { useAdminAvailability, useAdminHotel, type AdminHotel } from '@/hooks/use-admin'
+import type { HotelCheck } from '@/lib/repo/admin'
 
 // [id, nhãn, nhãn dưới sm]: rút chữ để 4 tab vừa 375px, không phải cuộn ngang (R10 bước 1)
 const TABS = [['phong', 'Phòng & ánh xạ', 'Phòng'], ['gia', 'Giá & phòng trống', 'Giá'], ['noi-dung', 'Nội dung', 'Nội dung'], ['anh', 'Ảnh', 'Ảnh']] as const
 type Tab = (typeof TABS)[number][0]
-const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? null
-
-export async function generateMetadata({ params }: PageProps<'/admin/hotels/[slug]'>) {
-  return { title: repo.getHotel((await params).slug, 'vi')?.name ?? 'Khách sạn' }
-}
 
 // ---------- Tab Phòng & ánh xạ ----------
 type GhRoom = HotelCheck['ghRooms'][number]
@@ -36,14 +30,20 @@ function rateRange(r: GhRoom) {
   return min === max ? vndPlain(min) : `${vndPlain(min)} – ${vndPlain(max)}`
 }
 
-function MapPanel({ c, file, properties }: { c: HotelCheck; file: string; properties: { id: string; title: string }[] | null }) {
+function MapPanel({ c, file, properties }: { c: HotelCheck; file: string; properties: AdminHotel['properties'] }) {
   if (c.state === 'none') return (
     <div className="px-5 pb-5">
-      <Empty>Khách sạn chưa nối Gohost. Điền gohost_tenant_id trong {file} để thấy hạng phòng.</Empty>
+      <Empty>Khách sạn chưa nối Gohost. Chọn đúng property bên dưới, chép ID vào gohost_tenant_id trong {file}.</Empty>
       {properties && properties.length > 0 && (
-        <div className="rounded-xl border border-border px-4 py-3">
-          <p className="text-sm font-medium">Property mà key Gohost đọc được</p>
-          <ul className="mt-2 grid gap-1.5 text-sm">{properties.map(p => <li key={p.id} className="flex flex-wrap items-center justify-between gap-2"><span>{p.title}</span><CopyId id={p.id} /></li>)}</ul>
+        <div className="grid gap-3">
+          {properties.map(p => (
+            <div key={p.id} className="rounded-xl border border-border px-4 py-3">
+              <div className="flex flex-wrap items-center justify-between gap-2"><p className="text-sm font-medium">{p.title} <span className="font-normal text-muted-foreground">· {p.prefix}</span></p><CopyId id={p.id} /></div>
+              <ul className="mt-2 grid gap-1 text-sm text-foreground/80">
+                {p.rooms.map(r => <li key={r.id} className="flex flex-wrap items-center justify-between gap-2"><span>{r.title} <span className="text-muted-foreground tabular-nums">· {r.quantity} phòng</span></span><CopyId id={r.id} /></li>)}
+              </ul>
+            </div>
+          ))}
         </div>
       )}
     </div>
@@ -98,25 +98,36 @@ function MapPanel({ c, file, properties }: { c: HotelCheck; file: string; proper
 }
 
 // ---------- Tab Giá & phòng trống ----------
-async function PricePanel({ c, content, checkin, checkout }: { c: HotelCheck; content: HotelContent; checkin: string | null; checkout: string | null }) {
+function PricePanel({ c, opening }: { c: HotelCheck; opening: string | null }) {
+  const router = useRouter()
+  const sp = useSearchParams()
   const now = today()
-  const fallback = defaultStay(now, content.opening)
-  const fromIn = checkin ?? fallback.checkin
-  const fromOut = checkout ?? fallback.checkout
-  const valid = validRange(fromIn, fromOut, now, content.opening)
+  const fallback = defaultStay(now, opening)
+  const checkin = sp.get('in') ?? fallback.checkin
+  const checkout = sp.get('out') ?? fallback.checkout
+  const valid = validRange(checkin, checkout, now, opening)
+  const connected = c.state === 'ok'
+  const { data, isFetching, isError, refetch } = useAdminAvailability(c.slug, connected && valid ? { checkin, checkout } : null)
+
+  const submit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const f = new FormData(e.currentTarget)
+    router.push(`?${new URLSearchParams({ tab: 'gia', in: String(f.get('in')), out: String(f.get('out')) })}`, { scroll: false })
+  }
   const form = (
-    <form className="flex flex-wrap items-end gap-3">
-      <input type="hidden" name="tab" value="gia" />
-      <DateRangeInput id="gia-dates" label="Nhận – trả phòng" from={valid ? fromIn : fallback.checkin} to={valid ? fromOut : fallback.checkout} min={firstCheckin(now, content.opening)} />
-      <Button type="submit" variant="default">Xem giá</Button>
+    <form onSubmit={submit} className="flex flex-wrap items-end gap-3">
+      <DateRangeInput key={`${checkin}|${checkout}`} id="gia-dates" label="Nhận – trả phòng" from={valid ? checkin : fallback.checkin} to={valid ? checkout : fallback.checkout} min={firstCheckin(now, opening)} />
+      <Button type="submit" variant="default" disabled={isFetching}>{isFetching ? 'Đang xem…' : 'Xem giá'}</Button>
       <p className="basis-full text-xs text-pretty text-muted-foreground">Cùng lời gọi web đang dùng (GET /room_types, cache 3 phút). Mỗi lần xem tốn 1 lượt nếu chưa có trong cache.</p>
     </form>
   )
-  if (c.state !== 'ok') return <section className={`${CARD} p-5`}>{form}<Empty>{c.state === 'none' ? 'Khách sạn chưa nối Gohost nên chưa có giá.' : 'Chưa đọc được Gohost.'}</Empty></section>
+  if (!connected) return <section className={`${CARD} p-5`}>{form}<Empty>{c.state === 'none' ? 'Khách sạn chưa nối Gohost nên chưa có giá.' : 'Chưa đọc được Gohost.'}</Empty></section>
   if (!valid) return <section className={`${CARD} p-5`}>{form}<Empty>Khoảng ngày không hợp lệ: chọn 1 – 30 đêm, từ hôm nay tới 365 ngày tới.</Empty></section>
+  if (isError) return <section className={`${CARD} p-5`}>{form}<div className="mt-4"><LoadFailed onRetry={() => refetch()} /></div></section>
+  if (!data) return <section className={`${CARD} grid gap-3 p-5`} aria-busy>{form}{[0, 1, 2].map(i => <Skel key={i} className="h-10" />)}</section>
+  if (data.error || !data.rooms) return <section className={`${CARD} p-5`}>{form}<div className="mt-4"><GohostError code={data.error ?? 'UPSTREAM'} /></div></section>
 
-  const { rooms, error } = await availabilityCheck(c.slug, fromIn, fromOut)
-  if (error || !rooms) return <section className={`${CARD} p-5`}>{form}<div className="mt-4"><GohostError code={error ?? 'UPSTREAM'} /></div></section>
+  const rooms = data.rooms
   const nameOf = (id: string, title: string) => c.contentRooms.find(r => r.gohost_room_type_id === id)?.name.vi ?? title
   const left = (n: number) => (n <= 0 ? <Badge tone="err">Hết phòng</Badge> : n <= 1 ? <Badge tone="warn">Còn {n}</Badge> : <span className="tabular-nums">{n}</span>)
   const nights = (p: (typeof rooms)[number]['plans'][number]) => p.days_breakdown.map(d => `${fmtDayMonth(d.day)} ${shortVnd(d.price)}`).join(' · ')
@@ -158,7 +169,8 @@ async function PricePanel({ c, content, checkin, checkout }: { c: HotelCheck; co
 }
 
 // ---------- Tab Nội dung ----------
-function ContentPanel({ content, file }: { content: HotelContent; file: string }) {
+function ContentPanel({ data, file }: { data: AdminHotel; file: string }) {
+  const { content, rows } = data
   const cell = (missing: number, value: string, review?: boolean) =>
     missing ? <Badge tone="warn">Thiếu {missing}</Badge> : review ? <Badge tone="warn">Chờ duyệt</Badge> : <Badge tone="ok">{value}</Badge>
   return (
@@ -166,7 +178,7 @@ function ContentPanel({ content, file }: { content: HotelContent; file: string }
       <table className="w-full text-left text-sm">
         <thead className="border-b border-border text-xs text-muted-foreground"><tr><th className="px-5 py-2.5 font-medium">Mục nội dung</th><th className="px-3 py-2.5 font-medium">Tiếng Việt</th><th className="px-5 py-2.5 font-medium">Tiếng Anh</th></tr></thead>
         <tbody className="divide-y divide-border">
-          {contentRows(content).map(r => (
+          {rows.map(r => (
             <tr key={r.label}>
               <td className={cn('px-5 py-2.5 font-medium', r.label.startsWith('Hạng phòng') ? 'whitespace-nowrap' : 'text-pretty')}>{r.label}</td>
               <td className="px-3 py-2.5">{cell(r.viMissing, r.value)}</td>
@@ -203,14 +215,29 @@ function PhotoPanel({ c }: { c: HotelCheck }) {
   )
 }
 
-async function Body({ slug, tab, checkin, checkout }: { slug: string; tab: Tab; checkin: string | null; checkout: string | null }) {
-  const data = await hotelCheck(slug)
-  if (!data) notFound()
-  const { check: c, content, error, properties } = data
+function Loading() {
+  return (
+    <div aria-busy>
+      <Skel className="h-7 w-56" /><Skel className="mt-2 h-6 w-72" />
+      <div className="mt-5 flex gap-4">{[0, 1, 2, 3].map(i => <Skel key={i} className="h-8 w-28" />)}</div>
+      <div className={`${CARD} mt-4 grid gap-3 p-5`}>{[0, 1, 2, 3].map(i => <Skel key={i} className="h-10" />)}</div>
+    </div>
+  )
+}
+
+export function HotelView({ slug }: { slug: string }) {
+  const sp = useSearchParams()
+  const tabParam = sp.get('tab')
+  const tab: Tab = TABS.some(([id]) => id === tabParam) ? (tabParam as Tab) : 'phong'
+  const { data, isPending, isError, refetch } = useAdminHotel(slug)
+  if (isPending) return <div className="max-w-[1200px]"><Loading /></div>
+  if (isError || !data) return <div className="max-w-[1200px]"><LoadFailed onRetry={() => refetch()} /></div>
+
+  const { check: c, error, properties } = data
   const file = `src/content/${slug}.ts`
   const counts: Partial<Record<Tab, number>> = { phong: c.state === 'ok' ? c.ghRooms.length : undefined, anh: c.photos.length }
   return (
-    <>
+    <div className="max-w-[1200px]">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1">
           <h1 className="text-lg font-semibold text-balance">{c.name}</h1>
@@ -227,7 +254,7 @@ async function Body({ slug, tab, checkin, checkout }: { slug: string; tab: Tab; 
           {TABS.map(([id, label, short]) => {
             const sel = tab === id
             return (
-              <Link key={id} href={`?tab=${id}`} role="tab" aria-selected={sel}
+              <Link key={id} href={`?tab=${id}`} scroll={false} role="tab" aria-selected={sel}
                 className={cn('relative box-content inline-flex h-10 shrink-0 items-center gap-1.5 rounded-xl px-2 pb-px text-sm font-medium whitespace-nowrap after:absolute after:inset-x-2 after:bottom-0 after:h-0.5 after:rounded-full',
                   sel ? 'text-foreground after:bg-foreground' : 'text-foreground/70 after:bg-transparent hover:text-foreground')}>
                 <span className="sm:hidden">{short}</span><span className="hidden sm:inline">{label}</span>
@@ -239,37 +266,10 @@ async function Body({ slug, tab, checkin, checkout }: { slug: string; tab: Tab; 
       </div>
       <div className="mt-4">
         {tab === 'phong' && <section className={`${CARD} overflow-hidden`}><MapPanel c={c} file={file} properties={properties} /></section>}
-        {tab === 'gia' && <PricePanel c={c} content={content} checkin={checkin} checkout={checkout} />}
-        {tab === 'noi-dung' && <ContentPanel content={content} file={file} />}
+        {tab === 'gia' && <PricePanel c={c} opening={data.content.opening} />}
+        {tab === 'noi-dung' && <ContentPanel data={data} file={file} />}
         {tab === 'anh' && <PhotoPanel c={c} />}
       </div>
-    </>
-  )
-}
-
-function Loading() {
-  return (
-    <div aria-busy>
-      <Skel className="h-7 w-56" /><Skel className="mt-2 h-6 w-72" />
-      <div className="mt-5 flex gap-4">{[0, 1, 2, 3].map(i => <Skel key={i} className="h-8 w-28" />)}</div>
-      <div className={`${CARD} mt-4 grid gap-3 p-5`}>{[0, 1, 2, 3].map(i => <Skel key={i} className="h-10" />)}</div>
     </div>
-  )
-}
-
-export default async function AdminHotelPage({ params, searchParams }: PageProps<'/admin/hotels/[slug]'>) {
-  const { slug } = await params
-  if (!repo.hotelSlugs().includes(slug)) notFound() // trước Suspense để trả đúng mã 404
-  const sp = await searchParams
-  const tabParam = one(sp.tab)
-  const tab: Tab = TABS.some(([id]) => id === tabParam) ? (tabParam as Tab) : 'phong'
-  return (
-    <AdminShell active={`hotel:${slug}`} parent={{ label: 'Khách sạn', href: '/admin' }}>
-      <div className="max-w-[1200px]">
-        <Suspense key={`${tab}|${one(sp.in)}|${one(sp.out)}`} fallback={<Loading />}>
-          <Body slug={slug} tab={tab} checkin={one(sp.in)} checkout={one(sp.out)} />
-        </Suspense>
-      </div>
-    </AdminShell>
   )
 }

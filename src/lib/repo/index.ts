@@ -40,6 +40,7 @@ function localize(h: HotelContent, locale: Locale): Hotel {
     faq: h.faq.map(([q, a]) => [t(q), t(a)]),
     cover: h.cover,
     gallery: h.gallery,
+    hero: h.hero,
     rooms: h.rooms.map(r => ({
       room_type_id: r.gohost_room_type_id,
       slug: r.slug,

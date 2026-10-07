@@ -1,7 +1,17 @@
 # Gohost PMS Public API
 
 Nguồn: OpenAPI 3.1 nhúng trong https://platform.gohost.vn/docs/api (Stoplight Elements), đọc ngày 05/10/2026.
-Toàn bộ nội dung file này **CONFIRMED từ spec**; **chưa gọi thử API thật** — hành vi thực tế có thể khác spec.
+Toàn bộ nội dung file này **CONFIRMED từ spec**; đã gọi thử bằng key chỉ-đọc ngày 07/10/2026 — xem mục **Gọi thật** ngay dưới (thắng spec khi khác).
+
+## Gọi thật (07/10/2026, key scope properties:read + bookings:read)
+
+CONFIRMED bằng response thật. Chỉ ghi cấu trúc, không ghi dữ liệu khách.
+
+- `GET /properties`: `room_types` là **mảng** (spec ghi object). Key đọc được **2 property đều là PITO**: `PIT` "Pito Hotel" và `PIO` "CÔNG TY TNHH KHÁCH SẠN HÒN THƠM PHÚ QUỐC - PITO HOTEL", cùng 4 hạng (Deluxe cao cấp view biển 4 · Tiêu chuẩn view nội khu 4 · Grand Deluxe Bồn Tắm 4 · Cozy sân thượng, view núi 1 = 13 phòng), mỗi hạng 1 gói "Standard" (`per_room`, giá 7 ngày như nhau). Chưa có Calista.
+- `GET /bookings`: `{ success, data[], pagination{ current_page, last_page, per_page, total, … } }`. Mỗi booking: `id` = **mã booking 8 ký tự** (dạng `PIT00199`; không có field `code`), `status`, `payment_status` (`not_pay`…), `amount`, `checkin_date`, `checkout_date`, `rooms_count`, `source_name` (vd `agoda`), `segment`, `payment_collect`, `booked_at`, `customer{ name, phone, email, country, identity, … }`, `booking_rooms[{ room_type (chuỗi), room_unit, nights, has_breakfast, occupancy, days_breakdown }]`, `booking_source{ name, color }`, `payments[]`.
+- `GET /bookings/{id}?booking_id={id}`: cùng cấu trúc, thêm `booking_rooms[].guests[]` (tên field của từng khách: chưa thấy vì danh sách rỗng).
+- **Booking không tồn tại → HTTP 422** `{ success: false, message: "Không tìm thấy đơn đặt phòng.", errors: { booking_id: [...] } }`.
+- Code đọc booking qua danh sách field cho phép (`src/lib/gohost.ts`); không đọc `customer.identity`, giấy tờ, ngày sinh.
 
 ## Tổng quan
 

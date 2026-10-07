@@ -11,7 +11,7 @@ const SELF_TICKET: L = { vi: 'Tự mua vé theo chiều cao', en: 'Own ticket, b
 export const PITO: HotelContent = {
   slug: 'pito-hon-thom',
   code: 'PITO',
-  gohost_tenant_id: null, // điền khi có API key: admin → Khách sạn → Phòng & ánh xạ
+  gohost_tenant_id: 'b231e154-fbfa-4426-b020-bbf8ed716b83', // Gohost property PIT "Pito Hotel" — chốt là PITO thật 07/10/2026 (key còn đọc được property PIO, không dùng)
   opening: null, // khai trương 10/2026 (PDF), đang đón khách
   name: 'PITO Hòn Thơm',
   area: { vi: 'Santo Port · Hòn Thơm', en: 'Santo Port · Hon Thom Island' },
@@ -139,17 +139,28 @@ export const PITO: HotelContent = {
     [{ vi: 'Ngày trả phòng tôi có quay lại đảo được không?', en: 'Can I go back to the island on check-out day?' }, { vi: 'Khi đã đi cáp từ Hòn Thơm về ga Sunset Town thì vé hết hiệu lực. Quý khách chọn về buổi sáng hay buổi chiều tuỳ ý, miễn trong giờ cáp chạy.', en: 'Once you ride from Hon Thom back to Sunset Town the ticket expires. Leave in the morning or the afternoon as you like, within cable car hours.' }],
   ],
   cover: img('mat-tien'),
-  // Ảnh ngang trước: 3 ảnh đầu làm banner trang chủ, 5 ảnh đầu hiện ở bộ ảnh đầu trang khách sạn.
+  // Ảnh ngang trước: 5 ảnh đầu hiện ở bộ ảnh đầu trang khách sạn.
   gallery: ['mat-tien', 'sanh', 'terrace-3', 'mat-tien-2', 'le-tan', 'terrace-1', 'terrace-2', 'ban-cong-301', 'cua-so-tron-403'].map(img),
+  // Banner trang chủ. Khung banner ~2,25:1 ở máy tính, dọc ở điện thoại; header, chữ và thanh chọn nhanh phủ mép trên,
+  // nửa trái và đáy. Chọn ảnh có chủ thể là một dải ngang (biển, dãy nhà) — không dùng ảnh mặt tiền: toà nhà rộng
+  // bị header cắt mái, thanh chọn nhanh che tầng trệt; mặt tiền đã hiện trọn ở ảnh thẻ khách sạn (cover, khung 16:10).
+  // focus = điểm giữ lại khi cắt (object-position).
+  hero: [
+    { src: img('terrace-1'), focus: '50% 56%' }, // vòm cửa nhìn ra biển, đảo và dãy nhà Santo Port
+    { src: img('ban-cong-301'), focus: '50% 45%' }, // ban công hoa giấy nhìn ra khu phố Santo Port
+    { src: img('terrace-2'), focus: '50% 52%' }, // hoàng hôn trên biển từ sân thượng
+  ],
   pending: [
     'Cáp treo đêm: PDF gửi khách ghi đang chạy, sổ tay vận hành ghi dự kiến từ 01/11 — web ghi “dự kiến”.',
     'Diện tích Superior: bản tiếng Việt ghi 19 – 22 m², bản tiếng Anh ghi 20 m² — web ghi 19 – 22 m².',
     'Phòng 101 và 601: PDF xếp vào Deluxe Bathtub 27 m², bảng giá đại lý và sổ tay ghi 20 m² — web ghi 20 m².',
+    'Hạng phòng Gohost ↔ web do Rooty tự ánh xạ theo số phòng và đặc điểm: Tiêu chuẩn view nội khu = Superior · Grand Deluxe Bồn Tắm = Deluxe Bathtub (gồm phòng 101) · Deluxe cao cấp view biển = Premier Bathtub · Cozy sân thượng, view núi = phòng 601.',
+    'Giá Gohost khác giá niêm yết PDF (Superior: Gohost 2.720.000, PDF 2.500.000) — web hiện giá Gohost.',
     'Xe riêng theo giờ tự chọn (ở từ 2 đêm): có trong bảng giá đại lý, không có trong PDF gửi khách — web chưa ghi.',
   ],
   rooms: [
     {
-      gohost_room_type_id: null,
+      gohost_room_type_id: '98d13bd3-0c01-4c7d-bddf-19bc1d74f299', // Gohost: Tiêu chuẩn view nội khu (4)
       slug: 'superior',
       name: { vi: 'Superior', en: 'Superior' },
       size: { vi: '19 – 22 m²', en: '19 – 22 m²' },
@@ -159,21 +170,21 @@ export const PITO: HotelContent = {
       images: ['superior-1', 'superior-2', 'superior-3', 'superior-4'].map(f => img(`rooms/${f}`)),
     },
     {
-      gohost_room_type_id: null,
+      gohost_room_type_id: 'd3bdac24-beb0-4373-93e2-7e9d316f3090', // Gohost: Grand Deluxe Bồn Tắm (4, gồm phòng 101)
       slug: 'deluxe-bathtub',
       name: { vi: 'Deluxe Bathtub', en: 'Deluxe Bathtub' },
       size: { vi: '27 m²', en: '27 m²' },
       view: { vi: 'Hướng núi', en: 'Mountain view' },
       features: [{ vi: 'Bồn tắm', en: 'Bathtub' }, { vi: 'Ban công', en: 'Balcony' }],
-      description: { vi: '5 phòng — hạng rộng nhất của khách sạn, có bồn tắm và ban công nhìn về phía núi.', en: '5 rooms — the largest at the hotel, with a bathtub and a balcony facing the mountains.' },
+      description: { vi: '4 phòng — hạng rộng nhất của khách sạn, có bồn tắm và ban công nhìn về phía núi.', en: '4 rooms — the largest at the hotel, with a bathtub and a balcony facing the mountains.' },
       note: {
-        vi: 'Phòng 101 và 601 thuộc hạng này nhưng bán giá ưu đãi riêng và rộng 20 m²: phòng 101 không có cửa sổ; phòng 601 ở tầng 6, thang máy chỉ lên tới tầng 5 (bù lại có ban công riêng).',
-        en: 'Rooms 101 and 601 belong to this type but are sold at a special rate and measure 20 m²: room 101 has no window; room 601 is on floor 6 while the lift only reaches floor 5 (it has a private balcony).',
+        vi: 'Phòng 101 thuộc hạng này nhưng rộng 20 m² và không có cửa sổ. Cần tránh phòng 101 thì báo khách sạn khi đặt.',
+        en: 'Room 101 belongs to this type but measures 20 m² and has no window. Tell the hotel when booking if you want to avoid it.',
       },
       images: ['deluxe-bathtub-1', 'deluxe-bathtub-2', 'deluxe-bathtub-3', 'deluxe-bathtub-4'].map(f => img(`rooms/${f}`)),
     },
     {
-      gohost_room_type_id: null,
+      gohost_room_type_id: 'ad4ec40f-9005-43d7-a2af-eab22687f2d4', // Gohost: Deluxe cao cấp view biển (4)
       slug: 'premier-bathtub',
       name: { vi: 'Premier Bathtub', en: 'Premier Bathtub' },
       size: { vi: '26 m²', en: '26 m²' },
@@ -181,6 +192,17 @@ export const PITO: HotelContent = {
       features: [{ vi: 'Bồn tắm', en: 'Bathtub' }, { vi: 'Ban công', en: 'Balcony' }],
       description: { vi: '4 phòng có bồn tắm và ban công nhìn ra khu phố Santo Port, một số phòng nhìn xéo ra biển.', en: '4 rooms with a bathtub and a balcony over the Santo Port promenade; some have a partial sea view.' },
       images: ['premier-bathtub-1', 'premier-bathtub-2', 'premier-bathtub-3'].map(f => img(`rooms/${f}`)),
+    },
+    {
+      gohost_room_type_id: '2e8418cd-3dd3-47ab-87ce-02ff80820c58', // Gohost: Cozy sân thượng, view núi (1) = phòng 601
+      slug: 'cozy-san-thuong',
+      name: { vi: 'Cozy sân thượng', en: 'Cozy Rooftop' },
+      size: { vi: '20 m²', en: '20 m²' },
+      view: { vi: 'Hướng núi', en: 'Mountain view' },
+      features: [{ vi: 'Ban công riêng', en: 'Private balcony' }],
+      description: { vi: 'Phòng 601 — phòng duy nhất ở tầng 6, có ban công riêng nhìn về phía núi.', en: 'Room 601 — the only room on floor 6, with a private balcony facing the mountains.' },
+      note: { vi: 'Thang máy chỉ lên tới tầng 5: đi bộ thêm một tầng cầu thang.', en: 'The lift only reaches floor 5: one flight of stairs to the room.' },
+      images: [], // ảnh phòng 601 có trên Drive, chưa tải
     },
   ],
 }

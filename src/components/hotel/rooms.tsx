@@ -2,13 +2,14 @@
 // Khối "Chọn phòng": nội dung từng hạng phòng (Rooty) + phòng trống, giá từng đêm (Gohost, qua /api/hotels/{slug}/rooms).
 // Trạng thái: đang tải · có giá · hết phòng · không đủ chỗ · chưa có giá trực tuyến (chưa nối Gohost, lỗi, hết lượt gọi).
 // Không có đặt phòng trực tuyến: nút "Liên hệ đặt phòng" mở hộp tóm tắt + Zalo / gọi / email — không ghi dữ liệu nào.
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import { BedDouble, CalendarDays, CalendarX, Coffee, Eye, Flame, Info, Mail, Maximize2, MessageCircle, Phone, RotateCw, Users, WifiOff } from 'lucide-react'
 import { cn } from 'cn'
 import { diffDays, fmtPrice, fmtRange, today } from '@/lib/format'
 import { mergeRooms, nightly, type RoomOffer } from '@/lib/rooms'
 import type { Contact, PlanOffer, Room, RoomAvailability, Stay } from '@/lib/types'
+import { useRoomAvailability } from '@/hooks/use-rooms'
 import { Dialog } from '@/components/ui/overlay'
 import { BTN, BTN_OUT, Photo } from '@/components/site/kit'
 import { DateRangeField, GuestsField } from '@/components/site/stay-fields'
@@ -16,35 +17,22 @@ import { firstCheckin } from '@/lib/stay'
 import { useStay } from './use-stay'
 
 export interface RoomsHotel { slug: string; name: string; online: boolean; opening: string | null; cancel_summary: string }
-type Result = { key: string; avail?: RoomAvailability[]; error?: boolean }
+type Result = { avail?: RoomAvailability[]; error?: boolean }
 type Pick = { room: Room; plan?: PlanOffer }
 
 export function Rooms({ hotel, rooms, contact }: { hotel: RoomsHotel; rooms: Room[]; contact: Contact }) {
   const t = useTranslations()
   const locale = useLocale()
   const [stay, setStay] = useStay(hotel.opening)
-  const [attempt, setAttempt] = useState(0)
-  const [res, setRes] = useState<Result>()
   const [editing, setEditing] = useState(false)
   const [picked, setPicked] = useState<Pick>()
-  const key = `${stay.checkin}|${stay.checkout}|${attempt}`
   const nights = diffDays(stay.checkin, stay.checkout)
   const party = t('Common.guests', { adults: stay.adults, children: stay.children })
   const range = fmtRange(stay.checkin, stay.checkout, locale)
 
   // Chỉ gọi lại khi đổi ngày (số khách tính "đủ chỗ" ngay trên trình duyệt, không tốn lượt gọi Gohost).
-  useEffect(() => {
-    if (!hotel.online) return
-    let live = true
-    const [checkin, checkout] = key.split('|')
-    fetch(`/api/hotels/${hotel.slug}/rooms?${new URLSearchParams({ in: checkin, out: checkout })}`)
-      .then(r => (r.ok ? r.json() : Promise.reject(r.status)))
-      .then((avail: RoomAvailability[]) => { if (live) setRes({ key, avail }) })
-      .catch(() => { if (live) setRes({ key, error: true }) })
-    return () => { live = false }
-  }, [hotel.online, hotel.slug, key])
-
-  const ready = hotel.online ? (res?.key === key ? res : undefined) : { key, avail: [] }
+  const query = useRoomAvailability(hotel.slug, stay.checkin, stay.checkout, hotel.online)
+  const ready: Result | undefined = !hotel.online ? { avail: [] } : query.isPending ? undefined : { avail: query.data, error: query.isError }
   const offers = ready?.avail ? mergeRooms(rooms, ready.avail, stay) : []
   const priced = offers.filter(o => o.state !== 'unmapped')
   const soldOut = priced.length > 0 && priced.every(o => o.state === 'sold_out')
@@ -83,7 +71,7 @@ export function Rooms({ hotel, rooms, contact }: { hotel: RoomsHotel; rooms: Roo
                   <p className="font-semibold text-brand">{ready.error ? t('Rooms.errorTitle') : t('Rooms.offlineTitle')}</p>
                   <p className="text-[15px] text-muted-foreground">{ready.error ? t('Rooms.errorBody') : t('Rooms.offlineBody', { range })}</p>
                 </div>
-                {ready.error && <button type="button" onClick={() => setAttempt(n => n + 1)} className={`${BTN_OUT} h-10`}><RotateCw className="size-4" aria-hidden />{t('Rooms.retry')}</button>}
+                {ready.error && <button type="button" onClick={() => query.refetch()} className={`${BTN_OUT} h-10`}><RotateCw className="size-4" aria-hidden />{t('Rooms.retry')}</button>}
               </div>
             )}
             {soldOut && (
@@ -158,17 +146,21 @@ function RoomCard({ offer, hotel, stay, onPick, onOtherDates }: { offer: RoomOff
               <div key={p.rate_plan_id} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 rounded-xl border border-border px-4 py-3">
                 <div className="min-w-[190px] flex-1">
                   <p className="text-[15px] font-medium">{p.title}</p>
-                  <p className="inline-flex items-center gap-1.5 text-[14px] text-muted-foreground">
-                    <Coffee className="size-3.5" aria-hidden />{p.has_breakfast ? t('Rooms.breakfast') : t('Rooms.noBreakfast')}
-                  </p>
+                  {/* Chỉ ghi khi Gohost bật has_breakfast. Cờ tắt chưa chắc là không có ăn sáng (PITO: Gohost tắt, PDF ghi có),
+                      nên không in "Không gồm ăn sáng" — mục "Đã gồm" của trang đã nói theo tài liệu khách sạn. */}
+                  {p.has_breakfast && (
+                    <p className="inline-flex items-center gap-1.5 text-[14px] text-muted-foreground">
+                      <Coffee className="size-3.5" aria-hidden />{t('Rooms.breakfast')}
+                    </p>
+                  )}
                   <p className="text-[13px] text-muted-foreground">{hotel.cancel_summary}</p>
                 </div>
-                <div className="flex w-full items-center justify-between gap-4 sm:ml-auto sm:w-auto sm:justify-end">
+                <div className="flex w-full flex-wrap items-center justify-between gap-x-4 gap-y-3 sm:ml-auto sm:w-auto sm:flex-nowrap sm:justify-end">
                   <p className="sm:text-right">
                     <span className="text-xl font-semibold">{fmtPrice(nightly(p))}</span><span className="text-[13px] text-muted-foreground"> {t('Common.perNight')}</span>
                     <span className="block text-[13px] whitespace-nowrap text-muted-foreground">{t('Rooms.total', { total: fmtPrice(p.total), nights: t('Common.nights', { n: p.days_breakdown.length }) })}</span>
                   </p>
-                  <button type="button" onClick={() => onPick(p)} className={`${BTN} h-10`}>{t('Rooms.book')}</button>
+                  <button type="button" onClick={() => onPick(p)} className={`${BTN} h-10 max-sm:w-full`}>{t('Rooms.book')}</button>
                 </div>
               </div>
             ))}
@@ -191,7 +183,7 @@ function ContactDialog({ hotel, stay, picked, contact, onClose }: { hotel: Rooms
   const rows: [string, string][] = picked ? [
     [t('Rooms.rowHotel'), hotel.name],
     [t('Rooms.rowRoom'), picked.room.name],
-    ...(picked.plan ? [[t('Rooms.rowPlan'), `${picked.plan.title} · ${picked.plan.has_breakfast ? t('Rooms.breakfast') : t('Rooms.noBreakfast')}`] as [string, string]] : []),
+    ...(picked.plan ? [[t('Rooms.rowPlan'), picked.plan.has_breakfast ? `${picked.plan.title} · ${t('Rooms.breakfast')}` : picked.plan.title] as [string, string]] : []),
     [t('Rooms.rowDates'), `${fmtRange(stay.checkin, stay.checkout, locale)} · ${t('Common.nights', { n: diffDays(stay.checkin, stay.checkout) })}`],
     [t('Rooms.rowGuests'), t('Common.guests', { adults: stay.adults, children: stay.children })],
     ...(picked.plan ? [[t('Rooms.rowTotal'), fmtPrice(picked.plan.total)] as [string, string]] : []),

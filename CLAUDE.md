@@ -28,9 +28,11 @@ Pre-production, 2 trang: `/` và `/hotel/[slug]` (PITO Hòn Thơm, Calista), vi/
 - Phòng trống, giá: Gohost **chỉ GET** (`src/lib/gohost.ts`). Chưa có API key và chưa điền `gohost_tenant_id` / `gohost_room_type_id` → web đang ở chế độ "liên hệ đặt phòng".
 - Không có đặt phòng trực tuyến: nút "Liên hệ đặt phòng" → Zalo/hotline/email của khách sạn.
 
-- Admin chỉ-xem `/admin` (wireframe A): Tổng quan · Khách sạn (4 tab) · Booking + chi tiết. Chưa có key nên mọi màn đang ở trạng thái "chưa đọc được Gohost"; bảng booking chưa thử với dữ liệu thật.
+- Admin chỉ-xem `/admin` (wireframe A) có trang đăng nhập: Tổng quan · Khách sạn (4 tab) · Booking + chi tiết. Đã có key (`.env`), đọc Gohost thật được.
+- PITO đã nối Gohost: property **PIT** "Pito Hotel" (chốt 07/10/2026; key còn đọc được PIO, không dùng). Hạng phòng do Rooty tự ánh xạ (INFERRED theo số phòng + đặc điểm, chờ KS xác nhận): Tiêu chuẩn view nội khu = Superior · Grand Deluxe Bồn Tắm = Deluxe Bathtub (gồm 101) · Deluxe cao cấp view biển = Premier Bathtub · Cozy sân thượng = phòng 601. Web đã có giá thật. **Calista chưa có trên Gohost.**
+- Cấu hình Gohost cần sửa (web không tự bù): mọi gói `has_breakfast: false` dù PITO có ăn sáng; sức chứa 2 NL + 0 TE (chính sách cho 1 trẻ < 6 tuổi ngủ chung) → khách chọn có trẻ bị báo "không đủ chỗ"; giá 24/12 bằng ngày thường (chưa có phụ thu lễ Tết).
 
-**Việc tiếp theo:** (1) có key → điền ánh xạ ID qua admin, (2) xem dạng dữ liệu thật của `GET /bookings` rồi chỉnh `toRow` trong `gohost.ts` nếu lệch, (3) KS xác nhận 7 mâu thuẫn ở `docs/2026-10-07-du-lieu-that-va-admin.md`.
+**Việc tiếp theo:** (1) KS xác nhận ánh xạ hạng phòng + sửa 3 cấu hình Gohost ở trên, (2) KS xác nhận 7 mâu thuẫn ở `docs/2026-10-07-du-lieu-that-va-admin.md`.
 
 ## Ranh giới hệ thống — không đổi được
 
@@ -47,7 +49,7 @@ Không tự xây Rates / Inventory / Channel Manager / Agent Portal / Loyalty / 
 
 Spec + giới hạn: `docs/api-docs/gohost-api.md`. Đợt pre-production **chỉ GET** — không viết code gọi POST.
 
-1. **Chỉ gọi từ server.** `src/lib/gohost.ts` (`import 'server-only'`, chỉ có hàm `get()`), key `GOHOST_API_KEY` / `GOHOST_API_SECRET` trong `.env.local`, scope chỉ đọc. Key không bao giờ xuống client.
+1. **Chỉ gọi từ server.** `src/lib/gohost.ts` (`import 'server-only'`, instance axios `gohostHttp` gắn Bearer một lần, chỉ có hàm `get()`), key `GOHOST_API_KEY` / `GOHOST_API_SECRET` trong `.env` (không commit), scope chỉ đọc. Key không bao giờ xuống client.
 2. **`src/lib/repo/index.ts`** ghép nội dung (`src/content`, sau là CMS) với Gohost theo `gohost_tenant_id` / `gohost_room_type_id`. Không có mock: thiếu key hoặc Gohost lỗi thì UI hiện chế độ liên hệ, không bịa số.
 3. **60 req/5 phút cho cả key** → `unstable_cache`: `/properties` 1 giờ, `/room_types` 3 phút theo (tenant, ngày); ngân sách 50 lượt/5 phút trong tiến trình. Route `/api/hotels/[slug]/rooms` kiểm khoảng ngày trước khi gọi. Khoảng ngày ≤ 30, `per_page` ≤ 50.
 4. **Tạo booking:** tính lại giá ở server; không retry mù (không có idempotency key); lưu ánh xạ mã Rooty ↔ booking Gohost phía Rooty.
@@ -55,7 +57,7 @@ Spec + giới hạn: `docs/api-docs/gohost-api.md`. Đợt pre-production **ch�
 
 ## Admin
 
-Đã chốt (07/10/2026): admin **chỉ xem**, nội dung + ánh xạ ID nằm trong `src/content/*.ts` (sửa bằng commit), **không database**. Màn: Tổng quan (dữ liệu thiếu/lệch) · Khách sạn (ánh xạ phòng, giá & phòng trống, nội dung, ảnh) · Booking (đọc từ Gohost, bỏ CCCD/ảnh giấy tờ). Basic Auth (`ADMIN_USER` / `ADMIN_PASSWORD`). Muốn sửa nội dung trong admin hay thêm CMS/DB → hỏi trước.
+Đã chốt (07/10/2026): admin **chỉ xem**, nội dung + ánh xạ ID nằm trong `src/content/*.ts` (sửa bằng commit), **không database**. Màn: Tổng quan (dữ liệu thiếu/lệch) · Khách sạn (ánh xạ phòng, giá & phòng trống, nội dung, ảnh) · Booking (đọc từ Gohost, bỏ CCCD/ảnh giấy tờ). Đăng nhập ở `/admin/login` (`ADMIN_USER` / `ADMIN_PASSWORD`, phiên cookie httpOnly ký HMAC, `src/lib/admin-auth.ts`). Muốn sửa nội dung trong admin hay thêm CMS/DB → hỏi trước.
 
 ## Câu hỏi mở — hỏi, đừng đoán
 
@@ -74,6 +76,6 @@ Spec + giới hạn: `docs/api-docs/gohost-api.md`. Đợt pre-production **ch�
 ## Code
 
 - **yarn**, không npm. `yarn build` là bước kiểm tra type.
-- Component **không import `src/content` hay `src/lib/gohost`** — mọi dữ liệu qua `src/lib/repo`. Tên field Gohost giữ nguyên (`src/lib/types.ts`, `src/lib/gohost.ts`).
+- Component **không import `src/content` hay `src/lib/gohost`** — trang server đọc qua `src/lib/repo`; component client chỉ gọi hook trong `src/hooks` (TanStack Query khai báo ở đó, gọi `/api` bằng axios `src/lib/http.ts`). Không gọi Gohost từ trình duyệt. Tên field Gohost giữ nguyên (`src/lib/types.ts`, `src/lib/gohost.ts`).
 - `yarn test` kiểm logic thuần (`src/lib/stay.ts`, `src/lib/rooms.ts`); `yarn photos` tải ảnh từ Drive theo `scripts/fetch-photos.ts`.
 - Không dùng `createNextIntlPlugin` (bẫy `@swc/core` trên máy này) — xem `next.config.ts`.

@@ -6,9 +6,10 @@ Website chung cho các khách sạn của Rooty, giao diện theo nhận diện 
 |---|---|
 | `/` | Banner + thanh chọn nhanh (khách sạn, ngày, số khách) · 4 điều đã gồm · thẻ các khách sạn · hệ sinh thái Rooty |
 | `/hotel/[slug]` | Bộ ảnh · mục lục dính · tổng quan · **chọn phòng** (phòng trống, giá từng đêm từ Gohost) · đã gồm · đi lại & vị trí · chính sách · hỏi đáp · thẻ giá dính |
-| `/admin` | **Chỉ xem**, Basic Auth. Tổng quan: trạng thái Gohost, việc cần xử lý (chặn hiển thị / cần sửa), thẻ từng khách sạn |
+| `/admin/login` | Đăng nhập admin (tài khoản trong env, phiên cookie httpOnly 7 ngày) |
+| `/admin` | **Chỉ xem**. Sidebar thu gọn được, "Khách sạn" có menu con. Tổng quan: trạng thái Gohost, việc cần xử lý (chặn hiển thị / cần sửa), thẻ từng khách sạn |
 | `/admin/hotels/[slug]` | Phòng & ánh xạ (hạng phòng Gohost ↔ nội dung, nút chép ID) · Giá & phòng trống (cùng lời gọi web dùng) · Nội dung VI/EN + chỗ chờ KS xác nhận · Ảnh |
-| `/admin/bookings` | Booking đọc từ Gohost theo khoảng ngày nhận phòng (≤ 30 ngày), lọc trạng thái; trang chi tiết. SĐT/email đã che, không hiện CCCD hay ảnh giấy tờ. Sửa, huỷ booking làm trong Gohost |
+| `/admin/bookings` | Booking đọc từ Gohost theo **property Gohost** (xem được cả khi khách sạn chưa gắn tenant) và khoảng ngày nhận phòng (≤ 30 ngày), lọc trạng thái; trang chi tiết. SĐT/email đã che, không hiện CCCD hay ảnh giấy tờ. Sửa, huỷ booking làm trong Gohost |
 
 Khách sạn: `/hotel/pito-hon-thom`, `/hotel/calista` (tiếng Anh: `/en/hotel/…`).
 
@@ -37,18 +38,18 @@ yarn test       # kiểm logic thuần: khoảng ngày, ghép phòng với Gohos
 yarn photos     # tải ảnh thật từ Drive còn thiếu vào public/images (danh sách trong scripts/fetch-photos.ts)
 ```
 
-### Biến môi trường (`.env.local`, không commit)
+### Biến môi trường (`.env` hoặc `.env.local`, không commit — `.gitignore` chặn `.env*`)
 
 | Biến | Dùng cho |
 |---|---|
 | `GOHOST_API_KEY`, `GOHOST_API_SECRET` | Gohost Public API. **Tạo key chỉ có scope `properties:read` + `bookings:read`** (không `bookings:write`). Thiếu thì web chạy ở chế độ "liên hệ" |
-| `ADMIN_USER`, `ADMIN_PASSWORD` | Đăng nhập `/admin` (Basic Auth). Thiếu thì `/admin` chặn hết |
+| `ADMIN_USER`, `ADMIN_PASSWORD` | Tài khoản đăng nhập `/admin/login`. Mật khẩu cũng là khoá ký cookie phiên: đổi mật khẩu là mọi phiên cũ hết hiệu lực. Thiếu thì không đăng nhập được |
 
 Gohost không có sandbox: máy dev dùng chung key production, giới hạn **60 lượt / 5 phút cho cả key**. Code tự giữ ngân sách 50 lượt/5 phút và cache (danh mục 1 giờ, phòng trống 3 phút) — đừng bật "Disable cache" trong DevTools khi đang có key.
 
 ### Nối Gohost lần đầu
 
-1. Đặt key và `ADMIN_USER` / `ADMIN_PASSWORD` vào `.env.local`, chạy `yarn dev`.
+1. Đặt key và `ADMIN_USER` / `ADMIN_PASSWORD` vào `.env`, chạy `yarn dev`, đăng nhập `/admin/login`.
 2. Mở `/admin/hotels/<slug>` → tab **Phòng & ánh xạ**: chép `id` property và `id` hạng phòng (nút chép cạnh mỗi ID), điền vào `gohost_tenant_id` và `gohost_room_type_id` trong `src/content/<slug>.ts`.
 3. Mở trang khách sạn, chọn ngày: khối "Chọn phòng" hiện giá từng gói. So với bảng giá niêm yết trong PDF của khách sạn.
 
@@ -56,19 +57,22 @@ Gohost không có sandbox: máy dev dùng chung key production, giới hạn **6
 
 ```
 src/content/                         nội dung thật của từng khách sạn (song ngữ vi/en) + kênh liên hệ
-src/lib/gohost.ts                    gọi Gohost — chỉ GET, chỉ server, cache, ngân sách lượt gọi
+src/lib/gohost.ts                    gọi Gohost — instance axios riêng (Bearer key:secret khai báo một lần), chỉ GET, chỉ server, cache, ngân sách lượt gọi
+src/lib/http.ts                      instance axios cho trình duyệt: chỉ gọi /api của Rooty; 401 ở /api/admin → về trang đăng nhập
+src/hooks/                           mọi khai báo TanStack Query (useQuery / useMutation + khoá cache); component chỉ gọi hook
+src/app/api/admin/                   route GET cho admin (kiểm phiên, kiểm tham số, rồi mới gọi Gohost) + đăng nhập/đăng xuất
 src/lib/repo/index.ts                cửa duy nhất để UI lấy dữ liệu (ghép content + Gohost)
 src/lib/rooms.ts, stay.ts            logic thuần dùng chung server/trình duyệt (ghép phòng, khoảng ngày)
 src/app/api/hotels/[slug]/rooms/     phòng trống + giá cho khối "Chọn phòng" (kiểm tham số trước khi gọi Gohost)
 src/app/[locale]/(site)/             trang chủ, trang khách sạn (dựng tĩnh, làm mới mỗi 10 phút)
 src/components/site/, hotel/         header, footer, ô chọn ngày/khách, bộ ảnh, chọn phòng, thẻ giá
-src/i18n/, src/proxy.ts, messages/   ngôn ngữ (next-intl); proxy còn chặn /admin bằng Basic Auth
-src/app/admin/, src/components/admin/  admin chỉ xem (layout gốc riêng, tiếng Việt, không index, không cache)
+src/i18n/, src/proxy.ts, messages/   ngôn ngữ (next-intl); proxy còn chặn /admin, /api/admin khi chưa đăng nhập
+src/app/admin/, src/components/admin/  admin chỉ xem: trang mỏng ở app/admin/(app), màn thật ở components/admin/views (client, dùng hook)
 src/lib/repo/admin.ts                đối chiếu content ↔ Gohost, danh sách việc cần xử lý, đọc booking
-src/lib/admin-auth.ts                Basic Auth dùng chung cho proxy và các hàm đọc booking (lớp chặn thứ hai)
+src/lib/admin-auth.ts                đăng nhập + phiên cookie ký HMAC, dùng chung cho proxy, route /api/admin và hàm đọc booking
 ```
 
-Component không import `src/content` hay `src/lib/gohost` — mọi dữ liệu qua `src/lib/repo`. Đổi sang CMS sau này chỉ thay `src/lib/repo`.
+Component không import `src/content` hay `src/lib/gohost` — trang server đọc qua `src/lib/repo`, component client đọc qua hook trong `src/hooks` (gọi /api). Trình duyệt không bao giờ gọi thẳng Gohost: key chỉ nằm ở server. Đổi sang CMS sau này chỉ thay `src/lib/repo`.
 
 ## Ngôn ngữ, header, banner
 

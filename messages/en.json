@@ -52,20 +52,39 @@
     "play": "Play slideshow",
     "whyAria": "Included when you stay at a Rooty hotel",
     "promises": [
-      ["Free airport transfer", "at fixed times"],
-      ["Daily breakfast", "included in your rate"],
-      ["VAT included", "and service charge"],
-      ["Book via Zalo or hotline", "the hotel confirms availability"]
+      [
+        "Free airport transfer",
+        "at fixed times"
+      ],
+      [
+        "Daily breakfast",
+        "included in your rate"
+      ],
+      [
+        "VAT included",
+        "and service charge"
+      ],
+      [
+        "Book via Zalo or hotline",
+        "the hotel confirms availability"
+      ]
     ],
     "hotelsLead": "Hotels by",
-    "count": "{n, plural, one {# hotel} other {# hotels}} in Phu Quoc",
     "viewHotel": "View hotel",
     "priceByDate": "See rooms and rates by date",
     "ecoLead": "Your whole trip with",
     "ecoSub": "Rooty hotels share one ecosystem with tours, speedboats and yachts in Phu Quoc.",
     "eco": [
-      ["Tours, combos, tickets", "Rooty Trip: Phu Quoc tours, combos and attraction tickets.", "See on Rooty Trip"],
-      ["Private speedboats, yachts", "RIVUS: private speedboats, yachts and events at sea.", "See on RIVUS"]
+      [
+        "Tours, combos, tickets",
+        "Rooty Trip: Phu Quoc tours, combos and attraction tickets.",
+        "See on Rooty Trip"
+      ],
+      [
+        "Private speedboats, yachts",
+        "RIVUS: private speedboats, yachts and events at sea.",
+        "See on RIVUS"
+      ]
     ]
   },
   "Fields": {
@@ -127,7 +146,6 @@
     "roomMax": "This room fits up to {max}. For {party}, book 2 rooms.",
     "askPrice": "Contact the hotel for this room's rate.",
     "breakfast": "Breakfast included",
-    "noBreakfast": "Room only",
     "total": "Total {total} · {nights}",
     "book": "Request to book",
     "contactTitle": "Request to book",

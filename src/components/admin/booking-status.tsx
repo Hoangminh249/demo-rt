@@ -12,7 +12,14 @@ const STATUS: Record<string, [label: string, tone: Tone, icon: LucideIcon]> = {
   merged: ['Đã gộp', 'neutral', Merge],
 }
 
-export const BOOKING_STATUSES = Object.entries(STATUS).map(([value, [label]]) => ({ value, label }))
+export const STATUS_OPTIONS = Object.entries(STATUS).map(([value, [label]]) => ({ value, label }))
+
+// Trạng thái thanh toán: mới thấy not_pay (gọi thật 07/10/2026); giá trị khác hiện nguyên chữ Gohost.
+const PAYMENT: Record<string, string> = { not_pay: 'Chưa thanh toán' }
+export const paymentLabel = (v: string | null) => (v ? PAYMENT[v] ?? v : null)
+
+const COLLECT: Record<string, string> = { property: 'Khách sạn thu', ota: 'OTA thu', online: 'Thanh toán online' }
+export const collectLabel = (v: string | null) => (v ? COLLECT[v] ?? v : null)
 
 export function BookingStatus({ status }: { status: string }) {
   const [label, tone, Icon] = STATUS[status] ?? [status, 'neutral', CircleHelp]
