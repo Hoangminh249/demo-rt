@@ -4,7 +4,7 @@
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { ArrowUpRight, Menu, UserRound } from 'lucide-react'
+import { ArrowUpRight, Menu } from 'lucide-react'
 import { cn } from 'cn'
 import { Link, usePathname } from '@/i18n/navigation'
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/ui/sheet'
@@ -66,10 +66,6 @@ export function SiteHeader() {
         </nav>
         <div className="ml-auto flex items-center gap-1">
           <LocalePicker className={cn('hidden lg:inline-flex', icon)} />
-          {/* Chỗ đăng nhập / tài khoản — nối khi có CMS */}
-          <button type="button" aria-label={t('account')} className={cn('inline-flex size-10 cursor-pointer items-center justify-center rounded-full transition-colors', icon)}>
-            <UserRound className="size-5" aria-hidden />
-          </button>
           <button type="button" onClick={() => setOpen(true)} className={cn('inline-flex size-10 cursor-pointer items-center justify-center rounded-lg transition-colors lg:hidden', icon)} aria-label={t('openMenu')}>
             <Menu className="size-6" aria-hidden />
           </button>

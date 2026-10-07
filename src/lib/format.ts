@@ -1,6 +1,7 @@
 // Ngày lưu dạng chuỗi ISO 'YYYY-MM-DD' (ngày lịch Asia/Ho_Chi_Minh), không mang giờ nên không lệch múi giờ.
 
-export const TODAY = '2026-10-07' // ngày "hôm nay" cố định của bản demo
+/** Hôm nay theo giờ Việt Nam, 'YYYY-MM-DD'. */
+export const today = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }).format(new Date())
 
 const toUTC = (iso: string) => {
   const [y, m, d] = iso.split('-').map(Number)
@@ -10,20 +11,16 @@ const fromUTC = (t: number) => new Date(t).toISOString().slice(0, 10)
 
 export const addDays = (iso: string, n: number) => fromUTC(toUTC(iso) + n * 86400000)
 export const diffDays = (from: string, to: string) => Math.round((toUTC(to) - toUTC(from)) / 86400000)
-export const isWeekendNight = (iso: string) => [5, 6].includes(new Date(toUTC(iso)).getUTCDay())
-export const isISODate = (s: string | null | undefined): s is string => !!s && /^\d{4}-\d{2}-\d{2}$/.test(s)
-
-export function nightsBetween(checkin: string, checkout: string): string[] {
-  const out: string[] = []
-  for (let d = checkin; d < checkout; d = addDays(d, 1)) out.push(d)
-  return out
-}
+export const isISODate = (s: string | null | undefined): s is string => !!s && /^\d{4}-\d{2}-\d{2}$/.test(s) && fromUTC(toUTC(s)) === s
 
 const MONTHS_EN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
 /** vi: 16/10 · en: 16 Oct */
 export const fmtDayMonth = (iso: string, locale = 'vi') =>
   locale === 'en' ? `${Number(iso.slice(8, 10))} ${MONTHS_EN[Number(iso.slice(5, 7)) - 1]}` : `${iso.slice(8, 10)}/${iso.slice(5, 7)}`
+
+/** vi: 16/10/2026 · en: 16 Oct 2026 */
+export const fmtDate = (iso: string, locale = 'vi') => `${fmtDayMonth(iso, locale)}${locale === 'en' ? ' ' : '/'}${iso.slice(0, 4)}`
 
 /** vi: 16/10 – 19/10/2026 · 30/12/2026 – 02/01/2027 — en: 16 Oct – 19 Oct 2026 */
 export function fmtRange(from: string, to: string, locale = 'vi') {
@@ -32,5 +29,5 @@ export function fmtRange(from: string, to: string, locale = 'vi') {
   return `${fmtDayMonth(from)}${sameYear ? '' : `/${from.slice(0, 4)}`} – ${fmtDayMonth(to)}/${to.slice(0, 4)}`
 }
 
-/** Giá kiểu rootytrip.com: "đ 2,850,000". Hiển thị theo tiền tệ khách chọn: dùng <Price> (components/site/currency.tsx). */
+/** Giá kiểu rootytrip.com: "đ 2,850,000". Giá luôn là VND (Gohost tính và thu bằng VND). */
 export const fmtPrice = (n: number) => `đ ${Math.round(n).toLocaleString('en-US')}`

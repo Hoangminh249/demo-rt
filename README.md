@@ -1,30 +1,28 @@
-# Rooty Hospitality — bản demo 2 trang
+# Rooty Hospitality — rootyhospitality.com (pre-production)
 
-Website chung cho các khách sạn của Rooty, giao diện theo nhận diện **rootytrip.com**. Phạm vi hiện tại chỉ có 2 trang:
+Website chung cho các khách sạn của Rooty, giao diện theo nhận diện **rootytrip.com**.
 
 | Trang | Nội dung |
 |---|---|
-| `/` | Banner + thanh chọn nhanh (khách sạn, ngày, số khách) · 4 cam kết đặt trực tiếp · thẻ các khách sạn · hệ sinh thái Rooty (xe sân bay, tour, RIVUS) |
-| `/hotel/[slug]` | Bộ ảnh · thanh mục lục dính · tổng quan · **chọn phòng** (giá theo ngày, gói ăn sáng / không hoàn huỷ, còn mấy phòng, hết phòng) · tiện ích · ăn uống · trải nghiệm · vị trí · chính sách · hỏi đáp · thẻ giá dính bên phải |
+| `/` | Banner + thanh chọn nhanh (khách sạn, ngày, số khách) · 4 điều đã gồm · thẻ các khách sạn · hệ sinh thái Rooty |
+| `/hotel/[slug]` | Bộ ảnh · mục lục dính · tổng quan · **chọn phòng** (phòng trống, giá từng đêm từ Gohost) · đã gồm · đi lại & vị trí · chính sách · hỏi đáp · thẻ giá dính |
+| `/admin` | **Chỉ xem**, Basic Auth. Tổng quan: trạng thái Gohost, việc cần xử lý (chặn hiển thị / cần sửa), thẻ từng khách sạn |
+| `/admin/hotels/[slug]` | Phòng & ánh xạ (hạng phòng Gohost ↔ nội dung, nút chép ID) · Giá & phòng trống (cùng lời gọi web dùng) · Nội dung VI/EN + chỗ chờ KS xác nhận · Ảnh |
+| `/admin/bookings` | Booking đọc từ Gohost theo khoảng ngày nhận phòng (≤ 30 ngày), lọc trạng thái; trang chi tiết. SĐT/email đã che, không hiện CCCD hay ảnh giấy tờ. Sửa, huỷ booking làm trong Gohost |
 
-Khách sạn: `/hotel/pito-hon-thom`, `/hotel/calista` (tiếng Anh: `/en/hotel/…`). **Mọi nội dung, giá, ảnh là mẫu.**
+Khách sạn: `/hotel/pito-hon-thom`, `/hotel/calista` (tiếng Anh: `/en/hotel/…`).
 
-**Dữ liệu là giả lập:** không có backend và không gọi Gohost. Bấm "Đặt phòng" sẽ mở một hộp tóm tắt: bản chính thức thay bằng trang đặt phòng + thanh toán của Gohost (điểm D2 trong `reviews/2026-10-06-yeu-cau-website-rooty-hospitality.docx`).
+## Dữ liệu đến từ đâu
 
-Stack: Next.js 16 (App Router) · TypeScript · Tailwind CSS 4 · shadcn/ui (Radix) · lucide-react · react-day-picker · next-intl · Embla Carousel · yet-another-react-lightbox · font Be Vietnam Pro.
-
-## Ngôn ngữ, tiền tệ, header, banner
-
-| Phần | Cách làm | Sửa ở đâu |
+| Dữ liệu | Nguồn | Sửa ở đâu |
 |---|---|---|
-| **Ngôn ngữ** (vi, en) | next-intl. Tiếng Việt giữ URL gốc (`/`, `/hotel/calista`), tiếng Anh thêm `/en`. Không tự đổi theo ngôn ngữ trình duyệt. | Chữ giao diện: `messages/vi.json`, `messages/en.json`. Nội dung khách sạn tiếng Anh: `src/data/hotels.en.ts`. Cấu hình: `src/i18n/routing.ts` |
-| **Tiền tệ** (VND, USD, EUR, KRW) | Nút "🌐 VI · VND" trên header (khuôn Klook), nhớ trong trình duyệt. Giá gốc luôn VND; ngoại tệ là quy đổi tham khảo, hộp đặt phòng ghi rõ "thanh toán bằng VND". | Danh sách + tỷ giá demo: `src/components/site/currency.tsx` |
-| **Header** | Như rootytrip.com: trang chủ trong suốt đè lên banner, cuộn thì nền trắng. Thêm: cuộn xuống thì ẩn, kéo lên thì hiện (thanh mục lục trang khách sạn dời lên theo). Icon tài khoản chưa nối gì, chờ CMS. | `src/components/site/header.tsx` |
-| **Banner** | Embla Carousel, tự chuyển 5 giây, vuốt được, có nút tạm dừng; máy bật "giảm chuyển động" thì không tự chạy. | `src/components/site/hero-slides.tsx`, danh sách ảnh ở `src/app/[locale]/(site)/page.tsx` |
-| **Lightbox** | Bộ ảnh trang khách sạn: bấm ảnh nào mở ảnh đó, vuốt / phím mũi tên, phóng to, dải ảnh nhỏ. | `src/components/hotel/gallery.tsx` |
-| **Thanh cuộn** | Chép rootytrip.com: 5px, thanh xanh #299683, rãnh #f1f1f1. | `src/app/globals.css` |
+| Ảnh, mô tả, tiện ích, đi lại, chính sách, hỏi đáp, bản dịch | Thư mục Drive "4. ROOTY HOSPITALITY" (PDF thông tin lưu trú, ảnh) | `src/content/<slug>.ts` |
+| Phòng trống, giá từng đêm, "Giá từ", số phòng, sức chứa | **Gohost PMS Public API — chỉ GET** | Trong Gohost (web chỉ đọc) |
+| Ánh xạ khách sạn ↔ Gohost (`gohost_tenant_id`), hạng phòng ↔ Gohost (`gohost_room_type_id`) | Rooty | `src/content/<slug>.ts` |
 
-Không dùng plugin `createNextIntlPlugin`: plugin kéo theo `@swc/core`, mà bản native của nó trên máy này lỗi quyền thư mục `AppData\Local\swc`. Thay bằng một dòng alias `next-intl/config` trong `next.config.ts` (đúng việc plugin làm).
+- Chưa có **đặt phòng trực tuyến**: nút "Liên hệ đặt phòng" mở hộp tóm tắt + Zalo / hotline / email của khách sạn. Không có lệnh ghi nào gửi sang Gohost.
+- Khách sạn chưa nối Gohost (`gohost_tenant_id: null`), Gohost lỗi hoặc hết lượt gọi → web ẩn giá, khối phòng hiện nội dung + nút liên hệ. Không bao giờ hiện số đoán.
+- Mâu thuẫn giữa các tài liệu của khách sạn và câu hỏi còn mở: `docs/2026-10-07-du-lieu-that-va-admin.md`.
 
 ## Chạy
 
@@ -35,46 +33,55 @@ yarn install
 yarn dev        # http://localhost:3000
 yarn build      # build production (cũng là bước kiểm tra type)
 yarn lint
-yarn photos     # tải lại ảnh mẫu Unsplash còn thiếu vào public/images
+yarn test       # kiểm logic thuần: khoảng ngày, ghép phòng với Gohost, "Giá từ"
+yarn photos     # tải ảnh thật từ Drive còn thiếu vào public/images (danh sách trong scripts/fetch-photos.ts)
 ```
 
-Ngày "hôm nay" của demo cố định là **07/10/2026** (`src/lib/format.ts`). Ngày ở mặc định: 16/10 – 19/10/2026, 2 người lớn + 1 trẻ em.
+### Biến môi trường (`.env.local`, không commit)
 
-## Xem các trạng thái
-
-| Muốn xem | Làm |
+| Biến | Dùng cho |
 |---|---|
-| Còn ít phòng | Deluxe Ocean View của PITO luôn hiện "Chỉ còn 3 phòng" |
-| Một hạng hết phòng | Family Suite của PITO hết cả tháng 10 → nút "Xem ngày khác" |
-| Cả khách sạn hết phòng + gợi ý ngày | Chọn 30/12 – 02/01 |
-| Đoàn đông hơn sức chứa | Chọn 3 người lớn ở Calista → lời khuyên đặt nhiều phòng |
-| Hạng phòng chưa có ảnh | Superior Garden của PITO |
-| Đang tải | Mỗi lần đổi ngày / số khách (giả lập độ trễ API) |
+| `GOHOST_API_KEY`, `GOHOST_API_SECRET` | Gohost Public API. **Tạo key chỉ có scope `properties:read` + `bookings:read`** (không `bookings:write`). Thiếu thì web chạy ở chế độ "liên hệ" |
+| `ADMIN_USER`, `ADMIN_PASSWORD` | Đăng nhập `/admin` (Basic Auth). Thiếu thì `/admin` chặn hết |
 
-## Đổi thương hiệu và nội dung
+Gohost không có sandbox: máy dev dùng chung key production, giới hạn **60 lượt / 5 phút cho cả key**. Code tự giữ ngân sách 50 lượt/5 phút và cache (danh mục 1 giờ, phòng trống 3 phút) — đừng bật "Disable cache" trong DevTools khi đang có key.
 
-- **Màu:** `src/app/globals.css`, khối `:root`. Màu lấy từ rootytrip.com; nút chính `--primary` đậm hơn `#299683` của rootytrip một nấc để chữ trắng đạt chuẩn tương phản.
-- **Font:** `src/app/layout.tsx`.
-- **Logo:** `public/images/brand/rooty-trip-logo.png` là logo Rooty Trip (bản trắng, tô xanh bằng CSS `.logo-green` như rootytrip.com đang làm). Có logo Rooty Hospitality thì thay file này.
-- **Nội dung khách sạn:** `src/data/hotels.ts`. Ảnh: ghi đè file cùng tên trong `public/images/<slug>/`.
+### Nối Gohost lần đầu
+
+1. Đặt key và `ADMIN_USER` / `ADMIN_PASSWORD` vào `.env.local`, chạy `yarn dev`.
+2. Mở `/admin/hotels/<slug>` → tab **Phòng & ánh xạ**: chép `id` property và `id` hạng phòng (nút chép cạnh mỗi ID), điền vào `gohost_tenant_id` và `gohost_room_type_id` trong `src/content/<slug>.ts`.
+3. Mở trang khách sạn, chọn ngày: khối "Chọn phòng" hiện giá từng gói. So với bảng giá niêm yết trong PDF của khách sạn.
 
 ## Kiến trúc mã
 
 ```
-src/app/[locale]/(site)/page.tsx              trang chủ
-src/app/[locale]/(site)/hotel/[slug]/page.tsx trang khách sạn (dựng tĩnh theo từng ngôn ngữ × slug)
-src/i18n/, src/proxy.ts, messages/           ngôn ngữ (next-intl)
-src/components/site/                 header, footer, ô chọn ngày/khách, mảnh dùng chung (kit.tsx)
-src/components/hotel/                bộ ảnh, mục lục, chọn phòng, thẻ giá
-src/lib/repo/                        cửa duy nhất lấy dữ liệu (mock.ts) — UI không import src/data
-src/data/hotels.ts                   dữ liệu mẫu
+src/content/                         nội dung thật của từng khách sạn (song ngữ vi/en) + kênh liên hệ
+src/lib/gohost.ts                    gọi Gohost — chỉ GET, chỉ server, cache, ngân sách lượt gọi
+src/lib/repo/index.ts                cửa duy nhất để UI lấy dữ liệu (ghép content + Gohost)
+src/lib/rooms.ts, stay.ts            logic thuần dùng chung server/trình duyệt (ghép phòng, khoảng ngày)
+src/app/api/hotels/[slug]/rooms/     phòng trống + giá cho khối "Chọn phòng" (kiểm tham số trước khi gọi Gohost)
+src/app/[locale]/(site)/             trang chủ, trang khách sạn (dựng tĩnh, làm mới mỗi 10 phút)
+src/components/site/, hotel/         header, footer, ô chọn ngày/khách, bộ ảnh, chọn phòng, thẻ giá
+src/i18n/, src/proxy.ts, messages/   ngôn ngữ (next-intl); proxy còn chặn /admin bằng Basic Auth
+src/app/admin/, src/components/admin/  admin chỉ xem (layout gốc riêng, tiếng Việt, không index, không cache)
+src/lib/repo/admin.ts                đối chiếu content ↔ Gohost, danh sách việc cần xử lý, đọc booking
+src/lib/admin-auth.ts                Basic Auth dùng chung cho proxy và các hàm đọc booking (lớp chặn thứ hai)
 ```
 
-Ngày ở + số khách nằm trên URL (`?in=&out=&a=&c=`), nên trang chủ truyền sang trang khách sạn và link chia sẻ được.
+Component không import `src/content` hay `src/lib/gohost` — mọi dữ liệu qua `src/lib/repo`. Đổi sang CMS sau này chỉ thay `src/lib/repo`.
 
-**Khi nối Gohost thật:** viết `src/lib/repo/api.ts` cùng kiểu `Repo` rồi đổi một dòng trong `src/lib/repo/index.ts`.
-- **Phòng trống và giá** (`searchRooms`) gọi qua backend Rooty, không gọi thẳng Gohost từ trình duyệt. Backend giữ API key, cache, chịu rate limit 60 lượt/5 phút và tính lại giá. Lời gọi tương ứng: `GET /properties/{tenant_id}/room_types/search`.
-- **Nội dung** (ảnh, mô tả, tiện ích, chính sách) Gohost API không có, nên vẫn lấy từ CMS của Rooty.
-- Tên field giữ theo Gohost: `tenant_id`, `room_type_id`, `rate_plan_id`, `has_breakfast`, `days_breakdown`, `quantity`.
+## Ngôn ngữ, header, banner
 
-Các trang của bản demo cũ (admin, đại lý, tìm kiếm, đặt phòng nhiều bước…) đã chuyển sang `demo/_luu-tru-ban-demo-cu-2026-10-07/`, không còn trong build.
+| Phần | Cách làm | Sửa ở đâu |
+|---|---|---|
+| **Ngôn ngữ** (vi, en) | next-intl. Tiếng Việt giữ URL gốc, tiếng Anh thêm `/en`. Giá luôn hiện VND | Chữ giao diện: `messages/*.json`. Nội dung khách sạn: `src/content/*.ts`. Cấu hình: `src/i18n/routing.ts` |
+| **Header** | Như rootytrip.com: trang chủ trong suốt đè lên banner, cuộn thì nền trắng; cuộn xuống thì ẩn, kéo lên thì hiện | `src/components/site/header.tsx` |
+| **Banner** | Embla Carousel, 3 ảnh đầu bộ ảnh của mỗi khách sạn có ảnh, tự chuyển 5 giây, có nút tạm dừng | `src/components/site/hero-slides.tsx` |
+| **Lightbox** | Bộ ảnh trang khách sạn: vuốt, phím mũi tên, phóng to. Chưa có ảnh thì khung "Ảnh đang cập nhật" | `src/components/hotel/gallery.tsx` |
+
+Không dùng plugin `createNextIntlPlugin`: plugin kéo theo `@swc/core`, mà bản native của nó trên máy này lỗi quyền thư mục `AppData\Local\swc`. Thay bằng một dòng alias `next-intl/config` trong `next.config.ts`.
+
+## Đổi thương hiệu
+
+- **Màu:** `src/app/globals.css`, khối `:root`. **Font:** `src/app/[locale]/layout.tsx`.
+- **Logo:** `public/images/brand/rooty-trip-logo.png` đang là logo Rooty Trip — có logo Rooty Hospitality thì thay file này.

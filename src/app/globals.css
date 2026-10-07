@@ -43,6 +43,9 @@
   --ring-focus: rgb(35 128 111 / 0.16);
   --item-hover: #f1f6f5;
   --button-hover: #eaf5f3;
+  /* Mục / tab đang chọn và đường kẻ hàng tab: phủ mờ theo màu chữ nên đậm hơn nền ngay dưới nó ~16–20 mức trên mọi nền */
+  --tab-selected: color-mix(in srgb, var(--foreground) 8%, transparent);
+  --tab-rail: color-mix(in srgb, var(--foreground) 10%, transparent);
 
   --elevation-card: 0 6px 28px rgb(6 87 73 / 0.1);   /* thẻ giá, thanh chọn nhanh (như rootytrip) */
   --elevation-popover: 0 10px 15px -3px rgb(16 40 36 / 0.1), 0 4px 6px -4px rgb(16 40 36 / 0.1);
@@ -85,6 +88,8 @@
   --color-ring: var(--ring);
   --color-item-hover: var(--item-hover);
   --color-button-hover: var(--button-hover);
+  --color-tab-selected: var(--tab-selected);
+  --color-tab-rail: var(--tab-rail);
 
   /* border-focus và ring-focus: hai màu khác nhau, tách namespace */
   --border-color-focus: var(--border-focus);
@@ -156,3 +161,20 @@
 }
 .scrollbar-clean { scrollbar-width: none; }
 .scrollbar-clean::-webkit-scrollbar { display: none; }
+
+/* ===== ADMIN (/admin, <html class="admin">): thanh cuộn tự ẩn 4px, hiện khi rê vào vùng cuộn. Website giữ thanh cuộn rootytrip ở trên. ===== */
+html.admin, html.admin * { --scrollbar-thumb: transparent; }
+html.admin:hover, html.admin *:hover { --scrollbar-thumb: color-mix(in srgb, var(--foreground) 16%, transparent); }
+html.admin ::-webkit-scrollbar { width: 4px; height: 4px; }
+html.admin ::-webkit-scrollbar-track { background: transparent; }
+html.admin ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 9999px; }
+@supports not selector(::-webkit-scrollbar) {
+  html.admin, html.admin * { scrollbar-width: thin; scrollbar-color: transparent transparent; }
+  html.admin:hover, html.admin *:hover { scrollbar-color: color-mix(in srgb, var(--foreground) 18%, transparent) transparent; }
+}
+/* Admin không vẽ vòng focus (skill evon, I13 — website giữ vòng ở @layer base). Outline trong suốt thay vì none:
+   chế độ tương phản cao (forced-colors) vẫn tô nó lên. Ô nhập, ô chọn ngày vẫn đổi viền khi focus. */
+html.admin :focus-visible { outline: 2px solid transparent; outline-offset: 2px; }
+/* Cuộn mượt của website (cho thanh mục lục #neo) không cần ở admin: tab admin là ?tab=, không có neo.
+   scroll-padding-top = header dính h-16: Tab tới một dòng thì trình duyệt cuộn dòng đó ra dưới header, không nằm khuất sau nó. */
+html.admin { scroll-behavior: auto; scroll-padding-top: 4rem; }

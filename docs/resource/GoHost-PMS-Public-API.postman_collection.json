@@ -1,0 +1,797 @@
+{
+  "info": {
+    "name": "GoHost PMS Public API v1",
+    "description": "# GoHost PMS Public API\n\n## Overview\nRESTful API for third-party partners to integrate with GoHost Property Management System.\n\n## Base URL\n- Production: `https://platform.gohost.vn/pms/api/public/v1`\n\n## Authentication\nAll API requests require Bearer token authentication.\n\n**Token Format:** `{api_key}:{api_secret}`\n\n**Example:**\n```bash\ncurl -H \"Authorization: Bearer abc123xyz:secret456def\" \\\n  https://platform.gohost.vn/pms/api/public/v1/properties\n```\n\n**How to get API credentials:**\n1. Login to GoHost PMS Admin panel\n2. Navigate to Settings > Integrations > Public API Keys\n3. Create a new API key with appropriate scopes\n4. Copy the API Key and API Secret\n5. Combine them as `{api_key}:{api_secret}` for Bearer token\n\n## Rate Limiting\n- Default: **60 requests per 5 minutes** per API key\n- Custom limits available for enterprise partners\n\n## Response Format\nAll responses follow standard JSON format:\n```json\n{\n  \"success\": true,\n  \"data\": {...}\n}\n```\n\n## Error Codes\n| Code | Description |\n|------|-------------|\n| AUTH_001 | Missing or invalid Authorization header |\n| AUTH_002 | Authentication failed |\n| AUTH_003 | API key disabled |\n| AUTH_004 | API key expired |\n| SCOPE_001 | Insufficient permissions |\n| RATE_001 | Rate limit exceeded |\n\n## Scopes\n- `properties:read` - Read property, room type, rate plan data\n- `bookings:read` - Read booking data\n- `bookings:write` - Create and update bookings\n\n## Support\nFor API support, contact: support@gohost.vn",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{api_key}}:{{api_secret}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://platform.gohost.vn/pms/api/public/v1"
+    },
+    {
+      "key": "api_key",
+      "value": ""
+    },
+    {
+      "key": "api_secret",
+      "value": ""
+    },
+    {
+      "key": "tenant_id",
+      "value": ""
+    },
+    {
+      "key": "booking_id",
+      "value": ""
+    },
+    {
+      "key": "booking_room_id",
+      "value": ""
+    },
+    {
+      "key": "room_type_id",
+      "value": ""
+    },
+    {
+      "key": "rate_plan_id",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Property",
+      "item": [
+        {
+          "name": "Get Properties List",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/properties",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "properties"
+              ]
+            },
+            "description": "**Get Properties List**\n\nRetrieve all active properties (tenants) belonging to the organization.\nEach property includes room types with their corresponding rate plans.\n\n**Scope Required:** `properties:read`\n\n**Response Structure:**\n- Returns array of properties with nested room types\n- Each room type contains its corresponding rate plans\n- Each property/room type/rate plan identified by UUID `id`\n- Room types include occupancy limits and availability\n- Rate plans include pricing details and restrictions\n- `default_rates`: Array of 7 daily rates (Monday-Sunday)"
+          },
+          "response": []
+        },
+        {
+          "name": "Search Properties",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/properties/search?checkin_date=2025-11-19&checkout_date=2025-11-21",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "properties",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "checkin_date",
+                  "value": "2025-11-19"
+                },
+                {
+                  "key": "checkout_date",
+                  "value": "2025-11-21"
+                }
+              ]
+            },
+            "description": "**Search Properties**\n\nSearch for properties that have available rooms for specific check-in and check-out dates.\nReturns properties with room availability, average daily rate, and total quantity.\n\n**Scope Required:** `properties:read`\n\n**Query Parameters:**\n- `checkin_date` (required): Check-in date in YYYY-MM-DD format\n- `checkout_date` (required): Check-out date in YYYY-MM-DD format\n\n**Important Notes:**\n- Maximum stay period: 30 days\n- For same-day availability queries, checkin and checkout must be different dates\n- Only returns properties with `quantity > 0` (at least one available room)\n- `quantity` is total of all available rooms across all room types in the property\n- `avg_daily_rate` shows the average daily rate for the entire stay period\n- Prices are calculated from direct rate plans only\n- Availability calculation considers:\n  - Existing bookings (confirmed, checked-in)\n  - Room maintenance schedules\n  - Out-of-order rooms"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Reference",
+      "item": [
+        {
+          "name": "Get Countries List",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/reference/countries?lang=vi",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "reference",
+                "countries"
+              ],
+              "query": [
+                {
+                  "key": "lang",
+                  "value": "vi",
+                  "description": "vi (default) | en"
+                }
+              ]
+            },
+            "description": "**Get Countries List**\n\nRetrieve the list of all countries available for address forms.\nUsed to populate the country dropdown when creating or updating guest/booking records.\n\n**Scope Required:** `properties:read`\n\n**Query Parameters:**\n- `lang` (optional): Language code for country names. Supported: `vi` (default), `en`\n\n**Use Cases:**\n- Populate country select dropdown in guest registration forms\n- Validate country values before submitting booking data\n- Display localized country names in the UI\n\n**Important Notes:**\n- Results are sorted alphabetically by name\n- For Vietnamese guests, use code `VN` — this triggers city/ward select dropdowns\n- For non-Vietnamese guests (code ≠ VN), city and ward fields should be free-text\n- DB stores the city/ward **name** (not the code)\n- Results are cached permanently (static data)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Vietnam Provinces (Cities)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/reference/cities",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "reference",
+                "cities"
+              ]
+            },
+            "description": "**Get Vietnam Provinces (Cities)**\n\nRetrieve the list of Vietnamese provinces/cities for address forms.\nOnly applicable when the selected country is Vietnam (code = `VN`).\n\n**Scope Required:** `properties:read`\n\n**Use Cases:**\n- Populate the city/province select dropdown after user selects country = VN\n- Validate city code before fetching wards\n\n**Important Notes:**\n- Vietnam provinces only — use this endpoint only when country = `VN`\n- Results are sorted alphabetically by name\n- The `code` field (TMSCode) is used to fetch wards via `/reference/cities/{city_code}/wards`\n- DB stores the province **name** (not the code) in the `city` field\n- Results are cached permanently (static data)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Wards for a City",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/reference/cities/:cityCode/wards",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "reference",
+                "cities",
+                ":cityCode",
+                "wards"
+              ],
+              "variable": [
+                {
+                  "key": "cityCode",
+                  "value": "101"
+                }
+              ]
+            },
+            "description": "**Get Wards for a City**\n\nRetrieve the list of wards/communes for a specific Vietnamese province/city.\nOnly applicable when the selected country is Vietnam (code = `VN`).\n\n**Scope Required:** `properties:read`\n\n**Path Parameters:**\n- `city_code` (required): Province TMSCode from `/reference/cities` (e.g., `101` for Hà Nội)\n\n**Use Cases:**\n- Populate the ward select dropdown after user selects a province\n- Validate ward before submitting guest address data\n\n**Important Notes:**\n- Vietnam wards only — use this endpoint only when country = `VN`\n- Results are sorted alphabetically by name\n- DB stores the ward **name** (not the code) in the `ward` field\n- Results are cached permanently (static data)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Booking Source",
+      "item": [
+        {
+          "name": "Get Booking Sources (Direct Segment Only)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/properties/:tenant_id/booking-sources",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "properties",
+                ":tenant_id",
+                "booking-sources"
+              ],
+              "variable": [
+                {
+                  "key": "tenant_id",
+                  "value": "{{tenant_id}}"
+                }
+              ]
+            },
+            "description": "**Get Booking Sources (Direct Segment Only)**\n\nRetrieve the list of active booking sources for a specific property,\nfiltered by \"direct\" segment. These sources represent direct booking\nchannels (walk-in, website, phone, etc.) and exclude OTA channels\n(Booking.com, Airbnb, etc.).\n\n**Scope Required:** `properties:read`\n\n**Path Parameters:**\n- `tenant_id` (required): Property/tenant identifier\n\n**Use Cases:**\n- Populate booking source dropdown in booking creation forms\n- Validate booking source values before creating bookings\n- Display available direct booking channels to API consumers\n- Show only booking sources configured for this specific property\n\n**Important Notes:**\n- Only returns active booking sources for the current property\n- Filtered by booking segment = \"direct\"\n- Each source includes translated name and color code\n- Results are cached for 10 minutes"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Payment Method",
+      "item": [
+        {
+          "name": "Get Payment Methods",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/properties/:tenant_id/payment-methods",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "properties",
+                ":tenant_id",
+                "payment-methods"
+              ],
+              "variable": [
+                {
+                  "key": "tenant_id",
+                  "value": "{{tenant_id}}"
+                }
+              ]
+            },
+            "description": "**Get Payment Methods**\n\nRetrieve the list of active payment methods for a specific property.\nThese are the payment methods that can be used when creating or confirming bookings.\n\n**Scope Required:** `properties:read`\n\n**Path Parameters:**\n- `tenant_id` (required): Property/tenant identifier\n\n**Use Cases:**\n- Populate payment method dropdown in booking/payment forms\n- Validate payment method values before creating bookings or payments\n- Display available payment options to API consumers\n- Show only payment methods configured for this specific property\n\n**Important Notes:**\n- Only returns active payment methods for the current property\n- Each method includes translated name for display\n- Results are cached for 10 minutes\n- The `name` field must be used when creating bookings or adding payments"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Services",
+      "item": [
+        {
+          "name": "Get Services List",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/properties/:tenant_id/services?category=",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "properties",
+                ":tenant_id",
+                "services"
+              ],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "",
+                  "disabled": true,
+                  "description": "Filter by service category name"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "tenant_id",
+                  "value": "{{tenant_id}}"
+                }
+              ]
+            },
+            "description": "**Get Services List**\n\nRetrieve the list of active services for a specific property.\nServices are identified by their unique code (not internal ID).\n\n**Scope Required:** `properties:read`\n\n**Path Parameters:**\n- `tenant_id` (required): Property/tenant identifier\n\n**Query Parameters:**\n- `category` (optional): Filter by service category name\n\n**Use Cases:**\n- Get available services for booking service additions\n- Display services list in third-party integrations\n- Validate service codes before adding to bookings\n\n**Important Notes:**\n- Only returns active services for the current property\n- Services are identified by `id` field (e.g., SVAB12CD34)\n- Internal IDs are hidden from the response\n- Results are cached for 10 minutes"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Room Type",
+      "item": [
+        {
+          "name": "Get Room Types List",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/properties/:tenant_id/room_types?checkin_date=2025-11-19&checkout_date=2025-11-21&room_type_id=550e8400-e29b-41d4-a716-446655440000",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "properties",
+                ":tenant_id",
+                "room_types"
+              ],
+              "query": [
+                {
+                  "key": "checkin_date",
+                  "value": "2025-11-19"
+                },
+                {
+                  "key": "checkout_date",
+                  "value": "2025-11-21"
+                },
+                {
+                  "key": "room_type_id",
+                  "value": "550e8400-e29b-41d4-a716-446655440000",
+                  "disabled": true,
+                  "description": "Optional room type UUID"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "tenant_id",
+                  "value": "{{tenant_id}}"
+                }
+              ]
+            },
+            "description": "**Get Room Types List**\n\nReturns all active room types including their availability (quantity) for specific check-in and check-out dates.\nUnlike /room_types/search endpoint, this returns ALL room types including those with quantity = 0.\n\n**Scope Required:** `properties:read`\n\n**Query Parameters:**\n- `checkin_date` (required): Check-in date in YYYY-MM-DD format\n- `checkout_date` (required): Check-out date in YYYY-MM-DD format\n- `room_type_id` (optional): Specific room type code (UUID) to check (if not provided, returns all room types)\n\n**Important Notes:**\n- Maximum stay period: 30 days\n- checkin_date and checkout_date must be different dates (checkout must be strictly after checkin)\n- Returns ALL active room types including those with 0 available rooms\n- Does NOT filter by occupancy (adults/children/infants)\n- Availability calculation considers:\n  - Existing bookings (confirmed, checked-in)\n  - Room maintenance schedules\n  - Out-of-order rooms\n- Rate plans returned are \"direct rate plans\" only (not derived/seasonal)\n- Rate plans include `days_breakdown` with daily rates (uses restrictions data first, then default_rates)\n- Rate plans include `estimated_total_price` (sum of daily rates)\n- Rate plans include `has_breakfast` (boolean flag whether breakfast is included in the rate)"
+          },
+          "response": []
+        },
+        {
+          "name": "Search Room Type",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/properties/:tenant_id/room_types/search?checkin_date=2025-11-19&checkout_date=2025-11-21&room_type_id=550e8400-e29b-41d4-a716-446655440000&occupancy_adults=2&occupancy_children=0&occupancy_infant=0",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "properties",
+                ":tenant_id",
+                "room_types",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "checkin_date",
+                  "value": "2025-11-19"
+                },
+                {
+                  "key": "checkout_date",
+                  "value": "2025-11-21"
+                },
+                {
+                  "key": "room_type_id",
+                  "value": "550e8400-e29b-41d4-a716-446655440000",
+                  "disabled": true,
+                  "description": "Optional room type UUID"
+                },
+                {
+                  "key": "occupancy_adults",
+                  "value": "2",
+                  "disabled": true,
+                  "description": "min 1"
+                },
+                {
+                  "key": "occupancy_children",
+                  "value": "0",
+                  "disabled": true,
+                  "description": "min 0"
+                },
+                {
+                  "key": "occupancy_infant",
+                  "value": "0",
+                  "disabled": true,
+                  "description": "min 0"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "tenant_id",
+                  "value": "{{tenant_id}}"
+                }
+              ]
+            },
+            "description": "**Search Room Type**\n\nCheck which room types are available for specific check-in and check-out dates.\nReturns available room types with quantity and applicable rate plans including pricing breakdown.\n\n**Scope Required:** `properties:read`\n\n**Query Parameters:**\n- `checkin_date` (required): Check-in date in YYYY-MM-DD format\n- `checkout_date` (required): Check-out date in YYYY-MM-DD format\n- `room_type_id` (optional): Specific room type code (UUID) to check (if not provided, checks all room types)\n- `occ_adults` (optional): Number of adults staying (filters room types that can accommodate this many adults)\n- `occ_children` (optional): Number of children staying (filters room types that can accommodate this many children)\n- `occ_infant` (optional): Number of infants staying (filters room types that can accommodate this many infants)\n\n**Important Notes:**\n- Maximum stay period: 30 days\n- checkin_date and checkout_date must be different dates (checkout must be strictly after checkin)\n- Availability calculation considers:\n  - Existing bookings (confirmed, checked-in)\n  - Room maintenance schedules\n  - Out-of-order rooms\n  - Occupancy requirements (when `occ_adults`, `occ_children`, or `occ_infant` are provided)\n- Rate plans returned are \"direct rate plans\" only (not derived/seasonal)\n- Rate plans include `days_breakdown` with daily rates (uses restrictions data first, then default_rates)\n- Rate plans include `estimated_total_price` (sum of daily rates)\n- Rate plans include `has_breakfast` (boolean flag whether breakfast is included in the rate)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Booking",
+      "item": [
+        {
+          "name": "Get Bookings",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/properties/:tenant_id/bookings?start_date=2025-11-01&end_date=2025-11-30&status=confirmed&per_page=10&page=1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "properties",
+                ":tenant_id",
+                "bookings"
+              ],
+              "query": [
+                {
+                  "key": "start_date",
+                  "value": "2025-11-01"
+                },
+                {
+                  "key": "end_date",
+                  "value": "2025-11-30"
+                },
+                {
+                  "key": "status",
+                  "value": "confirmed",
+                  "disabled": true,
+                  "description": "new | confirmed | in_progress | finished | no_show | cancelled | merged"
+                },
+                {
+                  "key": "per_page",
+                  "value": "10",
+                  "disabled": true,
+                  "description": "max 50"
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "disabled": true
+                }
+              ],
+              "variable": [
+                {
+                  "key": "tenant_id",
+                  "value": "{{tenant_id}}"
+                }
+              ]
+            },
+            "description": "**Get Bookings**\n\nRetrieve a list of bookings within a specified date range.\nQuery bookings based on check-in date falling within the provided range.\n\n**Scope Required:** `bookings:read`\n\n**Query Parameters:**\n- `start_date` (required): Start date in YYYY-MM-DD format\n- `end_date` (required): End date in YYYY-MM-DD format\n- `status` (optional): Filter by booking status (new, confirmed, in_progress, finished, no_show, cancelled)\n- `per_page` (optional): Number of items per page (default: 10, max: 50)\n- `page` (optional): Page number (default: 1)\n\n**Important Notes:**\n- Maximum date range: 30 days\n- Bookings are filtered by `checkin_date` within the range [start_date, end_date]\n- Results are paginated\n- Includes related data: customer, booking source, and occupancy information"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Booking",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/properties/:tenant_id/bookings",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "properties",
+                ":tenant_id",
+                "bookings"
+              ],
+              "variable": [
+                {
+                  "key": "tenant_id",
+                  "value": "{{tenant_id}}"
+                }
+              ]
+            },
+            "description": "**Create Booking**\n\nCreate a new booking with customer information, room assignments, and optional payments.\nThe booking will be created with status \"confirmed\" and assigned a unique booking code.\n\n**Scope Required:** `bookings:write`\n\n**Body Parameters:**\n- \"currency\": format: ISO 4217 currency code, example: VND,\n- \"checkin_date\": format: YYYY-MM-DD,\n- \"arrival_hour\": format: H:i,\n- \"checkout_date\": format: YYYY-MM-DD,\n- \"departure_hour\": format: H:i,\n- \"source_commission\": integer (min 0) or null,\n- \"notes\": format: string, max: 500 characters,\n- \"source_name\": format: string, example: trip,\n- \"occupancy_children\": format: integer, min: 0,\n- \"occupancy_adults\": format: integer, min: 1,\n- \"occupancy_infants\": format: integer, min: 0,\n- \"payment_collect\": string|null, one of: \"property\", \"ota\", \"online\", \"\",\n\n**Customer (`customer`) object:**\n- \"customer\": object, required, main guest information,\n- \"customer.name\": string, required, max: 50 characters,\n- \"customer.phone\": string|null,\n- \"customer.email\": string|null, valid email format, max: 255 characters,\n- \"customer.birthday\": string|null, format: YYYY-MM-DD,\n- \"customer.gender\": string|null, one of: \"male\", \"female\", \"unknown\",\n- \"customer.company\": string|null,\n- \"customer.address\": string|null,\n- \"customer.ward\": string|null,\n- \"customer.city\": string|null,\n- \"customer.country\": string|null, ISO 3166-1 alpha-2 format (2 uppercase letters). Example: `VN`, `US`, `JP`, `KR`\n- \"customer.identity\": string|null,\n- \"customer.identity_issue_date\": string|null, format: YYYY-MM-DD,\n- \"customer.id_type\": string|null, one of: \"identity_card\", \"passport\", \"other\",\n- \"customer.is_child\": boolean|null,\n- \"customer.notes\": string|null, max: 500 characters,\n\n**Booking rooms (`booking_rooms`) array:**\n- \"booking_rooms\": array, required, at least 1 item,\n- \"booking_rooms[].room_type_id\": string, required, room type code (must exist and be active),\n- \"booking_rooms[].default_rate\": numeric|null, default room rate,\n- \"booking_rooms[].room_discount\": numeric, optional discount amount (default 0),\n- \"booking_rooms[].days_breakdown\": array|null, custom price per day,\n- \"booking_rooms[].days_breakdown[].day\": string, required with `days_breakdown`, format: YYYY-MM-DD,\n- \"booking_rooms[].days_breakdown[].price\": numeric, required with `days_breakdown`, daily price,\n\n**Payments (`payments`) array:**\n- \"payments\": array|null, list of payment records to attach to booking,\n- \"payments[].amount\": numeric, required, min: 0,\n- \"payments[].notes\": string|null,\n- \"payments[].method\": string|null, one of system payment method (cash, bank_transfer, debt, atm_transfer, credit_card, apple_pay, pos, wechat_pay..v.v),\n- \"payments[].paid_at\": string|null, format: YYYY-MM-DD H:i:s,\n\n**Auto-cancel option:**\n- \"auto_cancel\": boolean|null, default: true. If true and no payments provided, booking will be auto-cancelled after 16 minutes if unconfirmed.\n\n**Important Notes:**\n- Room availability is checked before booking creation\n- Overlapping bookings for same room will be rejected\n- Payment is optional - can be added later via Payment API\n- For hourly bookings: set `checkin_date` = `checkout_date` and specify `arrival_hour`, `departure_hour`\n- If no payments are provided and `auto_cancel` is true (default), the booking will be automatically cancelled after 16 minutes if it is still unconfirmed.\n- Set `auto_cancel` to false to disable automatic cancellation for partners who manage confirmation externally.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currency\": \"VND\",\n  \"checkin_date\": \"2025-11-19\",\n  \"checkout_date\": \"2025-11-21\",\n  \"arrival_hour\": \"14:00\",\n  \"departure_hour\": \"12:00\",\n  \"source_name\": \"trip\",\n  \"source_commission\": 0,\n  \"payment_collect\": \"property\",\n  \"occupancy_adults\": 2,\n  \"occupancy_children\": 0,\n  \"occupancy_infants\": 0,\n  \"notes\": \"Booking tạo qua Public API\",\n  \"discount_reason\": null,\n  \"auto_cancel\": true,\n  \"customer\": {\n    \"name\": \"Nguyen Van A\",\n    \"phone\": \"0901234567\",\n    \"email\": \"guest@example.com\",\n    \"birthday\": \"1990-05-15\",\n    \"gender\": \"male\",\n    \"company\": null,\n    \"address\": \"123 Nguyen Hue\",\n    \"ward\": \"Ben Nghe\",\n    \"city\": \"Ho Chi Minh\",\n    \"country\": \"VN\",\n    \"identity\": \"012345678901\",\n    \"identity_issue_date\": \"2020-01-15\",\n    \"id_type\": \"identity_card\",\n    \"is_child\": false,\n    \"notes\": null\n  },\n  \"booking_rooms\": [\n    {\n      \"room_type_id\": \"{{room_type_id}}\",\n      \"rate_plan_id\": \"{{rate_plan_id}}\",\n      \"default_rate\": 1000000,\n      \"room_discount\": 0,\n      \"days_breakdown\": [\n        {\n          \"day\": \"2025-11-19\",\n          \"price\": 1000000\n        },\n        {\n          \"day\": \"2025-11-20\",\n          \"price\": 1000000\n        }\n      ]\n    }\n  ],\n  \"payments\": [\n    {\n      \"method\": \"cash\",\n      \"amount\": 500000,\n      \"paid_at\": \"2025-11-19 16:54:00\",\n      \"notes\": \"Đặt cọc\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Booking Detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/properties/:tenant_id/bookings/:booking_id?booking_id={{booking_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "properties",
+                ":tenant_id",
+                "bookings",
+                ":booking_id"
+              ],
+              "query": [
+                {
+                  "key": "booking_id",
+                  "value": "{{booking_id}}",
+                  "description": "Spec khai báo thêm booking_id ở query (required)"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "tenant_id",
+                  "value": "{{tenant_id}}"
+                },
+                {
+                  "key": "booking_id",
+                  "value": "{{booking_id}}"
+                }
+              ]
+            },
+            "description": "**Get Booking Detail**\n\nRetrieve detailed information for a specific booking, including rooms and guests.\nUse this endpoint for online check-in flow to get all guest information.\n\n**Scope Required:** `bookings:read`\n\n**URL Parameters:**\n- `booking_id` (required): The booking code. Example: PR00123\n\n**Response includes:**\n- Booking details: dates, status, amount, payment_collect (enum [property, ota, null]), etc.\n- Customer information (primary booker)\n- Booking rooms with room type and unit assignments\n- Guests attached to each room (for online check-in)\n- Payments history\n- Booking source information\n- Note: payment_collect is information about who should collect Payment. Can be 'property' if payment should be collected by property, 'ota' if guest already pay at OTA and null if value is not specified. Usually null mean that property will collect payment.\n- Note: `meals` is the detailed breakfast list per room (serve_date, adults, children) — empty array `[]` if the room has no breakfast recorded. Internal fields (price, notes, is_included, created_by) are intentionally NOT exposed. This field is shared with the Update Booking (Online Check-in) response since both use the same relation/resource pipeline."
+          },
+          "response": []
+        },
+        {
+          "name": "Confirm Booking",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/properties/:tenant_id/bookings/:booking_id/confirm",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "properties",
+                ":tenant_id",
+                "bookings",
+                ":booking_id",
+                "confirm"
+              ],
+              "variable": [
+                {
+                  "key": "tenant_id",
+                  "value": "{{tenant_id}}"
+                },
+                {
+                  "key": "booking_id",
+                  "value": "{{booking_id}}"
+                }
+              ]
+            },
+            "description": "**Confirm Booking**\n\nConfirm a pending booking, optionally adding payments.\nThe booking status will be updated to \"confirmed\".\n\n**Scope Required:** `bookings:write`\n\n**URL Parameters:**\n- `booking_id` (required): The booking code to confirm (must exist and be in pending status)\n\n**Body Parameters:**\n- `payments` (optional): Array of payment records to attach during confirmation\n- `payments[].amount` (required): Payment amount (numeric, min: 0)\n- `payments[].method` (optional): Payment method (one of system payment method (cash, bank_transfer, debt, atm_transfer, credit_card, apple_pay, pos, wechat_pay..v.v))\n- `payments[].paid_at` (optional): Payment date (format: Y-m-d H:i:s)\n- `payments[].notes` (optional): Payment notes (max: 500 characters)\n\n**Important Notes:**\n- Only pending bookings can be confirmed\n- Payments are optional - booking can be confirmed without payment\n- Booking status will be updated to \"confirmed\" automatically\n- If booking is already confirmed, checked_in, checked_out, or cancelled, the request will fail",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"payments\": [\n    {\n      \"amount\": 500000,\n      \"method\": \"cash\",\n      \"paid_at\": \"2025-11-19 16:54:00\",\n      \"notes\": \"Thanh toán khi xác nhận\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Add Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/properties/:tenant_id/bookings/:booking_id/payments",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "properties",
+                ":tenant_id",
+                "bookings",
+                ":booking_id",
+                "payments"
+              ],
+              "variable": [
+                {
+                  "key": "tenant_id",
+                  "value": "{{tenant_id}}"
+                },
+                {
+                  "key": "booking_id",
+                  "value": "{{booking_id}}"
+                }
+              ]
+            },
+            "description": "**Add Payment**\n\nAdd one or more payments to an existing booking without changing its status.\nUse this endpoint to record payments for bookings that are already confirmed or in progress.\n\n**Scope Required:** `bookings:write`\n\n**URL Parameters:**\n- `booking_id` (required): The booking code to add payments (must exist and not be cancelled)\n\n**Body Parameters:**\n- `payments` (required): Array of payment records, at least one payment is required\n- `payments[].amount` (required): Payment amount (numeric, min: 0)\n- `payments[].method` (optional): Payment method (one of system payment method (cash, bank_transfer, debt, atm_transfer, credit_card, apple_pay, pos, wechat_pay..v.v))\n- `payments[].paid_at` (optional): Payment date (format: Y-m-d H:i:s)\n- `payments[].notes` (optional): Payment notes (max: 500 characters)\n\n**Important Notes:**\n- At least one payment is required\n- Booking status will NOT be changed\n- Cancelled bookings cannot receive payments\n- Payments are added to existing payments (not replaced)\n- If `booking_id` refers to a booking that has since been merged into a\n  group booking (a \"đơn đoàn\" — status Merged), the payment is redirected\n  to its master booking instead, because payments always live on the\n  master after a merge. The `data` in the response then describes the\n  MASTER booking, whose `id` may differ from the `booking_id` you sent —\n  this is intentional (see `BookingService::addPayment()`), not a bug.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"payments\": [\n    {\n      \"amount\": 500000,\n      \"method\": \"bank_transfer\",\n      \"paid_at\": \"2025-11-20 10:00:00\",\n      \"notes\": \"Thanh toán đợt 2\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel Booking",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/properties/:tenant_id/bookings/:booking_id/cancel",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "properties",
+                ":tenant_id",
+                "bookings",
+                ":booking_id",
+                "cancel"
+              ],
+              "variable": [
+                {
+                  "key": "tenant_id",
+                  "value": "{{tenant_id}}"
+                },
+                {
+                  "key": "booking_id",
+                  "value": "{{booking_id}}"
+                }
+              ]
+            },
+            "description": "**Cancel Booking**\n\nCancel an existing booking and all its associated booking rooms.\nAll unpaid payments will be marked as cancelled.\nAll booking rooms will have their check-in status set to cancelled.\n\n**Scope Required:** `bookings:write`\n\n**URL Parameters:**\n- `booking_id` (required): The ID of the booking to cancel (must exist and be cancellable)\n\n**Important Notes:**\n- Only bookings with status that allows cancellation can be cancelled\n- The booking must pass the `canCancel` check (see Booking model)\n- All unpaid payments will be automatically cancelled\n- All booking rooms will be marked as cancelled\n- Room charges will be recalculated after cancellation",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Booking (Online Check-in)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/properties/:tenant_id/bookings/:booking_id/update",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "properties",
+                ":tenant_id",
+                "bookings",
+                ":booking_id",
+                "update"
+              ],
+              "variable": [
+                {
+                  "key": "tenant_id",
+                  "value": "{{tenant_id}}"
+                },
+                {
+                  "key": "booking_id",
+                  "value": "{{booking_id}}"
+                }
+              ]
+            },
+            "description": "**Update Booking (Online Check-in)**\n\nUpdate booking with rooms, guests, payments, status, and notes.\nUse this endpoint for online check-in to submit guest information and complete check-in.\n\n**Scope Required:** `bookings:write`\n\n**Content-Type:** `multipart/form-data` (to support file uploads)\n\n**URL Parameters:**\n- `booking_id` (required): The booking code to update\n\n**Request Format:**\nSend as `multipart/form-data` with:\n- `data`: JSON string containing the update payload\n- `rooms[{index}][guests][records][{guestIndex}][identity_image]`: Single identity image file (backward compatible)\n- `rooms[{index}][guests][records][{guestIndex}][identity_image][]`: Multiple identity image files (max 3)\n\n**Body Parameters (in `data` JSON):**\n\n**Rooms (`rooms` array) - Updates per booking room:**\n- `rooms[].id` (required): UUID of the booking room\n- `rooms[].status` (optional): \"checked_in\" to check in this specific room\n- `rooms[].guests` (optional): Guest updates for this room\n- `rooms[].guests.method` (required with guests): \"add\" or \"replace\"\n  - `add`: Add new guests to existing list\n  - `replace`: Remove all existing guests and replace with new list\n- `rooms[].guests.records[]` (required with guests): Array of guest objects\n  - `id` (optional): ID of the customer\n  - `name` (required): Guest full name\n  - `email` (optional): Email address\n  - `phone` (optional): Phone number\n  - `birthday` (optional): Date of birth (YYYY-MM-DD)\n  - `gender` (optional): male, female, unknown\n  - `identity` (optional): ID/Passport number\n  - `id_type` (optional): identity_card, passport, other\n  - `identity_issue_date` (optional): ID issue date (YYYY-MM-DD)\n  - `identity_image` (optional): File upload(s) - single file or array of files (JPEG/PNG, max 5MB each, max 3 files)\n  - `address` (optional): Street address\n  - `ward` (optional): Ward/District\n  - `city` (optional): City\n  - `country` (optional): Country, ISO 3166-1 alpha-2 format (2 uppercase letters). Example: `VN`, `US`, `JP`, `KR`\n  - `is_primary_guest` (optional): Boolean, primary guest for room\n  - `accommodation_type` (optional): permanent, temporary, other\n  - `travel_purpose` (optional): business, tourism, other\n  - `guest_category` (optional): solo, couple, family, small_group, large_group\n\n**Services (`rooms[].services` object) - Per room:**\n- `rooms[].services.method` (required with services): Only \"add\" is supported\n  - `add`: Add new services to existing list (no replace functionality)\n- `rooms[].services.records[]` (required with services): Array of service objects\n  - `id` (required): Service ID (e.g., SVAB12CD34 - get from /services endpoint)\n  - `quantity` (required): Quantity of service (must be > 0)\n  - `price_per_unit` (optional): Override default price per unit\n  - `service_used_date` (optional): Date service was used (YYYY-MM-DD)\n  - `notes` (optional): Service notes\n\n**Payments (`payments` object) - Booking level:**\n- `payments.method` (required with payments): \"add\" or \"replace\"\n  - `add`: Add new payments to existing list\n  - `replace`: Remove unpaid payments and replace with new list (paid payments preserved)\n- `payments.records[]` (required with payments): Array of payment objects\n  - `amount` (required): Payment amount\n  - `method` (optional): Payment method (cash, bank_transfer, credit_card, etc.)\n  - `paid_at` (optional): Payment timestamp (YYYY-MM-DD HH:mm:ss)\n  - `notes` (optional): Payment notes/reference\n\n**Notes (`notes` string) - Booking level:**\n- `notes` (optional): Booking notes\n\n**Invoice (`invoice` object) - Booking level:**\nOptional invoice/billing info collected at online check-in (e.g. a guest\nrequesting a VAT invoice for their company). Persisted onto the booking's\nprimary guest (resolved server-side via the first display room's primary\nguest).\n- `invoice.company` (optional): Company/organization name (max 255)\n- `invoice.tax_code` (optional): Tax code / MST (max 20)\n- `invoice.address` (optional): Billing address (max 255)\n- `invoice.email` (optional): Email to receive the invoice (max 255)\n\n**Important Notes:**\n- All fields are optional - only provided fields will be updated\n- For file uploads, use multipart/form-data with JSON data in 'data' field\n- Cannot check in before checkin_date\n- Cannot check in cancelled bookings\n- Sending `invoice` with any value while the booking has no resolvable\n  primary guest fails with HTTP 422 (`INVOICE_NO_PRIMARY_GUEST`)",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "data",
+                  "type": "text",
+                  "contentType": "application/json",
+                  "value": "{\n  \"rooms\": [\n    {\n      \"id\": \"{{booking_room_id}}\",\n      \"status\": \"checked_in\",\n      \"guests\": {\n        \"method\": \"replace\",\n        \"records\": [\n          {\n            \"name\": \"Nguyen Van A\",\n            \"email\": \"guest@example.com\",\n            \"phone\": \"0901234567\",\n            \"birthday\": \"1990-05-15\",\n            \"gender\": \"male\",\n            \"identity\": \"012345678901\",\n            \"id_type\": \"identity_card\",\n            \"identity_issue_date\": \"2020-01-15\",\n            \"address\": \"123 Nguyen Hue\",\n            \"ward\": \"Ben Nghe\",\n            \"city\": \"Ho Chi Minh\",\n            \"country\": \"VN\",\n            \"is_primary_guest\": true,\n            \"accommodation_type\": \"temporary\",\n            \"travel_purpose\": \"tourism\",\n            \"guest_category\": \"couple\"\n          }\n        ]\n      },\n      \"services\": {\n        \"method\": \"add\",\n        \"records\": [\n          {\n            \"id\": \"SVAB12CD34\",\n            \"quantity\": 2,\n            \"price_per_unit\": 50000,\n            \"service_used_date\": \"2025-11-20\",\n            \"notes\": \"Mini bar\"\n          }\n        ]\n      }\n    }\n  ],\n  \"invoice\": {\n    \"company\": \"GoHost Co Ltd\",\n    \"tax_code\": \"0312345678\",\n    \"address\": \"123 Nguyen Hue, Q1, HCMC\",\n    \"email\": \"invoice@example.com\"\n  },\n  \"payments\": {\n    \"method\": \"add\",\n    \"records\": [\n      {\n        \"amount\": 1500000,\n        \"method\": \"cash\",\n        \"paid_at\": \"2025-11-19 14:30:00\",\n        \"notes\": \"Check-in payment\"\n      }\n    ]\n  },\n  \"notes\": \"Online check-in completed\"\n}",
+                  "description": "JSON string chứa payload cập nhật (bắt buộc dạng text)"
+                },
+                {
+                  "key": "rooms[0][guests][records][0][identity_image][]",
+                  "type": "file",
+                  "src": [],
+                  "disabled": true,
+                  "description": "Ảnh giấy tờ, JPEG/PNG, tối đa 5MB/ảnh, tối đa 3 ảnh. Bật lên và chọn file khi cần. Đổi chỉ số [0] theo room/guest."
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

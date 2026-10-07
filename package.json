@@ -7,9 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "check-data": "tsx scripts/check-data.ts",
-    "images": "tsx scripts/gen-images.ts",
-    "photos": "tsx scripts/fetch-photos.ts"
+    "photos": "tsx scripts/fetch-photos.ts",
+    "test": "tsx scripts/check.ts"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",
