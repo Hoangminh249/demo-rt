@@ -67,6 +67,13 @@ export interface SiteContent {
   owner: { name: string; id: string; address: L } // pháp nhân đứng tên website
 }
 
+/** Trang tĩnh (liên hệ, chính sách). `draft`: bản Rooty soạn, chờ pháp chế duyệt — web gắn nhãn. */
+export type PageSlug = 'lien-he' | 'chinh-sach-huy' | 'chinh-sach-bao-mat' | 'dieu-khoan-dat-phong'
+export interface PageSectionContent { id: string; title: L; body: L[]; list?: L[]; link?: { href: string; label: L } }
+export interface PageContent { slug: PageSlug; eyebrow: L; title: L; lead: L; updated: string; draft: boolean; sections: PageSectionContent[] }
+export interface PageSection { id: string; title: string; body: string[]; list?: string[]; link?: { href: string; label: string } }
+export interface Page { slug: PageSlug; eyebrow: string; title: string; lead: string; updated: string; draft: boolean; sections: PageSection[] }
+
 /** Kênh đặt phòng (Zalo / hotline / email) — chưa có đặt phòng trực tuyến. */
 export type Contact = Pick<SiteContent, 'phone' | 'phone_display' | 'zalo' | 'email'>
 
@@ -112,6 +119,14 @@ export interface Hotel {
   gallery: string[]
   hero: HeroImage[]
   rooms: Room[]
+}
+
+/** Khách sạn + phòng đưa cho các bước đặt phòng (repo.bookingTarget). */
+export interface BookingTarget {
+  hotel: { slug: string; code: string; name: string; online: boolean; opening: string | null; cancel_summary: string; address: string; map_url: string }
+  room: Room
+  times: { checkin: string; checkout: string }
+  children: InfoTable | null
 }
 
 // ---------- Phòng trống + giá (Gohost GET /properties/{tenant}/room_types) ----------

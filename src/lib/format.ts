@@ -19,6 +19,10 @@ const MONTHS_EN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'
 export const fmtDayMonth = (iso: string, locale = 'vi') =>
   locale === 'en' ? `${Number(iso.slice(8, 10))} ${MONTHS_EN[Number(iso.slice(5, 7)) - 1]}` : `${iso.slice(8, 10)}/${iso.slice(5, 7)}`
 
+/** vi: T6 · en: Fri */
+export const fmtWeekday = (iso: string, locale = 'vi') =>
+  new Intl.DateTimeFormat(locale === 'en' ? 'en-GB' : 'vi-VN', { weekday: 'short', timeZone: 'UTC' }).format(new Date(toUTC(iso)))
+
 /** vi: 16/10/2026 · en: 16 Oct 2026 */
 export const fmtDate = (iso: string, locale = 'vi') => `${fmtDayMonth(iso, locale)}${locale === 'en' ? ' ' : '/'}${iso.slice(0, 4)}`
 

@@ -4,7 +4,8 @@
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { ArrowUpRight, Menu } from 'lucide-react'
+import { ArrowUpRight, CalendarX2, ChevronDown, FileText, Headset, Menu, ShieldCheck } from 'lucide-react'
+import { DropdownMenu } from 'radix-ui'
 import { cn } from 'cn'
 import { Link, usePathname } from '@/i18n/navigation'
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/ui/sheet'
@@ -43,7 +44,8 @@ export function SiteHeader() {
   const [open, setOpen] = useState(false)
   const clear = overlay && !scrolled && !open
 
-  const NAV = [[t('hotels'), '/#khach-san'], [t('direct'), '/#vi-sao'], [t('experiences'), '/#trai-nghiem'], [t('contact'), '#lien-he']] as const
+  const NAV = [[t('hotels'), '/#khach-san'], [t('direct'), '/#vi-sao'], [t('experiences'), '/#trai-nghiem']] as const
+  const SUPPORT = [[t('contactPage'), '/lien-he', Headset], [t('cancel'), '/chinh-sach-huy', CalendarX2], [t('terms'), '/dieu-khoan-dat-phong', FileText], [t('privacy'), '/chinh-sach-bao-mat', ShieldCheck]] as const
   const link = cn('rounded-md px-3 py-2 text-[14px] font-medium uppercase transition-colors', clear ? 'text-white hover:text-yellow' : 'text-foreground hover:text-primary')
   const icon = clear ? 'text-white hover:bg-white/15' : 'text-brand hover:bg-mint'
 
@@ -62,6 +64,23 @@ export function SiteHeader() {
         </Link>
         <nav aria-label={t('mainNav')} className="ml-4 hidden items-center gap-1 lg:flex">
           {NAV.map(([label, href]) => <Link key={href} href={href} className={link}>{label}</Link>)}
+          {/* Hỗ trợ: liên hệ + 3 trang chính sách */}
+          <DropdownMenu.Root modal={false}>
+            <DropdownMenu.Trigger className={cn(link, 'group inline-flex cursor-pointer items-center gap-1 outline-none focus-visible:ring-4 focus-visible:ring-focus')}>
+              {t('support')}<ChevronDown className="size-3.5 transition-transform group-data-[state=open]:rotate-180" aria-hidden />
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Portal>
+              <DropdownMenu.Content align="start" sideOffset={6} className="z-50 w-72 origin-(--radix-dropdown-menu-content-transform-origin) rounded-xl border border-border bg-white p-1.5 shadow-popover duration-150 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95">
+                {SUPPORT.map(([label, href, Icon]) => (
+                  <DropdownMenu.Item key={href} asChild>
+                    <Link href={href} className="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg px-3 text-[15px] text-foreground outline-none data-highlighted:bg-mint data-highlighted:text-brand">
+                      <Icon className="size-4 shrink-0 text-brand" aria-hidden />{label}
+                    </Link>
+                  </DropdownMenu.Item>
+                ))}
+              </DropdownMenu.Content>
+            </DropdownMenu.Portal>
+          </DropdownMenu.Root>
           <a href="https://rootytrip.com" className={cn(link, 'inline-flex items-center gap-1')}>Rooty Trip <ArrowUpRight className="size-3.5" aria-hidden /></a>
         </nav>
         <div className="ml-auto flex items-center gap-1">
@@ -78,7 +97,9 @@ export function SiteHeader() {
           <SheetDescription className="sr-only">{t('menuDesc')}</SheetDescription>
           <Logo className="mb-4 h-9 self-start" />
           {NAV.map(([label, href]) => <Link key={href} href={href} onClick={() => setOpen(false)} className="flex h-11 items-center rounded-lg px-3 text-[15px] font-medium uppercase hover:bg-mint">{label}</Link>)}
-          <a href="https://rootytrip.com" className="flex h-11 items-center gap-1 rounded-lg px-3 text-[15px] font-medium uppercase hover:bg-mint">Rooty Trip <ArrowUpRight className="size-3.5" aria-hidden /></a>
+          <p className="mt-2 px-3 pb-1 text-[13px] font-semibold tracking-wide text-muted-foreground uppercase">{t('support')}</p>
+          {SUPPORT.map(([label, href, Icon]) => <Link key={href} href={href} onClick={() => setOpen(false)} className="flex h-11 items-center gap-3 rounded-lg px-3 text-[15px] hover:bg-mint"><Icon className="size-4 shrink-0 text-brand" aria-hidden />{label}</Link>)}
+          <a href="https://rootytrip.com" className="mt-2 flex h-11 items-center gap-1 rounded-lg px-3 text-[15px] font-medium uppercase hover:bg-mint">Rooty Trip <ArrowUpRight className="size-3.5" aria-hidden /></a>
           <div className="mt-4 border-t border-border pt-4"><LocalePicker className="w-full justify-start rounded-lg border border-border-strong text-brand hover:bg-mint" /></div>
         </SheetContent>
       </Sheet>
