@@ -25,22 +25,25 @@ export function Gallery({ name, images }: { name: string; images: string[] }) {
   const more = <><Images className="size-4" aria-hidden />{t('viewAll', { n: images.length })}</>
   const zoom = 'transition-transform duration-500 group-hover:scale-[1.03]'
   if (!images.length) return <Photo src={null} alt={name} className="aspect-[4/3] w-full rounded-xl sm:aspect-auto sm:h-[300px]" />
+  // Ít hơn 5 ảnh (trang phòng): 1 lớn + tối đa 2 nhỏ xếp dọc, không để ô trống.
+  const compact = images.length < 5
+  const small = images.slice(1, compact ? 3 : 5)
 
   return (
     <>
-      <div className="grid gap-2 sm:grid-cols-4 sm:grid-rows-2 sm:gap-3">
-        <div className="relative sm:col-span-2 sm:row-span-2">
+      <div className={`grid gap-2 sm:grid-rows-2 sm:gap-3 ${compact && small.length ? 'sm:grid-cols-3' : 'sm:grid-cols-4'}`}>
+        <div className={`relative sm:row-span-2 ${small.length ? 'sm:col-span-2' : 'sm:col-span-4'}`}>
           <button type="button" onClick={() => setIndex(0)} className={TILE} aria-label={alt(0)}>
             <Photo src={images[0]} alt={name} priority sizes="(min-width: 640px) 50vw, 100vw" className={`aspect-[4/3] w-full sm:aspect-auto sm:h-[440px] ${zoom}`} />
           </button>
           <button type="button" onClick={() => setIndex(0)} className={`${MORE} sm:hidden`}>{more}</button>
         </div>
-        {images.slice(1, 5).map((src, i) => (
+        {small.map((src, i) => (
           <div key={src} className="relative hidden sm:block">
             <button type="button" onClick={() => setIndex(i + 1)} className={TILE} aria-label={alt(i + 1)}>
               <Photo src={src} alt="" sizes="25vw" className={`h-[214px] w-full ${zoom}`} />
             </button>
-            {i === 3 && <button type="button" onClick={() => setIndex(0)} className={MORE}>{more}</button>}
+            {i === small.length - 1 && <button type="button" onClick={() => setIndex(0)} className={MORE}>{more}</button>}
           </div>
         ))}
       </div>

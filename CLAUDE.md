@@ -23,10 +23,10 @@ rooty-hospitality-web/
 
 ## Hiện trạng (07/10/2026)
 
-Pre-production, 2 trang: `/` và `/hotel/[slug]` (PITO Hòn Thơm, Calista), vi/en, giao diện theo rootytrip.com.
+Pre-production, vi/en, giao diện theo rootytrip.com: `/` · `/hotel/[slug]` (PITO Hòn Thơm, Calista) · `/hotel/[slug]/[room]` chi tiết phòng · luồng đặt phòng **minh hoạ** `/dat-phong` → `/thanh-toan` → `/xac-nhan` · 4 trang tĩnh trong menu "Hỗ trợ" (`/lien-he`, `/chinh-sach-huy`, `/dieu-khoan-dat-phong`, `/chinh-sach-bao-mat` — 2 trang sau là bản nháp chờ pháp chế). Figma chỉ để biết section nằm đâu, UI theo hệ có sẵn.
 - Nội dung + ảnh thật từ Drive "4. ROOTY HOSPITALITY" (`src/content/`). Calista chưa có ảnh chụp, khai trương 20/12/2026.
 - Phòng trống, giá: Gohost **chỉ GET** (`src/lib/gohost.ts`). Chưa có API key và chưa điền `gohost_tenant_id` / `gohost_room_type_id` → web đang ở chế độ "liên hệ đặt phòng".
-- Không có đặt phòng trực tuyến: nút "Liên hệ đặt phòng" → Zalo/hotline/email của khách sạn.
+- Đặt phòng trực tuyến là **bản minh hoạ chạy ở trình duyệt** (`docs/2026-10-08-luong-dat-phong-minh-hoa.md`): giá GET Gohost thật, thông tin khách ở sessionStorage, QR Vietcombank / OnePay giả, không POST, không email. Phòng chưa có giá trực tuyến (Calista) vẫn là "Liên hệ đặt phòng" → Zalo/hotline/email.
 
 - Admin chỉ-xem `/admin` (wireframe A) có trang đăng nhập: Tổng quan · Khách sạn (4 tab) · Booking + chi tiết. Đã có key (`.env`), đọc Gohost thật được.
 - PITO đã nối Gohost: property **PIT** "Pito Hotel" (chốt 07/10/2026; key còn đọc được PIO, không dùng). Hạng phòng do Rooty tự ánh xạ (INFERRED theo số phòng + đặc điểm, chờ KS xác nhận): Tiêu chuẩn view nội khu = Superior · Grand Deluxe Bồn Tắm = Deluxe Bathtub (gồm 101) · Deluxe cao cấp view biển = Premier Bathtub · Cozy sân thượng = phòng 601. Web đã có giá thật. **Calista chưa có trên Gohost.**

@@ -8,7 +8,8 @@ import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
 import { repo } from '@/lib/repo'
 import { fmtDate, fmtPrice, today } from '@/lib/format'
-import type { InfoTable, Locale } from '@/lib/types'
+import type { Locale } from '@/lib/types'
+import { InfoTable } from '@/components/hotel/info-table'
 import { BTN, BTN_OUT, CheckItem, CONTAINER, EYEBROW, ICONS } from '@/components/site/kit'
 import { Gallery } from '@/components/hotel/gallery'
 import { TabNav } from '@/components/hotel/tab-nav'
@@ -28,21 +29,6 @@ export async function generateMetadata({ params }: PageProps<'/[locale]/hotel/[s
 
 function Section({ id, title, children }: { id: string; title: string; children: ReactNode }) {
   return <section id={id} className="scroll-mt-36 border-t border-border pt-10"><h2 className="text-[26px] font-bold text-brand">{title}</h2>{children}</section>
-}
-
-function Table({ table }: { table: InfoTable }) {
-  return (
-    <figure className="mt-4">
-      <figcaption className="mb-2 text-[15px] font-semibold text-brand">{table.caption}</figcaption>
-      <div className="overflow-x-auto rounded-xl border border-border">
-        <table className="w-full min-w-[420px] text-left text-[15px]">
-          <thead className="bg-muted text-[14px] text-muted-foreground"><tr>{table.head.map(c => <th key={c} scope="col" className="px-4 py-2.5 font-semibold">{c}</th>)}</tr></thead>
-          <tbody className="divide-y divide-border">{table.rows.map(r => <tr key={r.join('|')}>{r.map((c, i) => <td key={i} className="px-4 py-2.5 align-top">{c}</td>)}</tr>)}</tbody>
-        </table>
-      </div>
-      {table.note && <p className="mt-2 text-[14px] text-muted-foreground">{table.note}</p>}
-    </figure>
-  )
 }
 
 export default async function HotelPage({ params }: PageProps<'/[locale]/hotel/[slug]'>) {
@@ -135,7 +121,7 @@ export default async function HotelPage({ params }: PageProps<'/[locale]/hotel/[
               <div key={g.title} className="mt-8">
                 <h3 className="text-xl font-bold text-brand">{g.title}</h3>
                 {g.body && <p className="mt-1 text-[15px]">{g.body}</p>}
-                {g.tables.map(x => <Table key={x.caption} table={x} />)}
+                {g.tables.map(x => <InfoTable key={x.caption} table={x} />)}
                 {g.notes.length > 0 && <ul className="mt-4 grid gap-2">{g.notes.map(n => <li key={n} className="flex gap-2 text-[15px]"><Info className="mt-1 size-4 shrink-0 text-orange" aria-hidden />{n}</li>)}</ul>}
               </div>
             ))}
@@ -146,7 +132,7 @@ export default async function HotelPage({ params }: PageProps<'/[locale]/hotel/[
               <dl className="mt-6 divide-y divide-border rounded-xl border border-border">
                 {h.policies.map(([k, v]) => <div key={k} className="grid gap-1 px-5 py-4 sm:grid-cols-[180px_1fr] sm:gap-6"><dt className="font-semibold text-brand">{k}</dt><dd className="text-[15px]">{v}</dd></div>)}
               </dl>
-              {h.children && <Table table={h.children} />}
+              {h.children && <InfoTable table={h.children} />}
             </Section>
           )}
 

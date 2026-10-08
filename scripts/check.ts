@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict'
 import { defaultStay, validRange } from '../src/lib/stay'
 import { mergeRooms, minDefaultRate, nightly } from '../src/lib/rooms'
+import { bookingCode, deposit, isEmail, isPhone, roomHref, selectionQuery } from '../src/lib/booking'
 import type { Room, RoomAvailability } from '../src/lib/types'
 
 // --- validRange: chặn ở route handler trước khi tốn lượt gọi Gohost ---
@@ -40,5 +41,17 @@ const rt = (id: string, is_virtual: boolean, currency: string, default_rates: nu
 const catalog = [rt('rt1', false, 'VND', [2_700_000, 2_500_000, 0, 2_900_000]), rt('rt2', true, 'VND', [100]), rt('rt3', false, 'VND', [50]), rt('rt7', false, 'USD', [10])]
 assert.equal(minDefaultRate(catalog, new Set(['rt1', 'rt2', 'rt7'])), 2_500_000)
 assert.equal(minDefaultRate(catalog, new Set()), null, 'chưa ánh xạ phòng nào → không hiện giá')
+
+// --- luồng đặt phòng (minh hoạ) ---
+assert.equal(deposit(5_280_000), 1_584_000)
+assert.equal(deposit(1_234_567), 370_000, 'làm tròn nghìn đồng')
+assert.equal(bookingCode('PITO', '2026-10-08', 42), 'RH-PITO-261008-0042')
+assert.equal(bookingCode('CALISTA', '2027-01-02', 123456), 'RH-CALISTA-270102-3456', 'seq tối đa 4 số')
+assert.equal(selectionQuery({ hotel: 'pito-hon-thom', room: 'superior', plan: 'p 1' }, defaultStay(now)), 'hotel=pito-hon-thom&room=superior&plan=p+1&in=2026-10-08&out=2026-10-10&a=2&c=0')
+assert.equal(roomHref('pito-hon-thom', 'superior'), '/hotel/pito-hon-thom/superior')
+assert.equal(isEmail('minh.anh@example.com'), true)
+assert.equal(isEmail('minh.anh@example'), false)
+assert.equal(isPhone('+84 912 345 678'), true)
+assert.equal(isPhone('0912'), false)
 
 console.log('check: ok')

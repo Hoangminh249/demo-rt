@@ -1,7 +1,8 @@
 'use client'
 // Khối "Chọn phòng": nội dung từng hạng phòng (Rooty) + phòng trống, giá từng đêm (Gohost, qua /api/hotels/{slug}/rooms).
 // Trạng thái: đang tải · có giá · hết phòng · không đủ chỗ · chưa có giá trực tuyến (chưa nối Gohost, lỗi, hết lượt gọi).
-// Không có đặt phòng trực tuyến: nút "Liên hệ đặt phòng" mở hộp tóm tắt + Zalo / gọi / email — không ghi dữ liệu nào.
+// Phòng có giá: ảnh, tên, nút "Chọn" dẫn sang trang chi tiết phòng (chọn sẵn gói) → luồng đặt phòng (bản minh hoạ).
+// Chưa có giá trực tuyến: nút "Liên hệ đặt phòng" mở hộp tóm tắt + Zalo / gọi / email — không ghi dữ liệu nào.
 import { useState } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import { BedDouble, CalendarDays, CalendarX, Coffee, Eye, Flame, Info, Mail, Maximize2, MessageCircle, Phone, RotateCw, Users, WifiOff } from 'lucide-react'
@@ -14,11 +15,13 @@ import { Dialog } from '@/components/ui/overlay'
 import { BTN, BTN_OUT, Photo } from '@/components/site/kit'
 import { DateRangeField, GuestsField } from '@/components/site/stay-fields'
 import { firstCheckin } from '@/lib/stay'
+import { roomHref } from '@/lib/booking'
+import { Link } from '@/i18n/navigation'
 import { useStay } from './use-stay'
 
 export interface RoomsHotel { slug: string; name: string; online: boolean; opening: string | null; cancel_summary: string }
 type Result = { avail?: RoomAvailability[]; error?: boolean }
-type Pick = { room: Room; plan?: PlanOffer }
+export type Pick = { room: Room; plan?: PlanOffer }
 
 export function Rooms({ hotel, rooms, contact }: { hotel: RoomsHotel; rooms: Room[]; contact: Contact }) {
   const t = useTranslations()
@@ -115,10 +118,12 @@ function RoomCard({ offer, hotel, stay, onPick, onOtherDates }: { offer: RoomOff
   const range = fmtRange(stay.checkin, stay.checkout, locale)
   return (
     <article className={cn('grid gap-5 rounded-2xl border border-border p-4 md:grid-cols-[260px_1fr]', off ? 'bg-muted/60' : 'bg-white')}>
-      <Photo src={room.images[0]} alt={room.name} sizes="(min-width: 768px) 260px, 100vw" className={cn('aspect-[4/3] w-full rounded-xl md:aspect-auto md:h-full md:min-h-[220px]', off && 'opacity-60')} />
+      <Link href={roomHref(hotel.slug, room.slug, stay)} tabIndex={-1} aria-hidden className="block">
+        <Photo src={room.images[0]} alt={room.name} sizes="(min-width: 768px) 260px, 100vw" className={cn('aspect-[4/3] w-full rounded-xl md:aspect-auto md:h-full md:min-h-[220px]', off && 'opacity-60')} />
+      </Link>
       <div className="min-w-0">
         <div className="flex flex-wrap items-start justify-between gap-2">
-          <h3 className="text-xl font-bold text-brand">{room.name}</h3>
+          <h3 className="text-xl font-bold text-brand"><Link href={roomHref(hotel.slug, room.slug, stay)} className="underline-offset-4 hover:underline">{room.name}</Link></h3>
           {state === 'available' && left <= 3 && <span className="inline-flex h-7 items-center gap-1 rounded-md bg-yellow px-2.5 text-[13px] font-semibold text-yellow-foreground"><Flame className="size-3.5" aria-hidden />{t('Rooms.lowStock', { n: left })}</span>}
         </div>
         <ul className="mt-2 flex flex-wrap gap-x-6 gap-y-1.5 text-[14px] text-muted-foreground">
@@ -160,7 +165,7 @@ function RoomCard({ offer, hotel, stay, onPick, onOtherDates }: { offer: RoomOff
                     <span className="text-xl font-semibold">{fmtPrice(nightly(p))}</span><span className="text-[13px] text-muted-foreground"> {t('Common.perNight')}</span>
                     <span className="block text-[13px] whitespace-nowrap text-muted-foreground">{t('Rooms.total', { total: fmtPrice(p.total), nights: t('Common.nights', { n: p.days_breakdown.length }) })}</span>
                   </p>
-                  <button type="button" onClick={() => onPick(p)} className={`${BTN} h-10 max-sm:w-full`}>{t('Rooms.book')}</button>
+                  <Link href={roomHref(hotel.slug, room.slug, stay, p.rate_plan_id)} className={`${BTN} h-10 max-sm:w-full`}>{t('Rooms.choose')}</Link>
                 </div>
               </div>
             ))}
@@ -177,7 +182,7 @@ function RoomCard({ offer, hotel, stay, onPick, onOtherDates }: { offer: RoomOff
 }
 
 /** Tóm tắt lựa chọn + kênh liên hệ của khách sạn. Không tạo đặt phòng — nhân viên khách sạn xác nhận qua Zalo / email. */
-function ContactDialog({ hotel, stay, picked, contact, onClose }: { hotel: RoomsHotel; stay: Stay; picked?: Pick; contact: Contact; onClose: () => void }) {
+export function ContactDialog({ hotel, stay, picked, contact, onClose }: { hotel: RoomsHotel; stay: Stay; picked?: Pick; contact: Contact; onClose: () => void }) {
   const t = useTranslations()
   const locale = useLocale()
   const rows: [string, string][] = picked ? [

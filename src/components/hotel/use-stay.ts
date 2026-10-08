@@ -11,6 +11,12 @@ export function useStay(opening?: string | null) {
   const router = useRouter()
   const path = usePathname()
   const stay = parseStay(sp, opening)
-  const setStay = useCallback((s: Stay) => router.replace(`${path}?${stayQuery(s)}`, { scroll: false }), [router, path])
-  return [stay, setStay] as const
+  // Giữ các tham số khác trên URL (trang phòng có `plan`, luồng đặt phòng có `hotel`, `room`).
+  const setParams = useCallback((q: string) => {
+    const next = new URLSearchParams(window.location.search)
+    new URLSearchParams(q).forEach((v, k) => next.set(k, v))
+    router.replace(`${path}?${next}`, { scroll: false })
+  }, [router, path])
+  const setStay = useCallback((s: Stay) => setParams(stayQuery(s)), [setParams])
+  return [stay, setStay, setParams] as const
 }

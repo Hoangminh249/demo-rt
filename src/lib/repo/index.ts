@@ -3,9 +3,10 @@
 // Đổi nơi lưu nội dung (CMS) sau này: chỉ sửa file này, giữ nguyên tên hàm và kiểu trả về.
 import 'server-only'
 import { HOTELS, SITE } from '@/content'
+import { PAGES } from '@/content/pages'
 import { getProperties, getRoomTypes, isGohostError } from '../gohost'
 import { minDefaultRate } from '../rooms'
-import type { Hotel, HotelContent, InfoTable, InfoTableContent, L, Locale, RoomAvailability } from '../types'
+import type { BookingTarget, Hotel, HotelContent, InfoTable, InfoTableContent, L, Locale, Page, PageSlug, RoomAvailability } from '../types'
 
 const tr = (l: L, locale: Locale) => (locale === 'en' && l.en) || l.vi
 const table = (x: InfoTableContent, locale: Locale): InfoTable => ({
@@ -57,6 +58,7 @@ function localize(h: HotelContent, locale: Locale): Hotel {
 }
 
 const content = (slug: string) => HOTELS.find(h => h.slug === slug)
+const CANCEL_KEYS = ['Huỷ phòng', 'Đổi ngày', 'Lễ, Tết', 'Gián đoạn phương tiện ra đảo']
 
 export const repo = {
   // --- nội dung (src/content) ---
@@ -67,6 +69,34 @@ export const repo = {
   },
   hotelSlugs: () => HOTELS.map(h => h.slug),
   site: (locale: Locale) => ({ ...SITE, owner: { ...SITE.owner, address: tr(SITE.owner.address, locale) } }),
+  /** Khách sạn + phòng cho các bước đặt phòng (?hotel=&room=). null khi URL sai. */
+  bookingTarget: (hotel: string | undefined, room: string | undefined, locale: Locale): BookingTarget | null => {
+    const h = hotel ? content(hotel) : undefined
+    const r = h?.rooms.find(x => x.slug === room)
+    if (!h || !r) return null
+    const l = localize(h, locale)
+    return {
+      hotel: { slug: l.slug, code: l.code, name: l.name, online: l.online, opening: l.opening, cancel_summary: l.cancel_summary, address: l.address, map_url: l.map_url },
+      room: l.rooms.find(x => x.slug === room)!,
+      times: { checkin: l.policies[0]?.[1] ?? '', checkout: l.policies[1]?.[1] ?? '' }, // file KS mở đầu bằng Nhận phòng, Trả phòng
+      children: l.children,
+    }
+  },
+  roomParams: () => HOTELS.flatMap(h => h.rooms.map(r => ({ slug: h.slug, room: r.slug }))),
+  page: (slug: PageSlug, locale: Locale): Page => {
+    const p = PAGES[slug]
+    const t = (l: L) => tr(l, locale)
+    return {
+      slug, eyebrow: t(p.eyebrow), title: t(p.title), lead: t(p.lead), updated: p.updated, draft: p.draft,
+      sections: p.sections.map(s => ({ id: s.id, title: t(s.title), body: s.body.map(t), list: s.list?.map(t), link: s.link && { href: s.link.href, label: t(s.link.label) } })),
+    }
+  },
+  /** Các dòng huỷ / đổi ngày / lễ Tết / gián đoạn trong chính sách từng khách sạn — trang huỷ đọc thẳng, không chép lại. */
+  cancelPolicies: (locale: Locale) => HOTELS.map(h => ({
+    slug: h.slug,
+    name: h.name,
+    rows: h.policies.filter(([k]) => CANCEL_KEYS.includes(k.vi)).map(([k, v]) => [tr(k, locale), tr(v, locale)] as [string, string]),
+  })),
 
   // --- Gohost ---
   /** "Giá từ …/đêm". null khi KS chưa nối Gohost, chưa ánh xạ phòng, hoặc Gohost lỗi — UI ẩn giá, không đoán. */
