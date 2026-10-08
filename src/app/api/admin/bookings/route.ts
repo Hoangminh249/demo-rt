@@ -1,8 +1,8 @@
 // Danh sách booking của một property Gohost theo khoảng ngày nhận phòng (≤ 30 ngày, giới hạn Gohost).
 // Kiểm tham số trước khi gọi Gohost: property phải nằm trong danh sách key đọc được.
-import { bookingList, gohostProperties } from '@/lib/repo/admin'
+import { adminApi } from '@/api/admin'
 import { diffDays, isISODate } from '@/lib/format'
-import { BOOKING_STATUSES } from '@/lib/types'
+import { BOOKING_STATUSES } from '@/types/admin'
 import { adminGet, badRequest } from '../_lib'
 
 export const GET = adminGet(async req => {
@@ -15,8 +15,8 @@ export const GET = adminGet(async req => {
   if (!property || !isISODate(start) || !isISODate(end) || !Number.isInteger(page) || page < 1) return badRequest()
   const days = diffDays(start, end) + 1
   if (days < 1 || days > 30 || (status && !(BOOKING_STATUSES as readonly string[]).includes(status))) return badRequest()
-  const { properties, error } = await gohostProperties()
+  const { properties, error } = await adminApi.properties()
   if (!properties) return { data: null, error }
   if (!properties.some(p => p.id === property)) return badRequest()
-  return bookingList(property, { start, end, status, page })
+  return adminApi.bookings(property, { start, end, status, page })
 })

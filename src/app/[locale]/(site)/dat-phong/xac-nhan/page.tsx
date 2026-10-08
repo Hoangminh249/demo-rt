@@ -1,8 +1,9 @@
 // Bước 4 — đặt phòng thành công (BẢN MINH HOẠ: chưa gửi email thật, chưa có booking trên Gohost).
 import { Suspense } from 'react'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
-import { repo } from '@/lib/repo'
-import type { Locale } from '@/lib/types'
+import { hotelApi } from '@/api/hotel'
+import { siteApi } from '@/api/site'
+import type { Locale } from '@/types/global'
 import { BookingMissing, Steps } from '@/components/booking/shell'
 import { Confirmation } from '@/components/booking/confirmation'
 
@@ -16,12 +17,12 @@ export default async function DonePage({ params, searchParams }: PageProps<'/[lo
   setRequestLocale(locale as Locale)
   const sp = await searchParams
   const t = await getTranslations('Booking')
-  const target = repo.bookingTarget(sp.hotel as string, sp.room as string, locale as Locale)
+  const target = hotelApi.bookingTarget(sp.hotel as string, sp.room as string, locale as Locale)
   if (!target) return <BookingMissing title={t('missingTitle')} body={t('missingBody')} href="/#khach-san" cta={t('missingCta')} />
   return (
     <>
       <Steps current={3} />
-      <Suspense><Confirmation target={target} contact={repo.site(locale as Locale)} /></Suspense>
+      <Suspense><Confirmation target={target} contact={siteApi.info(locale as Locale)} /></Suspense>
     </>
   )
 }

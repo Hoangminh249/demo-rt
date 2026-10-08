@@ -7,7 +7,7 @@ Nhãn: **CONFIRMED** (đọc thấy) · **INFERRED** (suy luận) · **UNKNOWN**
 
 | # | Quyết định | Vì sao |
 |---|---|---|
-| 1 | Nội dung KS + ánh xạ ID Gohost nằm trong `src/content/*.ts` (sửa bằng commit). Admin **chỉ xem**, không database | 2 KS, ít thay đổi; tránh thêm hệ thống. Đổi sang CMS sau chỉ thay `src/lib/repo` |
+| 1 | Nội dung KS + ánh xạ ID Gohost nằm trong `src/content/*.ts` (sửa bằng commit). Admin **chỉ xem**, không database | 2 KS, ít thay đổi; tránh thêm hệ thống. Đổi sang CMS sau chỉ thay `src/api/hotel.ts`, `src/api/site.ts` |
 | 2 | Calista hiện khung "Ảnh đang cập nhật" | Chưa có ảnh chụp thật; phối cảnh 3D có thể khác thực tế |
 | 3 | Admin: vẽ wireframe 2–3 phương án, chọn rồi mới dựng | Quy trình thiết kế |
 | 4 | Tài liệu mâu thuẫn → lên web bản **ít hứa hơn**, gửi KS xác nhận (mục 3) | Tránh khiếu nại vì hứa sai |

@@ -1,6 +1,6 @@
-// Nội dung của Rooty (Gohost API không có ảnh, mô tả, chính sách, bản dịch). Chỉ src/lib/repo được import thư mục này.
+// Nội dung của Rooty (Gohost API không có ảnh, mô tả, chính sách, bản dịch). Chỉ src/api được import thư mục này.
 // Thêm khách sạn = thêm 1 file + 1 dòng trong HOTELS.
-import type { HotelContent, SiteContent } from '@/lib/types'
+import type { HotelContent, SiteContent } from '@/types/hotel'
 import { CALISTA } from './calista'
 import { PITO } from './pito-hon-thom'
 

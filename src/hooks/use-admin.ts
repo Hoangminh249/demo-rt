@@ -2,14 +2,9 @@
 // Component admin chỉ gọi các hook dưới đây; khoá cache tập trung ở adminKeys để làm mới đúng chỗ.
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/http'
-import type { availabilityCheck, bookingDetail, bookingList, contentRows, gohostProperties, hotelCheck, overview } from '@/lib/repo/admin'
+import type { AdminAvailability, AdminBooking, AdminBookings, AdminHotel, AdminOverview, AdminProperties } from '@/types/admin'
 
-export type AdminOverview = Awaited<ReturnType<typeof overview>>
-export type AdminHotel = NonNullable<Awaited<ReturnType<typeof hotelCheck>>> & { rows: ReturnType<typeof contentRows> }
-export type AdminAvailability = Awaited<ReturnType<typeof availabilityCheck>>
-export type AdminProperties = Awaited<ReturnType<typeof gohostProperties>>
-export type AdminBookings = Awaited<ReturnType<typeof bookingList>>
-export type AdminBooking = Awaited<ReturnType<typeof bookingDetail>>
+/** Query của GET /api/admin/bookings (phía trình duyệt). */
 export interface BookingQuery { property: string; in: string; out: string; status: string; page: number }
 
 export const adminKeys = {

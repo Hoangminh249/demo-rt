@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from '@/i18n/navigation'
 import { defaultStay, firstCheckin, hotelHref } from '@/lib/stay'
-import type { Stay } from '@/lib/types'
+import type { Stay } from '@/types/hotel'
 import { BTN } from './kit'
 import { DateRangeField, GuestsField, HotelField } from './stay-fields'
 

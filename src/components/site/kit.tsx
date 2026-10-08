@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 import { Bus, CableCar, Check, Clock, Coffee, DoorOpen, FerrisWheel, ImageOff, MapPin, Plane, Receipt, Shirt, WashingMachine, Wifi, type LucideIcon } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { cn } from 'cn'
-import type { IconKey } from '@/lib/types'
+import type { IconKey } from '@/types/global'
 
 export const CONTAINER = 'mx-auto w-full max-w-[1200px] px-4 sm:px-6'
 export const BTN = 'inline-flex h-11 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary px-5 text-[15px] font-semibold text-primary-foreground transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50'

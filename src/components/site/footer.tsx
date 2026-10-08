@@ -4,9 +4,10 @@ import type { ReactNode } from 'react'
 import { ArrowUpRight } from 'lucide-react'
 import { getLocale, getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
-import { repo } from '@/lib/repo'
+import { hotelApi } from '@/api/hotel'
+import { siteApi } from '@/api/site'
 import { hotelHref } from '@/lib/stay'
-import type { Locale } from '@/lib/types'
+import type { Locale } from '@/types/global'
 import { CONTAINER, EYEBROW } from './kit'
 import { Logo } from './header'
 
@@ -18,7 +19,7 @@ const LINK = 'inline-flex min-h-8 items-center gap-1 whitespace-nowrap hover:tex
 export async function SiteFooter() {
   const t = await getTranslations('Footer')
   const locale = (await getLocale()) as Locale
-  const site = repo.site(locale)
+  const site = siteApi.info(locale)
   return (
     <footer id="lien-he" className="mt-20 border-t-4 border-primary bg-white">
       <div className={`${CONTAINER} grid gap-10 py-12 md:grid-cols-[1.1fr_1fr_1fr]`}>
@@ -33,7 +34,7 @@ export async function SiteFooter() {
         <div>
           <p className="text-xl font-bold text-brand">{t('hotels')}</p>
           <ul className="mt-3 grid gap-1 text-[15px]">
-            {repo.listHotels(locale).map(h => <Dot key={h.slug}><Link href={hotelHref(h.slug)} className={LINK}>{h.name}</Link></Dot>)}
+            {hotelApi.list(locale).map(h => <Dot key={h.slug}><Link href={hotelHref(h.slug)} className={LINK}>{h.name}</Link></Dot>)}
           </ul>
         </div>
         <div>

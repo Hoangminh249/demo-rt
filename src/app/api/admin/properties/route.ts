@@ -1,4 +1,4 @@
-import { gohostProperties } from '@/lib/repo/admin'
+import { adminApi } from '@/api/admin'
 import { adminGet } from '../_lib'
 
-export const GET = adminGet(() => gohostProperties())
+export const GET = adminGet(() => adminApi.properties())

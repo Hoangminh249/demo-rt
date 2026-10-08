@@ -1,20 +1,15 @@
-// Cửa duy nhất để UI lấy dữ liệu. Component KHÔNG import src/content hay src/lib/gohost trực tiếp.
-// Nội dung (ảnh, mô tả, chính sách, bản dịch) từ src/content; phòng, giá, tồn từ Gohost (chỉ GET, qua src/lib/gohost).
+// Khách sạn + phòng: nội dung Rooty (src/content) ghép với phòng trống, giá Gohost (src/api/gohost.ts) theo ID.
+// Cửa duy nhất để trang server lấy dữ liệu khách sạn — component KHÔNG import src/content hay src/lib/gohost.
 // Đổi nơi lưu nội dung (CMS) sau này: chỉ sửa file này, giữ nguyên tên hàm và kiểu trả về.
 import 'server-only'
-import { HOTELS, SITE } from '@/content'
-import { PAGES } from '@/content/pages'
-import { getProperties, getRoomTypes, isGohostError } from '../gohost'
-import { minDefaultRate } from '../rooms'
-import type { BookingTarget, Hotel, HotelContent, InfoTable, InfoTableContent, L, Locale, Page, PageSlug, RoomAvailability } from '../types'
-
-const tr = (l: L, locale: Locale) => (locale === 'en' && l.en) || l.vi
-const table = (x: InfoTableContent, locale: Locale): InfoTable => ({
-  caption: tr(x.caption, locale),
-  head: x.head.map(h => tr(h, locale)),
-  rows: x.rows.map(r => r.map(c => tr(c, locale))),
-  note: x.note && tr(x.note, locale),
-})
+import { HOTELS } from '@/content'
+import { isGohostError } from '@/lib/gohost'
+import { minDefaultRate } from '@/lib/rooms'
+import { table, tr } from '@/lib/tr'
+import type { Locale, L } from '@/types/global'
+import type { Hotel, HotelContent, RoomAvailability } from '@/types/hotel'
+import type { BookingTarget } from '@/types/booking'
+import { gohostApi } from './gohost'
 
 function localize(h: HotelContent, locale: Locale): Hotel {
   const t = (l: L) => tr(l, locale)
@@ -58,17 +53,16 @@ function localize(h: HotelContent, locale: Locale): Hotel {
 }
 
 const content = (slug: string) => HOTELS.find(h => h.slug === slug)
-const CANCEL_KEYS = ['Huỷ phòng', 'Đổi ngày', 'Lễ, Tết', 'Gián đoạn phương tiện ra đảo']
 
-export const repo = {
+export const hotelApi = {
   // --- nội dung (src/content) ---
-  listHotels: (locale: Locale): Hotel[] => HOTELS.map(h => localize(h, locale)),
-  getHotel: (slug: string, locale: Locale): Hotel | null => {
+  list: (locale: Locale): Hotel[] => HOTELS.map(h => localize(h, locale)),
+  get: (slug: string, locale: Locale): Hotel | null => {
     const h = content(slug)
     return h ? localize(h, locale) : null
   },
-  hotelSlugs: () => HOTELS.map(h => h.slug),
-  site: (locale: Locale) => ({ ...SITE, owner: { ...SITE.owner, address: tr(SITE.owner.address, locale) } }),
+  slugs: () => HOTELS.map(h => h.slug),
+  roomParams: () => HOTELS.flatMap(h => h.rooms.map(r => ({ slug: h.slug, room: r.slug }))),
   /** Khách sạn + phòng cho các bước đặt phòng (?hotel=&room=). null khi URL sai. */
   bookingTarget: (hotel: string | undefined, room: string | undefined, locale: Locale): BookingTarget | null => {
     const h = hotel ? content(hotel) : undefined
@@ -82,21 +76,6 @@ export const repo = {
       children: l.children,
     }
   },
-  roomParams: () => HOTELS.flatMap(h => h.rooms.map(r => ({ slug: h.slug, room: r.slug }))),
-  page: (slug: PageSlug, locale: Locale): Page => {
-    const p = PAGES[slug]
-    const t = (l: L) => tr(l, locale)
-    return {
-      slug, eyebrow: t(p.eyebrow), title: t(p.title), lead: t(p.lead), updated: p.updated, draft: p.draft,
-      sections: p.sections.map(s => ({ id: s.id, title: t(s.title), body: s.body.map(t), list: s.list?.map(t), link: s.link && { href: s.link.href, label: t(s.link.label) } })),
-    }
-  },
-  /** Các dòng huỷ / đổi ngày / lễ Tết / gián đoạn trong chính sách từng khách sạn — trang huỷ đọc thẳng, không chép lại. */
-  cancelPolicies: (locale: Locale) => HOTELS.map(h => ({
-    slug: h.slug,
-    name: h.name,
-    rows: h.policies.filter(([k]) => CANCEL_KEYS.includes(k.vi)).map(([k, v]) => [tr(k, locale), tr(v, locale)] as [string, string]),
-  })),
 
   // --- Gohost ---
   /** "Giá từ …/đêm". null khi KS chưa nối Gohost, chưa ánh xạ phòng, hoặc Gohost lỗi — UI ẩn giá, không đoán. */
@@ -104,7 +83,7 @@ export const repo = {
     const h = content(slug)
     if (!h?.gohost_tenant_id) return null
     try {
-      const property = (await getProperties()).find(p => p.id === h.gohost_tenant_id)
+      const property = (await gohostApi.properties()).find(p => p.id === h.gohost_tenant_id)
       const mapped = new Set(h.rooms.flatMap(r => (r.gohost_room_type_id ? [r.gohost_room_type_id] : [])))
       return property ? minDefaultRate(property.room_types ?? [], mapped) : null
     } catch (e) {
@@ -117,7 +96,7 @@ export const repo = {
   async availability(slug: string, checkin: string, checkout: string): Promise<RoomAvailability[]> {
     const tenant = content(slug)?.gohost_tenant_id
     if (!tenant) return []
-    return (await getRoomTypes(tenant, checkin, checkout)).map(rt => ({
+    return (await gohostApi.roomTypes({ tenant, checkin, checkout })).map(rt => ({
       room_type_id: rt.id,
       title: rt.title,
       quantity: rt.quantity ?? 0,

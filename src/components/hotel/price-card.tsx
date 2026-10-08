@@ -7,7 +7,7 @@ import { firstCheckin } from '@/lib/stay'
 import { BTN } from '@/components/site/kit'
 import { DateRangeField, GuestsField } from '@/components/site/stay-fields'
 import { useStay } from './use-stay'
-import type { Contact } from '@/lib/types'
+import type { Contact } from '@/types/hotel'
 
 export function PriceCard({ fromPrice, opening, contact }: { fromPrice: number | null; opening: string | null; contact: Contact }) {
   const t = useTranslations()

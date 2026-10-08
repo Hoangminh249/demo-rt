@@ -6,9 +6,10 @@ import { Suspense, type ReactNode } from 'react'
 import { Ban, ChevronDown, Info, MapPin, Navigation } from 'lucide-react'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
-import { repo } from '@/lib/repo'
+import { hotelApi } from '@/api/hotel'
+import { siteApi } from '@/api/site'
 import { fmtDate, fmtPrice, today } from '@/lib/format'
-import type { Locale } from '@/lib/types'
+import type { Locale } from '@/types/global'
 import { InfoTable } from '@/components/hotel/info-table'
 import { BTN, BTN_OUT, CheckItem, CONTAINER, EYEBROW, ICONS } from '@/components/site/kit'
 import { Gallery } from '@/components/hotel/gallery'
@@ -17,13 +18,13 @@ import { Rooms } from '@/components/hotel/rooms'
 import { PriceCard } from '@/components/hotel/price-card'
 
 export const dynamicParams = false
-export const generateStaticParams = () => repo.hotelSlugs().map(slug => ({ slug }))
+export const generateStaticParams = () => hotelApi.slugs().map(slug => ({ slug }))
 // Dựng tĩnh, làm mới mỗi 10 phút ("Giá từ" lấy từ Gohost, cache 1 giờ). Phòng trống theo ngày tải ở trình duyệt.
 export const revalidate = 600
 
 export async function generateMetadata({ params }: PageProps<'/[locale]/hotel/[slug]'>) {
   const { locale, slug } = await params
-  const h = repo.getHotel(slug, locale as Locale)
+  const h = hotelApi.get(slug, locale as Locale)
   return h ? { title: `${h.name} — ${h.area}`, description: h.tagline } : {}
 }
 
@@ -34,11 +35,11 @@ function Section({ id, title, children }: { id: string; title: string; children:
 export default async function HotelPage({ params }: PageProps<'/[locale]/hotel/[slug]'>) {
   const { locale, slug } = await params
   setRequestLocale(locale as Locale)
-  const h = repo.getHotel(slug, locale as Locale)
+  const h = hotelApi.get(slug, locale as Locale)
   if (!h) notFound()
   const t = await getTranslations()
-  const from = await repo.fromPrice(slug)
-  const contact = repo.site(locale as Locale)
+  const from = await hotelApi.fromPrice(slug)
+  const contact = siteApi.info(locale as Locale)
   const upcoming = h.opening && h.opening > today() ? h.opening : null
   const sections = [
     ['tong-quan', true],

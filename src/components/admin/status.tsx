@@ -1,6 +1,7 @@
 // Trạng thái kết nối Gohost: dải trạng thái API (Tổng quan) và badge nối Gohost của từng khách sạn.
 import { PlugZap } from 'lucide-react'
-import type { ConnectState, GohostErrorCode } from '@/lib/repo/admin'
+import type { ConnectState } from '@/types/admin'
+import type { GohostErrorCode } from '@/types/gohost'
 import { Badge, CARD, GohostError, hhmm } from './ui'
 
 type Status = { budget: number; budgetLeft: number; last: { at: number; path: string; status: number | 'network' } | null }

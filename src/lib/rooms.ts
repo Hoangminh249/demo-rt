@@ -1,6 +1,6 @@
-// Logic thuần ghép nội dung phòng (Rooty) với phòng trống + giá (Gohost). Dùng ở cả server (repo) và trình duyệt (khối Chọn phòng),
+// Logic thuần ghép nội dung phòng (Rooty) với phòng trống + giá (Gohost). Dùng ở cả server (src/api/hotel.ts) và trình duyệt (khối Chọn phòng),
 // nên không import gì của server. Kiểm bằng scripts/check.ts.
-import type { PlanOffer, Room, RoomAvailability, Stay } from './types'
+import type { PlanOffer, Room, RoomAvailability, Stay } from '@/types/hotel'
 
 /** Giá thấp nhất/đêm trong danh mục Gohost: giá mặc định T2 → CN của các gói VND, chỉ hạng phòng thật đã ánh xạ. */
 export function minDefaultRate(

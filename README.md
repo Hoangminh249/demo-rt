@@ -57,22 +57,23 @@ Gohost không có sandbox: máy dev dùng chung key production, giới hạn **6
 
 ```
 src/content/                         nội dung thật của từng khách sạn (song ngữ vi/en) + kênh liên hệ
-src/lib/gohost.ts                    gọi Gohost — instance axios riêng (Bearer key:secret khai báo một lần), chỉ GET, chỉ server, cache, ngân sách lượt gọi
+src/lib/gohost.ts                    HTTP client Gohost — instance axios riêng (Bearer key:secret một lần), chỉ get(), chỉ server, ngân sách lượt gọi, lỗi
 src/lib/http.ts                      instance axios cho trình duyệt: chỉ gọi /api của Rooty; 401 ở /api/admin → về trang đăng nhập
 src/hooks/                           mọi khai báo TanStack Query (useQuery / useMutation + khoá cache); component chỉ gọi hook
 src/app/api/admin/                   route GET cho admin (kiểm phiên, kiểm tham số, rồi mới gọi Gohost) + đăng nhập/đăng xuất
-src/lib/repo/index.ts                cửa duy nhất để UI lấy dữ liệu (ghép content + Gohost)
+src/api/                             cửa lấy dữ liệu phía server, mỗi file một object: hotelApi (content + Gohost), siteApi (liên hệ, trang tĩnh),
+                                     gohostApi (endpoint Gohost + query riêng), adminApi. Payload/request dùng riêng cho endpoint khai báo ngay trong file
+src/types/                           kiểu dữ liệu: global.ts (dùng chung) + từng module: hotel, booking, page, admin, gohost (response thô)
 src/lib/rooms.ts, stay.ts            logic thuần dùng chung server/trình duyệt (ghép phòng, khoảng ngày)
 src/app/api/hotels/[slug]/rooms/     phòng trống + giá cho khối "Chọn phòng" (kiểm tham số trước khi gọi Gohost)
 src/app/[locale]/(site)/             trang chủ, trang khách sạn (dựng tĩnh, làm mới mỗi 10 phút)
 src/components/site/, hotel/         header, footer, ô chọn ngày/khách, bộ ảnh, chọn phòng, thẻ giá
 src/i18n/, src/proxy.ts, messages/   ngôn ngữ (next-intl); proxy còn chặn /admin, /api/admin khi chưa đăng nhập
 src/app/admin/, src/components/admin/  admin chỉ xem: trang mỏng ở app/admin/(app), màn thật ở components/admin/views (client, dùng hook)
-src/lib/repo/admin.ts                đối chiếu content ↔ Gohost, danh sách việc cần xử lý, đọc booking
 src/lib/admin-auth.ts                đăng nhập + phiên cookie ký HMAC, dùng chung cho proxy, route /api/admin và hàm đọc booking
 ```
 
-Component không import `src/content` hay `src/lib/gohost` — trang server đọc qua `src/lib/repo`, component client đọc qua hook trong `src/hooks` (gọi /api). Trình duyệt không bao giờ gọi thẳng Gohost: key chỉ nằm ở server. Đổi sang CMS sau này chỉ thay `src/lib/repo`.
+Component không import `src/content`, `src/lib/gohost` hay `src/api` — trang server đọc qua `src/api`, component client đọc qua hook trong `src/hooks` (gọi /api). Trình duyệt không bao giờ gọi thẳng Gohost: key chỉ nằm ở server. Đổi sang CMS sau này chỉ thay `src/api/hotel.ts`, `src/api/site.ts`.
 
 ## Ngôn ngữ, header, banner
 

@@ -13,8 +13,9 @@ import { DateRangeInput } from '@/components/admin/date-range'
 import { Badge, CARD, Empty, GohostError, LoadFailed, Photo, Skel, shortVnd, vndPlain } from '@/components/admin/ui'
 import { fmtDayMonth, today } from '@/lib/format'
 import { defaultStay, firstCheckin, validRange } from '@/lib/stay'
-import { useAdminAvailability, useAdminHotel, type AdminHotel } from '@/hooks/use-admin'
-import type { HotelCheck } from '@/lib/repo/admin'
+import { useAdminAvailability, useAdminHotel } from '@/hooks/use-admin'
+import type { AdminHotel } from '@/types/admin'
+import type { HotelCheck } from '@/types/admin'
 
 // [id, nhãn, nhãn dưới sm]: rút chữ để 4 tab vừa 375px, không phải cuộn ngang (R10 bước 1)
 const TABS = [['phong', 'Phòng & ánh xạ', 'Phòng'], ['gia', 'Giá & phòng trống', 'Giá'], ['noi-dung', 'Nội dung', 'Nội dung'], ['anh', 'Ảnh', 'Ảnh']] as const

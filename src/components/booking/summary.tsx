@@ -7,7 +7,7 @@ import { AlertTriangle, ChevronDown, Coffee, PencilLine, ShieldCheck } from 'luc
 import { Link } from '@/i18n/navigation'
 import { diffDays, fmtDate, fmtDayMonth, fmtPrice, fmtWeekday } from '@/lib/format'
 import { roomHref } from '@/lib/booking'
-import type { BookingTarget } from '@/lib/types'
+import type { BookingTarget } from '@/types/booking'
 import { Photo, TEXT_LINK } from '@/components/site/kit'
 import { useRoomOffer } from '@/components/room/use-room-offer'
 

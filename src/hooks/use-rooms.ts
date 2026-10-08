@@ -2,7 +2,7 @@
 // Khoá theo (khách sạn, ngày nhận, ngày trả): đổi số khách không gọi lại, quay lại ngày cũ thì lấy ngay từ cache.
 import { useQuery } from '@tanstack/react-query'
 import { api } from '@/lib/http'
-import type { RoomAvailability } from '@/lib/types'
+import type { RoomAvailability } from '@/types/hotel'
 
 export const roomKeys = {
   availability: (slug: string, checkin: string, checkout: string) => ['rooms', slug, checkin, checkout] as const,

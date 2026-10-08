@@ -1,6 +1,6 @@
 // Ngày ở + số khách ↔ URL (?in=&out=&a=&c=), để trang chủ truyền sang trang khách sạn và chia sẻ link được.
 // validRange dùng chung cho URL (trình duyệt) và route handler phòng trống (server): sai thì không gọi Gohost.
-import type { Stay } from './types'
+import type { Stay } from '@/types/hotel'
 import { addDays, diffDays, isISODate, today } from './format'
 
 export const MAX_NIGHTS = 30 // Gohost: khoảng ngày tối đa 30 đêm

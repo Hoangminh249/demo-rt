@@ -7,11 +7,11 @@ Toàn bộ nội dung file này **CONFIRMED từ spec**; đã gọi thử bằng
 
 CONFIRMED bằng response thật. Chỉ ghi cấu trúc, không ghi dữ liệu khách.
 
-- `GET /properties`: `room_types` là **mảng** (spec ghi object). Key đọc được **2 property đều là PITO**: `PIT` "Pito Hotel" và `PIO` "CÔNG TY TNHH KHÁCH SẠN HÒN THƠM PHÚ QUỐC - PITO HOTEL", cùng 4 hạng (Deluxe cao cấp view biển 4 · Tiêu chuẩn view nội khu 4 · Grand Deluxe Bồn Tắm 4 · Cozy sân thượng, view núi 1 = 13 phòng), mỗi hạng 1 gói "Standard" (`per_room`, giá 7 ngày như nhau). Chưa có Calista.
+- `GET /properties`: `room_types` là **mảng** (spec ghi object). Key đọc được **2 property đều là PITO**: `PIT` "Pito Hotel" và `PIO` "CÔNG TY TNHH KHÁCH SẠN HÒN THƠM PHÚ QUỐC - PITO HOTEL", cùng 4 hạng (Deluxe cao cấp view biển 4 · Tiêu chuẩn view nội khu 4 · Grand Deluxe Bồn Tắm 4 · Cozy sân thượng, view núi 1 = 13 phòng), mỗi hạng 1 gói "Standard" (`per_room`, giá 7 ngày như nhau). Chưa có Calista. **Dùng PIO** (pháp nhân hiện tại, chốt 08/10/2026); PIT là của chủ trước.
 - `GET /bookings`: `{ success, data[], pagination{ current_page, last_page, per_page, total, … } }`. Mỗi booking: `id` = **mã booking 8 ký tự** (dạng `PIT00199`; không có field `code`), `status`, `payment_status` (`not_pay`…), `amount`, `checkin_date`, `checkout_date`, `rooms_count`, `source_name` (vd `agoda`), `segment`, `payment_collect`, `booked_at`, `customer{ name, phone, email, country, identity, … }`, `booking_rooms[{ room_type (chuỗi), room_unit, nights, has_breakfast, occupancy, days_breakdown }]`, `booking_source{ name, color }`, `payments[]`.
 - `GET /bookings/{id}?booking_id={id}`: cùng cấu trúc, thêm `booking_rooms[].guests[]` (tên field của từng khách: chưa thấy vì danh sách rỗng).
 - **Booking không tồn tại → HTTP 422** `{ success: false, message: "Không tìm thấy đơn đặt phòng.", errors: { booking_id: [...] } }`.
-- Code đọc booking qua danh sách field cho phép (`src/lib/gohost.ts`); không đọc `customer.identity`, giấy tờ, ngày sinh.
+- Code đọc booking qua danh sách field cho phép (`src/api/gohost.ts`); không đọc `customer.identity`, giấy tờ, ngày sinh.
 
 ## Tổng quan
 

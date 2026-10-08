@@ -1,18 +1,8 @@
-// Kiểu dữ liệu. Phần đọc từ Gohost giữ tên field của Gohost (docs/api-docs/gohost-api.md); phần nội dung
-// (ảnh, mô tả, chính sách, bản dịch) là của Rooty, nằm ở src/content — Gohost API không có những thứ này.
+// Khách sạn + phòng. Nội dung (ảnh, mô tả, chính sách, bản dịch) là của Rooty, ở src/content — Gohost API không có.
+// Giá, tồn, sức chứa thuộc Gohost (đọc qua src/api/hotel.ts), giữ tên field của Gohost.
+import type { IconKey, InfoTable, InfoTableContent, L } from './global'
 
-export type Locale = 'vi' | 'en'
-
-/** Chữ hai ngôn ngữ. Thiếu `en` thì web dùng `vi`, admin báo thiếu bản dịch. */
-export interface L { vi: string; en?: string }
-
-export type IconKey =
-  | 'map-pin' | 'clock' | 'cable-car' | 'door-open' | 'plane' | 'bus' | 'ferris-wheel' | 'coffee' | 'wifi' | 'shirt'
-  | 'receipt' | 'washing-machine'
-
-// ---------- Nội dung Rooty (src/content) — không chứa giá, tồn, sức chứa: những thứ đó thuộc Gohost ----------
-
-export interface InfoTableContent { caption: L; head: L[]; rows: L[][]; note?: L }
+// ---------- Nội dung Rooty (src/content) ----------
 
 export interface RoomContent {
   gohost_room_type_id: string | null // null = chưa ánh xạ với Gohost → chưa có giá trực tuyến
@@ -67,19 +57,10 @@ export interface SiteContent {
   owner: { name: string; id: string; address: L } // pháp nhân đứng tên website
 }
 
-/** Trang tĩnh (liên hệ, chính sách). `draft`: bản Rooty soạn, chờ pháp chế duyệt — web gắn nhãn. */
-export type PageSlug = 'lien-he' | 'chinh-sach-huy' | 'chinh-sach-bao-mat' | 'dieu-khoan-dat-phong'
-export interface PageSectionContent { id: string; title: L; body: L[]; list?: L[]; link?: { href: string; label: L } }
-export interface PageContent { slug: PageSlug; eyebrow: L; title: L; lead: L; updated: string; draft: boolean; sections: PageSectionContent[] }
-export interface PageSection { id: string; title: string; body: string[]; list?: string[]; link?: { href: string; label: string } }
-export interface Page { slug: PageSlug; eyebrow: string; title: string; lead: string; updated: string; draft: boolean; sections: PageSection[] }
-
-/** Kênh đặt phòng (Zalo / hotline / email) — chưa có đặt phòng trực tuyến. */
+/** Kênh đặt phòng (Zalo / hotline / email). */
 export type Contact = Pick<SiteContent, 'phone' | 'phone_display' | 'zalo' | 'email'>
 
 // ---------- Bản đã chọn ngôn ngữ, đưa cho UI ----------
-
-export interface InfoTable { caption: string; head: string[]; rows: string[][]; note?: string }
 
 export interface Room {
   room_type_id: string | null
@@ -121,14 +102,6 @@ export interface Hotel {
   rooms: Room[]
 }
 
-/** Khách sạn + phòng đưa cho các bước đặt phòng (repo.bookingTarget). */
-export interface BookingTarget {
-  hotel: { slug: string; code: string; name: string; online: boolean; opening: string | null; cancel_summary: string; address: string; map_url: string }
-  room: Room
-  times: { checkin: string; checkout: string }
-  children: InfoTable | null
-}
-
 // ---------- Phòng trống + giá (Gohost GET /properties/{tenant}/room_types) ----------
 
 export interface DayPrice { day: string; price: number } // Gohost days_breakdown
@@ -152,34 +125,3 @@ export interface RoomAvailability {
 }
 
 export interface Stay { checkin: string; checkout: string; adults: number; children: number }
-
-// ---------- Booking (Gohost GET /bookings, /bookings/{id}) — chỉ admin, chỉ các field được phép (không CCCD, ảnh giấy tờ) ----------
-
-/** Trạng thái booking Gohost (spec + gọi thật). Dùng cho bộ lọc và kiểm tham số ở /api/admin/bookings. */
-export const BOOKING_STATUSES = ['new', 'confirmed', 'in_progress', 'finished', 'no_show', 'cancelled', 'merged'] as const
-
-export interface BookingRow {
-  code: string // mã booking Gohost (field `id`, 8 ký tự), dùng cho trang chi tiết
-  status: string // new | confirmed | in_progress | finished | no_show | cancelled | merged
-  payment_status: string | null // not_pay | … (mới thấy not_pay)
-  checkin: string | null
-  checkout: string | null
-  amount: number | null
-  currency: string
-  customer: string | null
-  phone: string | null // đã che phần giữa
-  source: string | null
-  rooms: string | null
-}
-
-export interface BookingDetail extends BookingRow {
-  booked_at: string | null
-  arrival_hour: string | null
-  departure_hour: string | null
-  payment_collect: string | null
-  ota_code: string | null // source_reservation_code
-  notes: string | null
-  email: string | null // đã che phần trước @
-  room_list: { room_type: string; unit: string | null; nights: number | null; adults: number; children: number; infants: number; breakfast: boolean; guests: { name: string; primary: boolean }[] }[]
-  payments: number
-}

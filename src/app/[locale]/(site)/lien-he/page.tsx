@@ -3,13 +3,14 @@
 import { ArrowRight, CalendarPlus, CalendarSync, Mail, MapPin, MessageCircle, Navigation, Phone, ReceiptText, MessagesSquare } from 'lucide-react'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
-import { repo } from '@/lib/repo'
-import type { Locale } from '@/lib/types'
+import { hotelApi } from '@/api/hotel'
+import { siteApi } from '@/api/site'
+import type { Locale } from '@/types/global'
 import { BTN, BTN_OUT, CONTAINER, Photo, TEXT_LINK } from '@/components/site/kit'
 import { PageHero } from '@/components/site/policy-page'
 
 export async function generateMetadata({ params }: PageProps<'/[locale]/lien-he'>) {
-  const p = repo.page('lien-he', (await params).locale as Locale)
+  const p = siteApi.page('lien-he', (await params).locale as Locale)
   return { title: p.title, description: p.lead }
 }
 
@@ -19,14 +20,14 @@ export default async function ContactPage({ params }: PageProps<'/[locale]/lien-
   const { locale } = await params
   setRequestLocale(locale as Locale)
   const t = await getTranslations('Pages.contact')
-  const site = repo.site(locale as Locale)
-  const hotels = repo.listHotels(locale as Locale)
+  const site = siteApi.info(locale as Locale)
+  const hotels = hotelApi.list(locale as Locale)
   const mail = (subject: string, body: string) => `mailto:${site.email}?${new URLSearchParams({ subject, body }).toString().replace(/\+/g, '%20')}`
   const h2 = 'text-[26px] font-bold text-brand'
 
   return (
     <>
-      <PageHero page={repo.page('lien-he', locale as Locale)} />
+      <PageHero page={siteApi.page('lien-he', locale as Locale)} />
       <div className={`${CONTAINER} grid gap-14 py-12`}>
         <section aria-labelledby="kenh" className="grid gap-4 md:grid-cols-2">
           <h2 id="kenh" className="sr-only">{t('channels')}</h2>

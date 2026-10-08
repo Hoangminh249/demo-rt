@@ -4,7 +4,8 @@ import { useLocale, useTranslations } from 'next-intl'
 import { ArrowRight, FileClock, Mail, MessageCircle } from 'lucide-react'
 import { Link } from '@/i18n/navigation'
 import { fmtDate } from '@/lib/format'
-import type { Contact, Page } from '@/lib/types'
+import type { Contact } from '@/types/hotel'
+import type { Page } from '@/types/page'
 import { CONTAINER, EYEBROW, TEXT_LINK } from './kit'
 
 export function PageHero({ page }: { page: Page }) {

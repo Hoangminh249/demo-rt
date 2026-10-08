@@ -3,10 +3,11 @@ import { ArrowRight, ArrowUpRight, Bus, Coffee, MessageCircle, Receipt } from 'l
 import { useLocale, useTranslations } from 'next-intl'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
-import { repo } from '@/lib/repo'
+import { hotelApi } from '@/api/hotel'
 import { fmtDate, fmtPrice, today } from '@/lib/format'
 import { defaultStay, hotelHref } from '@/lib/stay'
-import type { Hotel, Locale } from '@/lib/types'
+import type { Hotel } from '@/types/hotel'
+import type { Locale } from '@/types/global'
 import { BTN, CheckItem, CONTAINER, EYEBROW, Photo, SectionTitle, TEXT_LINK } from '@/components/site/kit'
 import { HeroSlides } from '@/components/site/hero-slides'
 import { QuickBar } from '@/components/site/quick-bar'
@@ -58,8 +59,8 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
   const locale = (await params).locale as Locale
   setRequestLocale(locale)
   const t = await getTranslations('Home')
-  const hotels = repo.listHotels(locale)
-  const prices = await Promise.all(hotels.map(h => repo.fromPrice(h.slug)))
+  const hotels = hotelApi.list(locale)
+  const prices = await Promise.all(hotels.map(h => hotelApi.fromPrice(h.slug)))
   const now = today()
   const promises = t.raw('promises') as [string, string][]
   const eco = t.raw('eco') as [string, string, string][]

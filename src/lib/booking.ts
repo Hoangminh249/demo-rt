@@ -1,7 +1,8 @@
 // Luồng đặt phòng (bản minh hoạ, chỉ chạy trên trình duyệt — chưa POST Gohost, chưa cổng thanh toán).
 // Lựa chọn (khách sạn, phòng, gói, ngày, khách) nằm trên URL; thông tin cá nhân của khách KHÔNG lên URL (sessionStorage).
 import { stayQuery } from './stay'
-import type { Stay } from './types'
+import type { Stay } from '@/types/hotel'
+import type { Arrival, ChildAge, StayRequest } from '@/types/booking'
 
 // ponytail: tỉ lệ cọc cố định 30% — chờ kế toán chốt (review §"Trả 100% hay đặt cọc?"), đổi ở đây.
 export const DEPOSIT_RATE = 0.3
@@ -21,37 +22,10 @@ export const selectionQuery = (sel: Selection, stay: Stay) =>
 export const roomHref = (hotel: string, room: string, stay?: Stay, plan?: string | null) =>
   `/hotel/${hotel}/${room}${stay ? `?${stayQuery(stay)}${plan ? `&plan=${encodeURIComponent(plan)}` : ''}` : ''}`
 
-export const CHILD_AGES = ['under6', '6to11', '12plus'] as const
-export type ChildAge = (typeof CHILD_AGES)[number]
-export const ARRIVALS = ['14-16', '16-18', '18-20', '20+'] as const // khung giờ đến → Gohost arrival_hour (lấy giờ đầu)
-export const REQUESTS = ['quiet', 'high', 'early', 'occasion'] as const
-
-/** Thông tin khách nhập ở bước 2 — tên field bám Gohost POST /bookings để sau này nối thẳng (docs/api-docs/gohost-api.md). */
-export interface GuestDraft {
-  name: string
-  phone: string
-  email: string
-  country: string // ISO-2, Gohost customer.country
-  self: boolean // người liên hệ cũng là khách nhận phòng
-  guest: string // tên khách nhận phòng khi self = false
-  children: ChildAge[]
-  arrival: (typeof ARRIVALS)[number] | '' // '' = chưa rõ
-  requests: (typeof REQUESTS)[number][]
-  notes: string // → notes, tối đa 500 ký tự
-  marketing: boolean
-}
-
-/** Kết quả bước thanh toán (minh hoạ) + ảnh chụp giá lúc trả, để trang xác nhận không phụ thuộc phòng trống sau đó. */
-export interface PaymentDraft {
-  code: string
-  mode: 'deposit' | 'full'
-  method: 'qr' | 'card'
-  paid: number
-  total: number
-  plan: string
-  breakfast: boolean
-  at: string
-}
+// Thứ tự hiển thị trên form; kiểu ở src/types/booking.ts.
+export const CHILD_AGES: ChildAge[] = ['under6', '6to11', '12plus']
+export const ARRIVALS: Arrival[] = ['14-16', '16-18', '18-20', '20+']
+export const REQUESTS: StayRequest[] = ['quiet', 'high', 'early', 'occasion']
 
 export const NOTES_MAX = 500
 export const isEmail = (s: string) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(s.trim())

@@ -164,7 +164,20 @@
     "contactNote": "Gửi các thông tin trên qua Zalo, điện thoại hoặc email. Khách sạn kiểm tra phòng trống và gửi hướng dẫn thanh toán; đặt phòng chỉ có hiệu lực khi khách sạn gửi xác nhận có mã đặt phòng.",
     "zalo": "Nhắn Zalo",
     "mailSubject": "Yêu cầu đặt phòng — {hotel}",
-    "choose": "Chọn"
+    "choose": "Chọn phòng",
+    "edit": "Đổi",
+    "typesCount": "{n} hạng phòng",
+    "photos": "{n} ảnh",
+    "perNightLabel": "Giá mỗi đêm",
+    "totalLine": "Tổng <b>{total}</b> · {nights}",
+    "plansCount": "{n} gói giá",
+    "soldOutShort": "Hết phòng",
+    "notFitShort": "Không đủ chỗ",
+    "roomMaxShort": "Tối đa {max}",
+    "changeGuests": "Đổi số khách",
+    "byDate": "Giá theo ngày",
+    "byDateBody": "Khách sạn báo giá và giữ phòng qua Zalo.",
+    "cancelPolicy": "Chính sách huỷ"
   },
   "NotFound": {
     "title": "Không tìm thấy trang",
@@ -176,7 +189,6 @@
     "retry": "Thử lại"
   },
   "Room": {
-    "plansTitle": "Chọn gói giá",
     "plansEmpty": {
       "error": "Chưa tải được giá. Thử lại ở thẻ đặt phòng, hoặc liên hệ khách sạn.",
       "contact": "Giá trực tuyến của phòng này đang được cập nhật — liên hệ khách sạn để nhận giá theo ngày.",
@@ -190,12 +202,26 @@
     "soldOut": "Hết phòng cho ngày đã chọn — chọn ngày khác ở trên.",
     "contactOnly": "Giá trực tuyến đang cập nhật. Gửi yêu cầu, khách sạn báo giá và giữ phòng cho quý khách.",
     "seeDates": "Chọn ngày",
-    "inRoom": "Trong phòng có",
     "beforeBooking": "Trước khi đặt",
-    "cancel": "Huỷ phòng",
     "allPolicies": "Toàn bộ chính sách khách sạn",
     "cancelPolicy": "Chính sách huỷ và hoàn tiền",
-    "others": "Phòng khác tại {hotel}"
+    "others": "Phòng khác tại {hotel}",
+    "statSize": "Diện tích",
+    "statView": "Hướng nhìn",
+    "statCapacity": "Sức chứa",
+    "highlights": "Điểm nổi bật",
+    "included": "Đã gồm trong giá phòng",
+    "includedTitle": "Đến đảo, chỉ việc nghỉ.",
+    "includedNote": "Không phải mua thêm khi đến khách sạn.",
+    "includedMore": "Cùng {list}.",
+    "yourStay": "kỳ nghỉ của bạn",
+    "cancelFees": "Phí huỷ theo ngày báo trước",
+    "kids": "Đi cùng trẻ em",
+    "seeAll": "Xem tất cả",
+    "vatIncluded": "Giá đã gồm phí phục vụ và VAT",
+    "adviceTitle": "Cần tư vấn trước khi đặt?",
+    "adviceZalo": "Nhắn Zalo {phone}",
+    "notPaid": "chưa thanh toán"
   },
   "Booking": {
     "steps": {

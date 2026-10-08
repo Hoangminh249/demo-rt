@@ -1,7 +1,8 @@
 // PITO Hòn Thơm — nội dung thật từ Drive "4. ROOTY HOSPITALITY/1. PITO HOTEL HÒN THƠM":
 // "2-Thông-tin-lưu-trú-PITO-Hòn-Thơm.pdf" (VI) + bản EN. Không ghi giá phòng: giá lấy từ Gohost.
 // Chỗ tài liệu mâu thuẫn ghi bản ít hứa hơn — xem docs/2026-10-07-du-lieu-that-va-admin.md §3.
-import type { HotelContent, L } from '@/lib/types'
+import type { HotelContent } from '@/types/hotel'
+import type { L } from '@/types/global'
 
 const img = (f: string) => `/images/pito-hon-thom/${f}.jpg`
 /** Chữ giống nhau ở mọi ngôn ngữ (giờ, số). */
@@ -11,7 +12,7 @@ const SELF_TICKET: L = { vi: 'Tự mua vé theo chiều cao', en: 'Own ticket, b
 export const PITO: HotelContent = {
   slug: 'pito-hon-thom',
   code: 'PITO',
-  gohost_tenant_id: 'b231e154-fbfa-4426-b020-bbf8ed716b83', // Gohost property PIT "Pito Hotel" — chốt là PITO thật 07/10/2026 (key còn đọc được property PIO, không dùng)
+  gohost_tenant_id: 'c27a439f-b2a4-480c-8d7a-5aca01ecdf7a', // Gohost property PIO — pháp nhân hiện tại (chốt 08/10/2026). PIT 'Pito Hotel' là của chủ trước, không dùng
   opening: null, // khai trương 10/2026 (PDF), đang đón khách
   name: 'PITO Hòn Thơm',
   area: { vi: 'Santo Port · Hòn Thơm', en: 'Santo Port · Hon Thom Island' },
@@ -160,7 +161,7 @@ export const PITO: HotelContent = {
   ],
   rooms: [
     {
-      gohost_room_type_id: '98d13bd3-0c01-4c7d-bddf-19bc1d74f299', // Gohost: Tiêu chuẩn view nội khu (4)
+      gohost_room_type_id: 'ae3d6b46-ea1e-44e4-ba05-7a92eea9ff45', // Gohost: Tiêu chuẩn view nội khu (4)
       slug: 'superior',
       name: { vi: 'Superior', en: 'Superior' },
       size: { vi: '19 – 22 m²', en: '19 – 22 m²' },
@@ -170,7 +171,7 @@ export const PITO: HotelContent = {
       images: ['superior-1', 'superior-2', 'superior-3', 'superior-4'].map(f => img(`rooms/${f}`)),
     },
     {
-      gohost_room_type_id: 'd3bdac24-beb0-4373-93e2-7e9d316f3090', // Gohost: Grand Deluxe Bồn Tắm (4, gồm phòng 101)
+      gohost_room_type_id: '9e9f06ff-1ffd-4b55-8aa0-70ab134d0ddb', // Gohost: Grand Deluxe Bồn Tắm (4, gồm phòng 101)
       slug: 'deluxe-bathtub',
       name: { vi: 'Deluxe Bathtub', en: 'Deluxe Bathtub' },
       size: { vi: '27 m²', en: '27 m²' },
@@ -184,7 +185,7 @@ export const PITO: HotelContent = {
       images: ['deluxe-bathtub-1', 'deluxe-bathtub-2', 'deluxe-bathtub-3', 'deluxe-bathtub-4'].map(f => img(`rooms/${f}`)),
     },
     {
-      gohost_room_type_id: 'ad4ec40f-9005-43d7-a2af-eab22687f2d4', // Gohost: Deluxe cao cấp view biển (4)
+      gohost_room_type_id: '7fa279ed-67c3-4e81-a683-40877d15dcf0', // Gohost: Deluxe cao cấp view biển (4)
       slug: 'premier-bathtub',
       name: { vi: 'Premier Bathtub', en: 'Premier Bathtub' },
       size: { vi: '26 m²', en: '26 m²' },
@@ -194,7 +195,7 @@ export const PITO: HotelContent = {
       images: ['premier-bathtub-1', 'premier-bathtub-2', 'premier-bathtub-3'].map(f => img(`rooms/${f}`)),
     },
     {
-      gohost_room_type_id: '2e8418cd-3dd3-47ab-87ce-02ff80820c58', // Gohost: Cozy sân thượng, view núi (1) = phòng 601
+      gohost_room_type_id: '8870f6d4-c1aa-4ae8-ab68-fbdffdac8d7c', // Gohost: Cozy sân thượng, view núi (1) = phòng 601
       slug: 'cozy-san-thuong',
       name: { vi: 'Cozy sân thượng', en: 'Cozy Rooftop' },
       size: { vi: '20 m²', en: '20 m²' },

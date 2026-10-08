@@ -3,7 +3,7 @@
 import { useCallback } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { parseStay, stayQuery } from '@/lib/stay'
-import type { Stay } from '@/lib/types'
+import type { Stay } from '@/types/hotel'
 
 /** `opening`: ngày khai trương — khách sạn chưa mở thì ngày ở không được sớm hơn. */
 export function useStay(opening?: string | null) {

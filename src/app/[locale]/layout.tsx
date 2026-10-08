@@ -4,7 +4,7 @@ import { Be_Vietnam_Pro } from 'next/font/google'
 import { hasLocale, NextIntlClientProvider } from 'next-intl'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { routing } from '@/i18n/routing'
-import type { Locale } from '@/lib/types'
+import type { Locale } from '@/types/global'
 import '../globals.css'
 
 // rootytrip.com dùng SF Pro Display (không có giấy phép web) và lùi về Be Vietnam Pro → dùng thẳng Be Vietnam Pro.

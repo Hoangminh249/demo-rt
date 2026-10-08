@@ -1,39 +1,15 @@
-// Dữ liệu cho /admin (chỉ xem): đối chiếu nội dung Rooty (src/content) với Gohost theo ID, đếm chỗ thiếu, lập danh sách việc.
+// Dữ liệu cho /admin (chỉ xem, sau /api/admin/*): đối chiếu nội dung Rooty (src/content) với Gohost theo ID, đếm chỗ thiếu, lập danh sách việc.
 // Không ghi gì: sửa nội dung là sửa src/content/*.ts (commit), sửa giá / phòng / booking là làm trong Gohost.
 import 'server-only'
 import { cache } from 'react'
 import { HOTELS } from '@/content'
-import { getBooking, getBookings, getProperties, gohostStatus, isGohostError, type GhRoomType, type GohostErrorCode } from '../gohost'
-import { repo } from './index'
-import type { HotelContent, L, RoomAvailability, RoomContent } from '../types'
-
-export type { GohostErrorCode } from '../gohost'
-
-/** ok = đọc được trên Gohost · none = nội dung chưa có tenant · unknown = không đọc được Gohost · missing = tenant không có trên Gohost */
-export type ConnectState = 'ok' | 'none' | 'unknown' | 'missing'
-
-export interface HotelCheck {
-  slug: string
-  name: string
-  area: string
-  opening: string | null
-  cover: string | null
-  tenant: string | null
-  state: ConnectState
-  ghRooms: GhRoomType[]
-  unmappedGohost: GhRoomType[] // hạng trên Gohost chưa có nội dung → web không hiện
-  orphanContent: RoomContent[] // nội dung trỏ tới ID không có trên Gohost
-  unlinkedContent: RoomContent[] // nội dung chưa có gohost_room_type_id
-  contentRooms: RoomContent[]
-  photos: { src: string; label: string }[]
-  roomsWithPhotos: number
-  enMissing: number
-  enReview: boolean
-  pending: string[]
-  fromPrice: number | null
-}
-
-export interface Issue { level: 'chan' | 'sua'; hotel: string; title: string; desc: string; go: string; href: string }
+import { gohostStatus, isGohostError } from '@/lib/gohost'
+import type { L } from '@/types/global'
+import type { HotelContent } from '@/types/hotel'
+import type { GohostErrorCode } from '@/types/gohost'
+import type { AdminAvailability, AdminBooking, AdminBookings, AdminHotel, AdminOverview, AdminProperties, ConnectState, ContentRow, HotelCheck, Issue } from '@/types/admin'
+import { gohostApi, type BookingsQuery } from './gohost'
+import { hotelApi } from './hotel'
 
 // ---------- Đếm chữ thiếu bản dịch ----------
 const isL = (v: unknown): v is L => !!v && typeof v === 'object' && 'vi' in v && typeof (v as L).vi === 'string'
@@ -59,7 +35,7 @@ function photosOf(h: HotelContent) {
 /** Danh mục Gohost (cache 1 giờ); lỗi thì trả mã lỗi, không ném. */
 const readCatalog = cache(async () => {
   try {
-    return { properties: await getProperties(), error: null as GohostErrorCode | null }
+    return { properties: await gohostApi.properties(), error: null as GohostErrorCode | null }
   } catch (e) {
     if (isGohostError(e)) return { properties: null, error: e.message }
     throw e
@@ -91,14 +67,14 @@ async function check(h: HotelContent): Promise<HotelCheck> {
     enMissing: missingEn(h),
     enReview: Boolean(h.en_review),
     pending: h.pending,
-    fromPrice: await repo.fromPrice(h.slug),
+    fromPrice: await hotelApi.fromPrice(h.slug),
   }
 }
 
 const short = (name: string) => name.split(' ')[0]
 const quote = (list: { title?: string; name?: L }[]) => list.map(x => `“${x.title ?? x.name?.vi}”`).join(', ')
 
-export function issuesOf(checks: HotelCheck[]): Issue[] {
+function issuesOf(checks: HotelCheck[]): Issue[] {
   const out: Issue[] = []
   for (const c of checks) {
     const href = (tab: string) => `/admin/hotels/${c.slug}?tab=${tab}`
@@ -118,24 +94,23 @@ export function issuesOf(checks: HotelCheck[]): Issue[] {
 }
 
 /** Tổng quan: dùng chung cho trang Tổng quan và số đếm trên sidebar (cache() gộp trong một lượt render). */
-export const overview = cache(async () => {
+const overview = cache(async (): Promise<AdminOverview> => {
   const checks = await Promise.all(HOTELS.map(check))
   const { error } = await readCatalog()
   return { status: gohostStatus(), error, checks, issues: issuesOf(checks) }
 })
 
-export async function hotelCheck(slug: string) {
+async function hotel(slug: string): Promise<AdminHotel | null> {
   const h = HOTELS.find(x => x.slug === slug)
   if (!h) return null
   const [c, { properties, error }] = await Promise.all([check(h), readCatalog()])
   // Khách sạn chưa nối: liệt kê mọi property key đọc được, kèm hạng phòng, để chọn đúng property mà chép ID.
   const options = properties?.map(p => ({ id: p.id, title: p.title, prefix: p.prefix, rooms: (p.room_types ?? []).map(r => ({ id: r.id, title: r.title, quantity: r.quantity })) }))
-  return { check: c, error, content: h, properties: options ?? null }
+  return { check: c, error, content: h, properties: options ?? null, rows: contentRows(h) }
 }
 
 // ---------- Tab Nội dung: từng mục, đủ / thiếu theo ngôn ngữ ----------
-export interface ContentRow { label: string; value: string; viMissing: number; enMissing: number }
-export function contentRows(h: HotelContent): ContentRow[] {
+function contentRows(h: HotelContent): ContentRow[] {
   const row = (label: string, value: string, v: unknown): ContentRow => ({ label, value, viMissing: missingVi(v), enMissing: missingEn(v) })
   return [
     row('Tên, khu vực, địa chỉ', 'Đủ', [h.area, h.address, h.facts]),
@@ -149,9 +124,9 @@ export function contentRows(h: HotelContent): ContentRow[] {
 }
 
 // ---------- Giá & phòng trống: cùng lời gọi web đang dùng ----------
-export async function availabilityCheck(slug: string, checkin: string, checkout: string): Promise<{ rooms: RoomAvailability[] | null; error: GohostErrorCode | null }> {
+async function availability(slug: string, checkin: string, checkout: string): Promise<AdminAvailability> {
   try {
-    return { rooms: await repo.availability(slug, checkin, checkout), error: null }
+    return { rooms: await hotelApi.availability(slug, checkin, checkout), error: null }
   } catch (e) {
     if (isGohostError(e)) return { rooms: null, error: e.message }
     throw e
@@ -160,8 +135,7 @@ export async function availabilityCheck(slug: string, checkin: string, checkout:
 
 // ---------- Booking ----------
 // Booking là dữ liệu Gohost: lọc theo property Gohost mà key đọc được (kể cả property chưa gắn khách sạn Rooty nào).
-export interface GohostPropertyOption { id: string; title: string; prefix: string; hotel: string | null }
-export async function gohostProperties(): Promise<{ properties: GohostPropertyOption[] | null; error: GohostErrorCode | null }> {
+async function properties(): Promise<AdminProperties> {
   const { properties, error } = await readCatalog()
   return {
     properties: properties?.map(p => ({ id: p.id, title: p.title, prefix: p.prefix, hotel: HOTELS.find(h => h.gohost_tenant_id === p.id)?.name ?? null })) ?? null,
@@ -169,20 +143,22 @@ export async function gohostProperties(): Promise<{ properties: GohostPropertyOp
   }
 }
 
-export async function bookingList(tenant: string, q: { start: string; end: string; status?: string; page?: number }) {
+async function bookings(tenant: string, q: BookingsQuery): Promise<AdminBookings> {
   try {
-    return { data: await getBookings(tenant, q), error: null as GohostErrorCode | null }
+    return { data: await gohostApi.bookings(tenant, q), error: null as GohostErrorCode | null }
   } catch (e) {
     if (isGohostError(e)) return { data: null, error: e.message }
     throw e
   }
 }
 
-export async function bookingDetail(tenant: string, code: string) {
+async function booking(tenant: string, code: string): Promise<AdminBooking> {
   try {
-    return { data: await getBooking(tenant, code), error: null as GohostErrorCode | null }
+    return { data: await gohostApi.booking(tenant, code), error: null as GohostErrorCode | null }
   } catch (e) {
     if (isGohostError(e)) return { data: null, error: e.message }
     throw e
   }
 }
+
+export const adminApi = { overview, hotel, availability, properties, bookings, booking }

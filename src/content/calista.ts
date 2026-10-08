@@ -1,7 +1,8 @@
 // Calista Hotel Phú Quốc — nội dung thật từ Drive "4. ROOTY HOSPITALITY/2. CALISTA HOTEL PHÚ QUỐC":
 // "2-Thông-tin-lưu-trú-CALISTA.pdf" (chỉ có tiếng Việt; bản EN do Claude dịch — Marketing duyệt).
 // Chưa có ảnh chụp (PDF: "thư viện hình ảnh đang cập nhật"). Chỗ mâu thuẫn ghi bản ít hứa hơn — docs/2026-10-07-du-lieu-that-va-admin.md §3.
-import type { HotelContent, L } from '@/lib/types'
+import type { HotelContent } from '@/types/hotel'
+import type { L } from '@/types/global'
 
 /** Chữ giống nhau ở mọi ngôn ngữ (giờ, số). */
 const n = (s: string): L => ({ vi: s, en: s })

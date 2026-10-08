@@ -164,7 +164,20 @@
     "contactNote": "Send these details by Zalo, phone or email. The hotel checks availability and sends payment instructions; the booking is valid only once the hotel sends a confirmation with a booking code.",
     "zalo": "Message on Zalo",
     "mailSubject": "Booking request — {hotel}",
-    "choose": "Select"
+    "choose": "Select room",
+    "edit": "Edit",
+    "typesCount": "{n} room types",
+    "photos": "{n} photos",
+    "perNightLabel": "Price per night",
+    "totalLine": "Total <b>{total}</b> · {nights}",
+    "plansCount": "{n} rates",
+    "soldOutShort": "Sold out",
+    "notFitShort": "Too small",
+    "roomMaxShort": "Max {max}",
+    "changeGuests": "Change guests",
+    "byDate": "Price by date",
+    "byDateBody": "The hotel quotes and holds the room via Zalo.",
+    "cancelPolicy": "Cancellation policy"
   },
   "NotFound": {
     "title": "Page not found",
@@ -176,7 +189,6 @@
     "retry": "Try again"
   },
   "Room": {
-    "plansTitle": "Choose a rate",
     "plansEmpty": {
       "error": "Prices could not be loaded. Retry in the booking card or contact the hotel.",
       "contact": "Online prices for this room are being updated — contact the hotel for a quote for your dates.",
@@ -190,12 +202,26 @@
     "soldOut": "Sold out for these dates — pick other dates above.",
     "contactOnly": "Online prices are being updated. Send a request and the hotel will quote and hold the room for you.",
     "seeDates": "Pick dates",
-    "inRoom": "In the room",
     "beforeBooking": "Before you book",
-    "cancel": "Cancellation",
     "allPolicies": "All hotel policies",
     "cancelPolicy": "Cancellation & refund policy",
-    "others": "Other rooms at {hotel}"
+    "others": "Other rooms at {hotel}",
+    "statSize": "Size",
+    "statView": "View",
+    "statCapacity": "Sleeps",
+    "highlights": "Highlights",
+    "included": "Included in the rate",
+    "includedTitle": "Arrive and simply rest.",
+    "includedNote": "Nothing extra to buy at the hotel.",
+    "includedMore": "Plus {list}.",
+    "yourStay": "your stay",
+    "cancelFees": "Cancellation fee by notice given",
+    "kids": "Travelling with children",
+    "seeAll": "See all",
+    "vatIncluded": "Service charge and VAT included",
+    "adviceTitle": "Questions before booking?",
+    "adviceZalo": "Message Zalo {phone}",
+    "notPaid": "not paid yet"
   },
   "Booking": {
     "steps": {

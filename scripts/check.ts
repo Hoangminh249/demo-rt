@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { defaultStay, validRange } from '../src/lib/stay'
 import { mergeRooms, minDefaultRate, nightly } from '../src/lib/rooms'
 import { bookingCode, deposit, isEmail, isPhone, roomHref, selectionQuery } from '../src/lib/booking'
-import type { Room, RoomAvailability } from '../src/lib/types'
+import type { Room, RoomAvailability } from '../src/types/hotel'
 
 // --- validRange: chặn ở route handler trước khi tốn lượt gọi Gohost ---
 const now = '2026-10-07'

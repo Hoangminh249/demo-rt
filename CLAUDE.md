@@ -18,18 +18,18 @@ rooty-hospitality-web/
 │   │   ├── gohost-api.md                     Gohost Public API: endpoint, giới hạn, câu hỏi mở
 │   │   └── 2026-10-07-tinh-nang-gohost-api.md từng tính năng ↔ endpoint Gohost (✅/🟡/❌)
 │   └── resource/                 tài liệu gốc: 2 PDF + Postman Gohost — PDF thắng khi tóm tắt khác
-└── src/ …                        nội dung KS ở src/content/, Gohost ở src/lib/gohost.ts
+└── src/ …                        nội dung KS ở src/content/, lấy dữ liệu ở src/api/, kiểu ở src/types/
 ```
 
 ## Hiện trạng (07/10/2026)
 
 Pre-production, vi/en, giao diện theo rootytrip.com: `/` · `/hotel/[slug]` (PITO Hòn Thơm, Calista) · `/hotel/[slug]/[room]` chi tiết phòng · luồng đặt phòng **minh hoạ** `/dat-phong` → `/thanh-toan` → `/xac-nhan` · 4 trang tĩnh trong menu "Hỗ trợ" (`/lien-he`, `/chinh-sach-huy`, `/dieu-khoan-dat-phong`, `/chinh-sach-bao-mat` — 2 trang sau là bản nháp chờ pháp chế). Figma chỉ để biết section nằm đâu, UI theo hệ có sẵn.
 - Nội dung + ảnh thật từ Drive "4. ROOTY HOSPITALITY" (`src/content/`). Calista chưa có ảnh chụp, khai trương 20/12/2026.
-- Phòng trống, giá: Gohost **chỉ GET** (`src/lib/gohost.ts`). Chưa có API key và chưa điền `gohost_tenant_id` / `gohost_room_type_id` → web đang ở chế độ "liên hệ đặt phòng".
+- Phòng trống, giá: Gohost **chỉ GET** (`src/api/gohost.ts` qua client `src/lib/gohost.ts`).
 - Đặt phòng trực tuyến là **bản minh hoạ chạy ở trình duyệt** (`docs/2026-10-08-luong-dat-phong-minh-hoa.md`): giá GET Gohost thật, thông tin khách ở sessionStorage, QR Vietcombank / OnePay giả, không POST, không email. Phòng chưa có giá trực tuyến (Calista) vẫn là "Liên hệ đặt phòng" → Zalo/hotline/email.
 
 - Admin chỉ-xem `/admin` (wireframe A) có trang đăng nhập: Tổng quan · Khách sạn (4 tab) · Booking + chi tiết. Đã có key (`.env`), đọc Gohost thật được.
-- PITO đã nối Gohost: property **PIT** "Pito Hotel" (chốt 07/10/2026; key còn đọc được PIO, không dùng). Hạng phòng do Rooty tự ánh xạ (INFERRED theo số phòng + đặc điểm, chờ KS xác nhận): Tiêu chuẩn view nội khu = Superior · Grand Deluxe Bồn Tắm = Deluxe Bathtub (gồm 101) · Deluxe cao cấp view biển = Premier Bathtub · Cozy sân thượng = phòng 601. Web đã có giá thật. **Calista chưa có trên Gohost.**
+- PITO đã nối Gohost: property **PIO** `c27a439f-…` "CÔNG TY TNHH KHÁCH SẠN HÒN THƠM PHÚ QUỐC - PITO HOTEL" (chốt 08/10/2026; PIT "Pito Hotel" là của chủ trước, không dùng). Hạng phòng do Rooty tự ánh xạ (INFERRED theo số phòng + đặc điểm, chờ KS xác nhận): Tiêu chuẩn view nội khu = Superior · Grand Deluxe Bồn Tắm = Deluxe Bathtub (gồm 101) · Deluxe cao cấp view biển = Premier Bathtub · Cozy sân thượng = phòng 601. Web đã có giá thật. **Calista chưa có trên Gohost.**
 - Cấu hình Gohost cần sửa (web không tự bù): mọi gói `has_breakfast: false` dù PITO có ăn sáng; sức chứa 2 NL + 0 TE (chính sách cho 1 trẻ < 6 tuổi ngủ chung) → khách chọn có trẻ bị báo "không đủ chỗ"; giá 24/12 bằng ngày thường (chưa có phụ thu lễ Tết).
 
 **Việc tiếp theo:** (1) KS xác nhận ánh xạ hạng phòng + sửa 3 cấu hình Gohost ở trên, (2) KS xác nhận 7 mâu thuẫn ở `docs/2026-10-07-du-lieu-that-va-admin.md`.
@@ -49,8 +49,8 @@ Không tự xây Rates / Inventory / Channel Manager / Agent Portal / Loyalty / 
 
 Spec + giới hạn: `docs/api-docs/gohost-api.md`. Đợt pre-production **chỉ GET** — không viết code gọi POST.
 
-1. **Chỉ gọi từ server.** `src/lib/gohost.ts` (`import 'server-only'`, instance axios `gohostHttp` gắn Bearer một lần, chỉ có hàm `get()`), key `GOHOST_API_KEY` / `GOHOST_API_SECRET` trong `.env` (không commit), scope chỉ đọc. Key không bao giờ xuống client.
-2. **`src/lib/repo/index.ts`** ghép nội dung (`src/content`, sau là CMS) với Gohost theo `gohost_tenant_id` / `gohost_room_type_id`. Không có mock: thiếu key hoặc Gohost lỗi thì UI hiện chế độ liên hệ, không bịa số.
+1. **Chỉ gọi từ server.** HTTP client `src/lib/gohost.ts` (`import 'server-only'`, instance axios `gohostHttp` gắn Bearer một lần, chỉ có hàm `get()`), key `GOHOST_API_KEY` / `GOHOST_API_SECRET` trong `.env` (không commit), scope chỉ đọc. Key không bao giờ xuống client. Endpoint Gohost (đường dẫn, query, đổi response) ở `src/api/gohost.ts` (`gohostApi`).
+2. **`src/api/hotel.ts`** (`hotelApi`) ghép nội dung (`src/content`, sau là CMS) với Gohost theo `gohost_tenant_id` / `gohost_room_type_id`. Không có mock: thiếu key hoặc Gohost lỗi thì UI hiện chế độ liên hệ, không bịa số.
 3. **60 req/5 phút cho cả key** → `unstable_cache`: `/properties` 1 giờ, `/room_types` 3 phút theo (tenant, ngày); ngân sách 50 lượt/5 phút trong tiến trình. Route `/api/hotels/[slug]/rooms` kiểm khoảng ngày trước khi gọi. Khoảng ngày ≤ 30, `per_page` ≤ 50.
 4. **Tạo booking:** tính lại giá ở server; không retry mù (không có idempotency key); lưu ánh xạ mã Rooty ↔ booking Gohost phía Rooty.
 5. **Không có sandbox:** làm endpoint **đọc** trước. Endpoint **ghi** chỉ thử trên property test Gohost cấp — không tạo booking thật trên PITO.
@@ -76,6 +76,7 @@ Spec + giới hạn: `docs/api-docs/gohost-api.md`. Đợt pre-production **ch�
 ## Code
 
 - **yarn**, không npm. `yarn build` là bước kiểm tra type.
-- Component **không import `src/content` hay `src/lib/gohost`** — trang server đọc qua `src/lib/repo`; component client chỉ gọi hook trong `src/hooks` (TanStack Query khai báo ở đó, gọi `/api` bằng axios `src/lib/http.ts`). Không gọi Gohost từ trình duyệt. Tên field Gohost giữ nguyên (`src/lib/types.ts`, `src/lib/gohost.ts`).
+- **`src/api/`** (ngang `src/app`): mỗi file một object (`hotelApi`, `siteApi`, `gohostApi`, `adminApi`), chỉ server. Payload/request dùng riêng cho một endpoint khai báo ngay trong file đó; kiểu dùng lại ở `src/types/` (`global.ts` + `hotel`, `booking`, `page`, `admin`, `gohost`). Kiểu response của `/api/admin/*` ở `src/types/admin.ts`.
+- Component **không import `src/content`, `src/lib/gohost` hay `src/api`** — trang server đọc qua `src/api`; component client chỉ gọi hook trong `src/hooks` (TanStack Query khai báo ở đó, gọi `/api` bằng axios `src/lib/http.ts`). Không gọi Gohost từ trình duyệt. Tên field Gohost giữ nguyên (`src/types/gohost.ts`).
 - `yarn test` kiểm logic thuần (`src/lib/stay.ts`, `src/lib/rooms.ts`); `yarn photos` tải ảnh từ Drive theo `scripts/fetch-photos.ts`.
 - Không dùng `createNextIntlPlugin` (bẫy `@swc/core` trên máy này) — xem `next.config.ts`.

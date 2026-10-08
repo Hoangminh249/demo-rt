@@ -13,8 +13,9 @@ import { DateRangeInput } from '@/components/admin/date-range'
 import { BookingStatus, STATUS_OPTIONS } from '@/components/admin/booking-status'
 import { CARD, Empty, GohostError, LoadFailed, Skel, vnd } from '@/components/admin/ui'
 import { addDays, diffDays, fmtDate, fmtDayMonth, isISODate, today } from '@/lib/format'
-import { useAdminBookings, useGohostProperties, type AdminBookings, type BookingQuery } from '@/hooks/use-admin'
-import type { BookingRow } from '@/lib/types'
+import { useAdminBookings, useGohostProperties, type BookingQuery } from '@/hooks/use-admin'
+import type { AdminBookings } from '@/types/admin'
+import type { BookingRow } from '@/types/admin'
 
 function Dates({ b, now }: { b: BookingRow; now: string }) {
   if (!b.checkin) return <span className="text-muted-foreground">—</span>

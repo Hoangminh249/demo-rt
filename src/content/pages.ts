@@ -1,7 +1,7 @@
 // Trang tĩnh: liên hệ + 3 trang chính sách (menu "Hỗ trợ" trên header).
-// Mức phí huỷ / đổi ngày từng khách sạn KHÔNG chép ở đây — trang huỷ đọc thẳng `policies` của file khách sạn (repo.cancelPolicies).
+// Mức phí huỷ / đổi ngày từng khách sạn KHÔNG chép ở đây — trang huỷ đọc thẳng `policies` của file khách sạn (siteApi.cancelPolicies).
 // draft: true = Rooty soạn nháp 08/10/2026 theo chính sách khách sạn + review §4.6, chờ pháp chế duyệt. Chỗ chưa có nguồn ghi "chờ … xác nhận".
-import type { PageContent, PageSlug } from '@/lib/types'
+import type { PageContent, PageSlug } from '@/types/page'
 
 const CONTACT: PageContent = {
   slug: 'lien-he',

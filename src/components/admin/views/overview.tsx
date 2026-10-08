@@ -6,7 +6,7 @@ import { ApiStatus, ConnectBadge } from '@/components/admin/status'
 import { CARD, Dl, Empty, GROUP_LABEL, LoadFailed, Photo, ROW_LINK, Skel, TEXT_LINK, vnd } from '@/components/admin/ui'
 import { fmtDate, today } from '@/lib/format'
 import { useAdminOverview } from '@/hooks/use-admin'
-import type { HotelCheck, Issue } from '@/lib/repo/admin'
+import type { HotelCheck, Issue } from '@/types/admin'
 
 function IssueRow({ x }: { x: Issue }) {
   const chan = x.level === 'chan'

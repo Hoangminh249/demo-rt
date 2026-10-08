@@ -5,7 +5,7 @@ import { useSyncExternalStore } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useRoomAvailability } from '@/hooks/use-rooms'
 import { mergeRooms, type RoomState } from '@/lib/rooms'
-import type { Room } from '@/lib/types'
+import type { Room } from '@/types/hotel'
 import { useStay } from '@/components/hotel/use-stay'
 
 const noop = () => () => {}

@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { CircleAlert, ImageOff } from 'lucide-react'
 import { cn } from 'cn'
 import { buttonVariants } from '@/components/ui/button'
-import type { GohostErrorCode } from '@/lib/repo/admin'
+import type { GohostErrorCode } from '@/types/gohost'
 
 /** Cookie nhớ sidebar thu gọn (đọc ở server để dựng đúng ngay lần đầu). Ở đây vì file 'use client' không export hằng số cho server được. */
 export const SIDEBAR_COOKIE = 'rh_admin_sidebar'

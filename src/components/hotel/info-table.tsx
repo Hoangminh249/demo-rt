@@ -1,5 +1,5 @@
 // Bảng thông tin (giá vé, chính sách trẻ em…) — dùng ở trang khách sạn và trang phòng.
-import type { InfoTable as Data } from '@/lib/types'
+import type { InfoTable as Data } from '@/types/global'
 
 export function InfoTable({ table }: { table: Data }) {
   return (

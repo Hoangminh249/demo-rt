@@ -2,7 +2,7 @@
 // Bản nháp đặt phòng trong sessionStorage (đóng tab là mất) — thông tin cá nhân không lên URL, không gửi server.
 // ponytail: chưa có backend; khi nối Gohost POST /bookings thì bước thanh toán gửi bản nháp này lên server rồi xoá.
 import { useMemo, useSyncExternalStore } from 'react'
-import type { GuestDraft, PaymentDraft } from '@/lib/booking'
+import type { GuestDraft, PaymentDraft } from '@/types/booking'
 
 const KEY = 'rooty-booking'
 export interface Draft { guest?: GuestDraft; payment?: PaymentDraft }
