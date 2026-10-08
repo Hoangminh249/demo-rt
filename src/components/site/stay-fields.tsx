@@ -31,8 +31,16 @@ function Field({ id, label, children }: { id: string; label: string; children: R
   )
 }
 
-export function HotelField({ id, value, hotels, onChange }: { id: string; value: string; hotels: { slug: string; name: string }[]; onChange: (slug: string) => void }) {
+export function HotelField({ id, value, hotels, onChange, boxed }: { id: string; value: string; hotels: { slug: string; name: string }[]; onChange: (slug: string) => void; boxed?: boolean }) {
   const t = useTranslations('Fields')
+  if (boxed) return (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger id={id} aria-label={t('hotel')} className={`${BOXED} flex h-auto items-center gap-3 rounded-none border-0 px-3.5 py-3 text-[16px] md:h-auto md:text-[16px] data-[state=open]:ring-0`}>
+        <span className="flex min-w-0 flex-1 flex-col gap-0.5"><span className={BOXED_LABEL}>{t('hotel')}</span><span className="truncate font-semibold"><SelectValue /></span></span>
+      </SelectTrigger>
+      <SelectContent>{hotels.map(h => <SelectItem key={h.slug} value={h.slug}>{h.name}</SelectItem>)}</SelectContent>
+    </Select>
+  )
   return (
     <Field id={id} label={t('hotel')}>
       <Select value={value} onValueChange={onChange}>

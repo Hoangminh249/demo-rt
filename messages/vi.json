@@ -58,20 +58,20 @@
     "whyAria": "Đã gồm khi ở khách sạn Rooty",
     "promises": [
       [
-        "Đón tiễn sân bay miễn phí",
-        "theo khung giờ cố định"
+        "Đón tiễn sân bay",
+        "Miễn phí, theo khung giờ cố định"
       ],
       [
         "Ăn sáng mỗi ngày",
-        "đã gồm trong giá phòng"
+        "Đã gồm trong giá phòng"
       ],
       [
         "Giá đã gồm VAT",
-        "và phí phục vụ"
+        "Và phí phục vụ"
       ],
       [
         "Đặt qua Zalo, hotline",
-        "khách sạn xác nhận phòng trống"
+        "Khách sạn xác nhận phòng trống"
       ]
     ],
     "hotelsLead": "Khách sạn của",
@@ -81,16 +81,55 @@
     "ecoSub": "Khách sạn của Rooty nằm trong cùng hệ sinh thái với tour, cano và du thuyền ở Phú Quốc.",
     "eco": [
       [
+        "Rooty Trip",
         "Tour, combo, vé tham quan",
-        "Rooty Trip: tour Phú Quốc, combo và vé tham quan.",
+        "Tour Phú Quốc, combo và vé tham quan.",
         "Xem trên Rooty Trip"
       ],
       [
+        "RIVUS Yacht",
         "Cano riêng, du thuyền",
-        "RIVUS: cano riêng, du thuyền và sự kiện trên biển.",
+        "Cano riêng, du thuyền và sự kiện trên biển.",
         "Xem trên RIVUS"
       ]
-    ]
+    ],
+    "checks": [
+      "Ăn sáng mỗi ngày",
+      "Xe đón tiễn sân bay",
+      "Giá đã gồm VAT và phí phục vụ"
+    ],
+    "direct": "Đặt trực tiếp với đội Rooty tại Phú Quốc",
+    "hotelsEyebrow": "Hai điểm dừng · Một đảo ngọc",
+    "hotelsSub": "Chọn nhịp nghỉ của bạn: trên đảo Hòn Thơm cùng cáp treo, hay ở Sunset Town ra vào tự do mọi giờ.",
+    "hotelsCount": "khách sạn tại Phú Quốc",
+    "open": "Đang đón khách",
+    "openingLabel": "Khai trương",
+    "bookLabel": "Đặt phòng",
+    "bookVia": "Liên hệ qua Zalo, hotline",
+    "storyEyebrow": "Người Phú Quốc đồng hành",
+    "storyA": "Từ lúc hạ cánh,",
+    "storyB": "bạn đã được chăm sóc.",
+    "storyBody": "Rooty không chỉ là nơi lưu trú. Chúng tôi lo phòng nghỉ, xe đón sân bay và những chuyến đi trên đảo — cùng một đội ngũ người địa phương.",
+    "storyItems": [
+      [
+        "Giá rõ ràng từng đêm",
+        "Xem giá theo ngày, đã gồm VAT và phí phục vụ."
+      ],
+      [
+        "Một đầu mối cho cả chuyến đi",
+        "Tour, cano và du thuyền trong cùng hệ sinh thái Rooty."
+      ],
+      [
+        "Người địa phương đồng hành",
+        "Tư vấn lịch trình qua Zalo và hotline."
+      ]
+    ],
+    "storyCta": "Tìm kỳ nghỉ của bạn",
+    "storyPhoto": "Hoàng hôn trên biển nhìn từ sân thượng PITO Hòn Thơm",
+    "ecoEyebrow": "Hệ sinh thái Rooty",
+    "ctaTitle": "Sẵn sàng cho kỳ nghỉ tiếp theo?",
+    "ctaBody": "Nhắn đội Rooty — chúng tôi kiểm tra phòng trống và xác nhận cho bạn.",
+    "ctaZalo": "Nhắn Zalo"
   },
   "Fields": {
     "hotel": "Khách sạn",
@@ -104,7 +143,8 @@
     "under12": "Dưới 12 tuổi",
     "less": "Bớt {label}",
     "more": "Thêm {label}",
-    "submit": "Xem phòng"
+    "submit": "Xem phòng",
+    "search": "Tìm phòng"
   },
   "Hotel": {
     "breadcrumb": "Đường dẫn",

@@ -58,20 +58,20 @@
     "whyAria": "Included when you stay at a Rooty hotel",
     "promises": [
       [
-        "Free airport transfer",
-        "at fixed times"
+        "Airport transfers",
+        "Free, at fixed times"
       ],
       [
         "Daily breakfast",
-        "included in your rate"
+        "Included in your rate"
       ],
       [
         "VAT included",
-        "and service charge"
+        "And service charge"
       ],
       [
         "Book via Zalo or hotline",
-        "the hotel confirms availability"
+        "The hotel confirms availability"
       ]
     ],
     "hotelsLead": "Hotels by",
@@ -81,16 +81,55 @@
     "ecoSub": "Rooty hotels share one ecosystem with tours, speedboats and yachts in Phu Quoc.",
     "eco": [
       [
+        "Rooty Trip",
         "Tours, combos, tickets",
-        "Rooty Trip: Phu Quoc tours, combos and attraction tickets.",
+        "Phu Quoc tours, combos and attraction tickets.",
         "See on Rooty Trip"
       ],
       [
+        "RIVUS Yacht",
         "Private speedboats, yachts",
-        "RIVUS: private speedboats, yachts and events at sea.",
+        "Private speedboats, yachts and events at sea.",
         "See on RIVUS"
       ]
-    ]
+    ],
+    "checks": [
+      "Daily breakfast",
+      "Airport transfers",
+      "VAT and service charge included"
+    ],
+    "direct": "Book direct with the Rooty team in Phu Quoc",
+    "hotelsEyebrow": "Two stays · One island",
+    "hotelsSub": "Pick your pace: Hon Thom Island with the cable car, or Sunset Town with come-and-go freedom at any hour.",
+    "hotelsCount": "hotels in Phu Quoc",
+    "open": "Now welcoming guests",
+    "openingLabel": "Opening",
+    "bookLabel": "Booking",
+    "bookVia": "Contact us via Zalo or hotline",
+    "storyEyebrow": "Locals by your side",
+    "storyA": "From the moment you land,",
+    "storyB": "you are taken care of.",
+    "storyBody": "Rooty is more than a place to stay. We look after your room, your airport transfer and your island trips — with a team of locals.",
+    "storyItems": [
+      [
+        "Clear nightly rates",
+        "Rates by date, VAT and service charge included."
+      ],
+      [
+        "One contact for the whole trip",
+        "Tours, speedboats and yachts in the same Rooty ecosystem."
+      ],
+      [
+        "Locals by your side",
+        "Trip advice via Zalo and hotline."
+      ]
+    ],
+    "storyCta": "Find your stay",
+    "storyPhoto": "Sunset over the sea from the PITO Hon Thom rooftop",
+    "ecoEyebrow": "The Rooty ecosystem",
+    "ctaTitle": "Ready for your next getaway?",
+    "ctaBody": "Message the Rooty team — we check availability and confirm for you.",
+    "ctaZalo": "Message on Zalo"
   },
   "Fields": {
     "hotel": "Hotel",
@@ -104,7 +143,8 @@
     "under12": "Under 12",
     "less": "Fewer {label}",
     "more": "More {label}",
-    "submit": "See rooms"
+    "submit": "See rooms",
+    "search": "Find a room"
   },
   "Hotel": {
     "breadcrumb": "Breadcrumb",

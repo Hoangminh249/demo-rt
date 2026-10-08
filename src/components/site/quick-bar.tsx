@@ -1,8 +1,10 @@
 'use client'
-// Thanh chọn nhanh trên banner trang chủ: chọn khách sạn + ngày + số khách → sang trang khách sạn đó.
+// Thanh tìm phòng trang chủ: chọn khách sạn + ngày + số khách → sang trang khách sạn đó.
+// Một dải trắng chia ô (máy tính: một hàng; điện thoại: xếp dọc), đè lên mép dưới banner.
 // Ngày mặc định tính ở server (trang chủ) rồi truyền vào, để HTML server và trình duyệt khớp nhau.
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
+import { ArrowRight } from 'lucide-react'
 import { useRouter } from '@/i18n/navigation'
 import { defaultStay, firstCheckin, hotelHref } from '@/lib/stay'
 import type { Stay } from '@/types/hotel'
@@ -29,13 +31,16 @@ export function QuickBar({ hotels, now, initial }: { hotels: QuickHotel[]; now: 
   if (!hotels.length) return null
   return (
     <form
+      aria-label={t('search')}
       onSubmit={e => { e.preventDefault(); router.push(`${hotelHref(slug, stay)}#phong`) }}
-      className="grid gap-3 rounded-2xl bg-white p-4 shadow-card md:grid-cols-2 md:p-5 lg:grid-cols-[1.2fr_1.3fr_1fr_auto] lg:items-end"
+      className="grid overflow-hidden rounded-xl bg-white p-1.5 shadow-[0_30px_60px_-30px_rgb(4_38_32/0.45),0_0_0_1px_rgb(6_87_73/0.06)] lg:grid-cols-[1.1fr_2fr_1fr_auto]"
     >
-      <HotelField id="qb-hotel" value={slug} hotels={hotels} onChange={pickHotel} />
-      <DateRangeField id="qb-dates" stay={stay} min={min} onChange={setStay} />
-      <GuestsField id="qb-guests" stay={stay} onChange={setStay} />
-      <button type="submit" className={`${BTN} h-12 px-7 md:self-end`}>{t('submit')}</button>
+      <div className="border-b border-border lg:border-r lg:border-b-0"><HotelField id="qb-hotel" boxed value={slug} hotels={hotels} onChange={pickHotel} /></div>
+      <div className="border-b border-border lg:border-r lg:border-b-0"><DateRangeField id="qb-dates" boxed stay={stay} min={min} onChange={setStay} /></div>
+      <GuestsField id="qb-guests" boxed stay={stay} onChange={setStay} />
+      <button type="submit" className={`${BTN} group/cta mt-1.5 h-12 px-7 lg:mt-0 lg:ml-1.5 lg:h-auto`}>
+        {t('submit')}<ArrowRight className="size-4 transition-transform duration-200 group-hover/cta:translate-x-[3px]" aria-hidden />
+      </button>
     </form>
   )
 }

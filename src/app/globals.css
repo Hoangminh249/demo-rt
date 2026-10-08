@@ -31,6 +31,7 @@
   --primary-foreground: #ffffff;
   --mint: #eaf5f3;                /* dải nền section, chip */
   --orange: #b44700;              /* nhãn nhỏ in hoa, icon cam kết */
+  --sand: #f8d09c;                /* nhãn nhỏ, đường kẻ trên ảnh / nền xanh đậm (trang chủ) */
   --yellow: #fde800;              /* chỉ làm nền nhãn, chữ tối */
   --yellow-foreground: #3d3400;
   --star: #f5b400;
@@ -79,6 +80,7 @@
   --color-primary-foreground: var(--primary-foreground);
   --color-mint: var(--mint);
   --color-orange: var(--orange);
+  --color-sand: var(--sand);
   --color-yellow: var(--yellow);
   --color-yellow-foreground: var(--yellow-foreground);
   --color-star: var(--star);
