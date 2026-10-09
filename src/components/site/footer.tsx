@@ -3,19 +3,12 @@
 import { ArrowUpRight, Mail, MessageCircle, Phone } from 'lucide-react'
 import { getLocale, getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
-<<<<<<< Updated upstream
 import { hotelApi } from '@/api/hotel'
 import { siteApi } from '@/api/site'
-import { hotelHref } from '@/lib/stay'
-import type { Locale } from '@/types/global'
-import { CONTAINER, EYEBROW } from './kit'
-=======
-import { repo } from '@/lib/repo'
 import { fmtDate, today } from '@/lib/format'
 import { hotelHref } from '@/lib/stay'
-import type { Locale } from '@/lib/types'
+import type { Locale } from '@/types/global'
 import { CONTAINER, Photo } from './kit'
->>>>>>> Stashed changes
 import { Logo } from './header'
 
 const LINK = 'inline-flex min-h-8 items-center gap-1 text-[#e6efe9] transition-colors hover:text-[#f8d09c]'
@@ -25,33 +18,7 @@ const HEAD = 'mb-3 text-[11px] font-semibold tracking-[0.18em] text-[#f8d09c] up
 export async function SiteFooter() {
   const t = await getTranslations()
   const locale = (await getLocale()) as Locale
-<<<<<<< Updated upstream
   const site = siteApi.info(locale)
-  return (
-    <footer id="lien-he" className="mt-20 border-t-4 border-primary bg-white">
-      <div className={`${CONTAINER} grid gap-10 py-12 md:grid-cols-[1.1fr_1fr_1fr]`}>
-        <div>
-          <Logo className="h-12" />
-          <p className="mt-5 text-xl font-bold text-brand">{t('contactTitle')}</p>
-          <p className={`mt-4 ${EYEBROW}`}>{t('booking')}</p>
-          <a href={`tel:${site.phone}`} className="mt-1 flex min-h-10 items-center gap-1.5 text-xl font-semibold text-brand">{site.phone_display} <span className="text-sm font-normal text-muted-foreground">Zalo · {t('hotline')}</span></a>
-          <p className={`mt-4 ${EYEBROW}`}>{t('email')}</p>
-          <a href={`mailto:${site.email}`} className="mt-1 inline-flex min-h-8 items-center text-brand underline underline-offset-4">{site.email}</a>
-        </div>
-        <div>
-          <p className="text-xl font-bold text-brand">{t('hotels')}</p>
-          <ul className="mt-3 grid gap-1 text-[15px]">
-            {hotelApi.list(locale).map(h => <Dot key={h.slug}><Link href={hotelHref(h.slug)} className={LINK}>{h.name}</Link></Dot>)}
-          </ul>
-        </div>
-        <div>
-          <p className="text-xl font-bold text-brand">{t('ecosystem')}</p>
-          <ul className="mt-3 grid gap-1 text-[15px]">
-            <li><a href="https://rootytrip.com" className={LINK}>{t('rootyTrip')} <ArrowUpRight className="size-3.5" aria-hidden /></a></li>
-            <li><a href="https://rivusyacht.com" className={LINK}>{t('rivus')} <ArrowUpRight className="size-3.5" aria-hidden /></a></li>
-          </ul>
-=======
-  const site = repo.site(locale)
   const year = new Date().getFullYear()
   return (
     <footer id="lien-he" className="mt-20 bg-[#0b2f2a] text-[#e6efe9]">
@@ -70,7 +37,6 @@ export async function SiteFooter() {
               <a href={site.zalo} target="_blank" rel="noopener" className={LINK}><MessageCircle className="size-4 text-[#f8d09c]" aria-hidden />Zalo</a>
             </div>
           </div>
->>>>>>> Stashed changes
         </div>
       </div>
 
@@ -87,7 +53,7 @@ export async function SiteFooter() {
         <nav aria-label={t('Header.hotels')} className={COL}>
           <p className={HEAD}>{t('Header.hotels')}</p>
           <ul className="grid gap-1">
-            {repo.listHotels(locale).map(h => (
+            {hotelApi.list(locale).map(h => (
               <li key={h.slug}><Link href={hotelHref(h.slug)} className={LINK}>{h.name}</Link>{h.opening && h.opening > today() &&<span className="ml-1.5 text-[12px] text-[#a9c4bb]">· {t('Footer.opening', { date: fmtDate(h.opening, locale) })}</span>}</li>
             ))}
           </ul>

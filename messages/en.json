@@ -35,10 +35,17 @@
     "title": "Language"
   },
   "Footer": {
+    "contactTitle": "Contact Rooty Hospitality",
+    "booking": "Bookings",
+    "hotline": "hotline",
+    "email": "Email",
     "hotels": "Hotels",
     "ecosystem": "Rooty ecosystem",
     "rootyTrip": "Rooty Trip · tours, combos, tickets",
     "rivus": "RIVUS · speedboats, yachts",
+    "companyId": "Business reg. no. {id}",
+    "address": "Head office: {address}",
+    "copyright": "© {year} Rooty Hospitality · part of Rooty Trip Phu Quoc Joint Stock Company",
     "inviteEyebrow": "Book direct with the hotel",
     "inviteA": "Your next getaway",
     "inviteB": "starts with one call.",
@@ -58,20 +65,20 @@
     "whyAria": "Included when you stay at a Rooty hotel",
     "promises": [
       [
-        "Airport transfers",
-        "Free, at fixed times"
+        "Free airport transfer",
+        "at fixed times"
       ],
       [
         "Daily breakfast",
-        "Included in your rate"
+        "included in your rate"
       ],
       [
         "VAT included",
-        "And service charge"
+        "and service charge"
       ],
       [
         "Book via Zalo or hotline",
-        "The hotel confirms availability"
+        "the hotel confirms availability"
       ]
     ],
     "hotelsLead": "Hotels by",
@@ -81,15 +88,12 @@
     "ecoSub": "From the airport to the little islands, every experience comes with a Rooty Trip local.",
     "eco": [
       [
-<<<<<<< Updated upstream
-=======
         "Included with your room",
         "Airport transfer",
         "Pick-up and drop-off at fixed times, included in your rate.",
         "Ask about times"
       ],
       [
->>>>>>> Stashed changes
         "Rooty Trip",
         "Tours, combos, tickets",
         "Phu Quoc tours, combos and attraction tickets.",
@@ -102,14 +106,13 @@
         "See on RIVUS"
       ]
     ],
-<<<<<<< Updated upstream
     "checks": [
       "Daily breakfast",
       "Airport transfers",
       "VAT and service charge included"
     ],
     "direct": "Book direct with the Rooty team in Phu Quoc",
-    "hotelsEyebrow": "Two stays · One island",
+    "hotelsEyebrow": "Ideas for your stay",
     "hotelsSub": "Pick your pace: Hon Thom Island with the cable car, or Sunset Town with come-and-go freedom at any hour.",
     "hotelsCount": "hotels in Phu Quoc",
     "open": "Now welcoming guests",
@@ -136,13 +139,10 @@
     ],
     "storyCta": "Find your stay",
     "storyPhoto": "Sunset over the sea from the PITO Hon Thom rooftop",
-    "ecoEyebrow": "The Rooty ecosystem",
+    "ecoEyebrow": "Services & experiences",
     "ctaTitle": "Ready for your next getaway?",
     "ctaBody": "Message the Rooty team — we check availability and confirm for you.",
-    "ctaZalo": "Message on Zalo"
-=======
-    "hotelsEyebrow": "Ideas for your stay",
-    "hotelsSub": "Pick your pace: island calm or a lively seaside town.",
+    "ctaZalo": "Message on Zalo",
     "sampleTag": "Sample hotel",
     "sampleDesc": "Illustrative photo — sample details",
     "samplePrice": "Rates coming soon",
@@ -174,9 +174,7 @@
       ],
       "cta": "Find your stay"
     },
-    "ecoEyebrow": "Services & experiences",
     "ecoAll": "See all services"
->>>>>>> Stashed changes
   },
   "Fields": {
     "hotel": "Hotel",
@@ -201,6 +199,7 @@
     "tabs": {
       "tong-quan": "Overview",
       "phong": "Rooms",
+      "tien-ich": "Included",
       "di-lai": "Getting here",
       "chinh-sach": "Policies",
       "hoi-dap": "FAQ"
@@ -251,7 +250,6 @@
     "contactNote": "Send these details by Zalo, phone or email. The hotel checks availability and sends payment instructions; the booking is valid only once the hotel sends a confirmation with a booking code.",
     "zalo": "Message on Zalo",
     "mailSubject": "Booking request — {hotel}",
-<<<<<<< Updated upstream
     "choose": "Select room",
     "edit": "Edit",
     "typesCount": "{n} room types",
@@ -265,14 +263,11 @@
     "changeGuests": "Change guests",
     "byDate": "Price by date",
     "byDateBody": "The hotel quotes and holds the room via Zalo.",
-    "cancelPolicy": "Cancellation policy"
-=======
-    "choose": "Select",
+    "cancelPolicy": "Cancellation policy",
     "included": "Included",
     "bookThis": "Book now",
     "viewPhotos": "View photos of {name}",
     "totalLabel": "Total"
->>>>>>> Stashed changes
   },
   "NotFound": {
     "title": "Page not found",
@@ -301,7 +296,6 @@
     "allPolicies": "All hotel policies",
     "cancelPolicy": "Cancellation & refund policy",
     "others": "Other rooms at {hotel}",
-<<<<<<< Updated upstream
     "statSize": "Size",
     "statView": "View",
     "statCapacity": "Sleeps",
@@ -317,10 +311,8 @@
     "vatIncluded": "Service charge and VAT included",
     "adviceTitle": "Questions before booking?",
     "adviceZalo": "Message Zalo {phone}",
-    "notPaid": "not paid yet"
-=======
+    "notPaid": "not paid yet",
     "direct": "Book direct"
->>>>>>> Stashed changes
   },
   "Booking": {
     "steps": {

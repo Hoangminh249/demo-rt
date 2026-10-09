@@ -1,6 +1,6 @@
 // Trang chi tiết phòng (thiết kế canvas "Chi tiết phòng", 08/10/2026) — nơi khách chốt phòng:
-// mosaic ảnh · khung tên phòng đè mép ảnh (thông số) · đã gồm trong giá (khối xanh) · điểm nổi bật · trước khi đặt · phòng khác
-// · thẻ đặt phòng dính → "Đặt phòng" sang /dat-phong (bản minh hoạ). Chưa có giá trực tuyến (Calista): thẻ "Liên hệ đặt phòng".
+// mosaic ảnh · khung tên phòng (thông số) · điểm nổi bật · trước khi đặt · phòng khác
+// · thẻ đặt phòng kính dính (kèm "Đã gồm trong giá phòng") → "Đặt phòng" sang /dat-phong (bản minh hoạ). Chưa có giá trực tuyến (Calista): thẻ "Liên hệ đặt phòng".
 // Thang chữ cố định 12 · 14 · 16 · 20 · 28 · 44 (giá 32); màu chữ: brand (tiêu đề), foreground, muted-foreground, orange (nhãn nhấn).
 import { notFound } from 'next/navigation'
 import { Suspense, type ReactNode } from 'react'
@@ -11,7 +11,7 @@ import { hotelApi } from '@/api/hotel'
 import { siteApi } from '@/api/site'
 import { roomHref } from '@/lib/booking'
 import type { Locale } from '@/types/global'
-import { CONTAINER, ICONS, Photo } from '@/components/site/kit'
+import { CONTAINER, Photo } from '@/components/site/kit'
 import { Gallery } from '@/components/hotel/gallery'
 import { BookingCard, LABEL, RoomCapacity, RoomMobileBar } from '@/components/room/room-booking'
 
@@ -52,21 +52,14 @@ export default async function RoomPage({ params }: PageProps<'/[locale]/hotel/[s
   const hotel = { slug: h.slug, code: h.code, name: h.name, online: h.online, opening: h.opening, cancel_summary: h.cancel_summary }
   const others = h.rooms.filter(r => r.slug !== room.slug)
   // File khách sạn luôn mở đầu chính sách bằng Nhận phòng, Trả phòng (src/content/*.ts).
-<<<<<<< Updated upstream
   const [[, checkin], [, checkout]] = h.policies
   const cancel = h.cancel_summary.split(' · ').map(x => x.split(': '))
-  const included = h.included.filter(i => i.desc)
-  const extras = h.included.filter(i => !i.desc).map(i => i.label)
   const vatIncluded = h.included.some(i => i.icon === 'receipt')
   const card = (prefix: string) => (
     <Suspense fallback={<div className="h-[520px] animate-pulse rounded-3xl bg-white" />}>
-      <BookingCard hotel={hotel} room={room} contact={contact} idPrefix={prefix} vatIncluded={vatIncluded} />
+      <BookingCard hotel={hotel} room={room} contact={contact} idPrefix={prefix} vatIncluded={vatIncluded} included={h.included} />
     </Suspense>
   )
-=======
-  const [checkin, checkout] = h.policies
-  const card = (prefix: string) => <Suspense fallback={<div className="h-[420px] animate-pulse rounded-2xl bg-muted" />}><BookingCard hotel={hotel} room={room} contact={contact} idPrefix={prefix} included={h.included} /></Suspense>
->>>>>>> Stashed changes
 
   return (
     <div className="bg-[#f7f9f8] pb-24">
@@ -82,9 +75,9 @@ export default async function RoomPage({ params }: PageProps<'/[locale]/hotel/[s
 
       <div className={CONTAINER}><Gallery name={room.name} images={room.images} /></div>
 
-      <div className={`${CONTAINER} relative mt-6 flex flex-col gap-5 lg:-mt-[72px] lg:flex-row lg:items-start lg:gap-12`}>
+      <div className={`${CONTAINER} relative mt-8 flex flex-col gap-5 lg:flex-row lg:items-start lg:gap-12`}>
         <main className="flex min-w-0 flex-1 flex-col gap-5">
-          <header className="rounded-3xl bg-white px-6 pt-7 pb-6 shadow-[0_24px_48px_-32px_rgba(6,40,34,0.45)] sm:px-9 sm:pt-8 lg:mx-8">
+          <header className="rounded-3xl bg-white px-6 pt-7 pb-6 sm:px-9 sm:pt-8">
             <Link href={`/hotel/${h.slug}`} className="inline-flex items-center gap-2.5 text-[12px] font-semibold tracking-[0.12em] text-orange uppercase hover:underline">
               <span className="h-px w-6 bg-orange" aria-hidden />{h.name} · {h.area}
             </Link>
@@ -100,29 +93,6 @@ export default async function RoomPage({ params }: PageProps<'/[locale]/hotel/[s
           {/* Điện thoại: thẻ đặt phòng ngay dưới tên phòng — chọn ngày là việc đầu tiên */}
           <div id="dat-phong" className="scroll-mt-24 lg:hidden">{card('m')}</div>
 
-          {included.length > 0 && (
-            <section className="rounded-3xl bg-brand p-6 text-white sm:p-9">
-              <div className="flex flex-wrap items-end justify-between gap-3">
-                <div>
-                  <h2 className="text-[12px] font-semibold tracking-[0.12em] text-[#9fd8cb] uppercase">{t('Room.included')}</h2>
-                  <p className="mt-2.5 text-[28px] leading-tight font-semibold tracking-[-0.02em]">{t('Room.includedTitle')}</p>
-                </div>
-                <p className="text-[14px] text-white/80">{t('Room.includedNote')}</p>
-              </div>
-              <ul className="mt-7 grid gap-px overflow-hidden rounded-2xl bg-white/15 sm:grid-cols-2">
-                {included.map(i => {
-                  const Icon = ICONS[i.icon]
-                  return (
-                    <li key={i.label} className="flex gap-3.5 bg-brand p-5">
-                      <Icon className="size-6 shrink-0 text-[#9fd8cb]" strokeWidth={1.7} aria-hidden />
-                      <span><span className="block text-[16px] font-semibold">{i.label}</span><span className="mt-1 block text-[14px] leading-relaxed text-white/80">{i.desc}</span></span>
-                    </li>
-                  )
-                })}
-              </ul>
-              {extras.length > 0 && <p className="mt-5 text-[14px] text-white/80">{t('Room.includedMore', { list: extras.join(' · ').toLowerCase() })}</p>}
-            </section>
-          )}
 
           {(room.features.length > 0 || room.note) && (
             <section className={CARD}>
@@ -208,7 +178,7 @@ export default async function RoomPage({ params }: PageProps<'/[locale]/hotel/[s
           )}
         </main>
 
-        <aside className="hidden w-[380px] shrink-0 lg:mt-24 lg:block lg:self-stretch" aria-label={t('Hotel.bookAria')}>
+        <aside className="hidden w-[380px] shrink-0 lg:block lg:self-stretch" aria-label={t('Hotel.bookAria')}>
           <div className="sticky top-[calc(var(--header-offset)+24px)] transition-[top] duration-300">{card('d')}</div>
         </aside>
       </div>

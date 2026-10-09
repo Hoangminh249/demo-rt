@@ -7,13 +7,8 @@ import { AlertTriangle, ChevronDown, Coffee, PencilLine, ShieldCheck } from 'luc
 import { Link } from '@/i18n/navigation'
 import { diffDays, fmtDate, fmtPrice, fmtWeekday } from '@/lib/format'
 import { roomHref } from '@/lib/booking'
-<<<<<<< Updated upstream
 import type { BookingTarget } from '@/types/booking'
-import { Photo, TEXT_LINK } from '@/components/site/kit'
-=======
-import type { BookingTarget } from '@/lib/types'
 import { NightlyPrices, Photo, TEXT_LINK } from '@/components/site/kit'
->>>>>>> Stashed changes
 import { useRoomOffer } from '@/components/room/use-room-offer'
 
 function Body({ target, extra }: { target: BookingTarget; extra?: ReactNode }) {
