@@ -29,19 +29,7 @@ export function Gallery({ name, images }: { name: string; images: string[] }) {
   const zoom = 'transition-transform duration-700 ease-out group-hover:scale-[1.04]'
   if (!images.length) return <Photo src={null} alt={name} className="aspect-[4/3] w-full rounded-xl sm:aspect-auto sm:h-[300px]" />
 
-  const lightbox = (
-    <Lightbox
-      open={index >= 0}
-      index={index}
-      close={() => setIndex(-1)}
-      slides={images.map((src, i) => ({ src, alt: alt(i) }))}
-      plugins={[Counter, Thumbnails, Zoom]}
-      labels={locale === 'vi' ? VI_LABELS : undefined}
-      controller={{ closeOnBackdropClick: true }}
-      thumbnails={{ width: 96, height: 64, border: 0, borderRadius: 8, padding: 0, gap: 8 }}
-      styles={{ container: { backgroundColor: 'rgb(8 24 21 / 0.95)' }, thumbnailsContainer: { backgroundColor: 'rgb(8 24 21 / 0.95)' } }}
-    />
-  )
+  const lightbox = <PhotoLightbox name={name} images={images} index={index} onClose={() => setIndex(-1)} />
 
   if (images.length < 5) {
     const rest = images.slice(1, 4)
@@ -83,11 +71,7 @@ export function Gallery({ name, images }: { name: string; images: string[] }) {
           </div>
         ))}
       </div>
-<<<<<<< Updated upstream
       {lightbox}
-=======
-      <PhotoLightbox name={name} images={images} index={index} onClose={() => setIndex(-1)} />
->>>>>>> Stashed changes
     </>
   )
 }

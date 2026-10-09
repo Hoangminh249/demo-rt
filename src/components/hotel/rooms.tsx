@@ -1,28 +1,17 @@
 'use client'
 // Khối "Chọn phòng": nội dung từng hạng phòng (Rooty) + phòng trống, giá từng đêm (Gohost, qua /api/hotels/{slug}/rooms).
 // Trạng thái: đang tải · có giá · hết phòng · không đủ chỗ · chưa có giá trực tuyến (chưa nối Gohost, lỗi, hết lượt gọi).
-<<<<<<< Updated upstream
-// Phòng có giá: tên phòng + nút "Chọn phòng" dẫn sang trang chi tiết phòng (chọn sẵn gói) → luồng đặt phòng (bản minh hoạ).
-=======
 // Phòng có giá: chọn gói ngay trên card, "Đặt phòng này" sang luồng đặt phòng (bản minh hoạ); tên/ảnh dẫn sang trang chi tiết phòng.
->>>>>>> Stashed changes
 // Chưa có giá trực tuyến: nút "Liên hệ đặt phòng" mở hộp tóm tắt + Zalo / gọi / email — không ghi dữ liệu nào.
 import { useState } from 'react'
 import Image from 'next/image'
 import { useLocale, useTranslations } from 'next-intl'
-<<<<<<< Updated upstream
-import { ArrowRight, CalendarDays, CalendarX, Check, Images, Info, Mail, MessageCircle, Phone, RotateCw, ShieldCheck, Users, WifiOff } from 'lucide-react'
-import { cn } from 'cn'
-import { diffDays, fmtPrice, fmtRange, today } from '@/lib/format'
-import { mergeRooms, nightly, type RoomOffer } from '@/lib/rooms'
-import type { Contact, PlanOffer, Room, RoomAvailability, Stay } from '@/types/hotel'
-=======
 import { ArrowRight, CalendarDays, CalendarX, Coffee, Flame, Focus, Info, Mail, MessageCircle, Phone, RotateCw, Users, WifiOff } from 'lucide-react'
 import { cn } from 'cn'
 import { diffDays, fmtPrice, fmtRange, today } from '@/lib/format'
 import { mergeRooms, nightly, type RoomOffer } from '@/lib/rooms'
-import type { Contact, IconKey, PlanOffer, Room, RoomAvailability, Stay } from '@/lib/types'
->>>>>>> Stashed changes
+import type { IconKey } from '@/types/global'
+import type { Contact, PlanOffer, Room, RoomAvailability, Stay } from '@/types/hotel'
 import { useRoomAvailability } from '@/hooks/use-rooms'
 import { Dialog } from '@/components/ui/overlay'
 import { BTN, BTN_OUT, ICONS, Photo } from '@/components/site/kit'
@@ -133,55 +122,13 @@ export function Rooms({ hotel, rooms, contact }: { hotel: RoomsHotel; rooms: Roo
   )
 }
 
-<<<<<<< Updated upstream
-// Thẻ phòng (thiết kế canvas "Room list", 08/10/2026): ảnh · thông tin phòng · cột giá. Điện thoại: xếp dọc, cột giá thành hàng dưới.
-// Tên phòng là link sang trang chi tiết; mỗi phòng một nút chính. Chính sách huỷ ghi một lần dưới danh sách, không lặp từng thẻ.
-const RAIL = 'flex border-t border-border bg-[#fafcfb] p-4 md:flex-col md:border-t-0 md:border-l md:p-5'
-const RAIL_OUT = `${BTN_OUT} h-11 rounded-full px-5 text-[14px] font-medium md:w-full`
-
-function RoomCard({ offer, hotel, stay, onPick, onOtherDates }: { offer: RoomOffer; hotel: RoomsHotel; stay: Stay; onPick: (p?: PlanOffer) => void; onOtherDates: () => void }) {
-=======
 /** Card phòng liquid glass: ảnh của chính phòng làm quầng màu nền · ảnh rõ bên trái (nhãn kính, nút xem ảnh) ·
  *  tấm kính sáng bên phải (tên, đã gồm, gói giá chọn một) · thanh kính đậm chốt tổng tiền + "Đặt phòng này". */
 function RoomCard({ offer, hotel, stay, onPick, onOtherDates, onPhotos }: { offer: RoomOffer; hotel: RoomsHotel; stay: Stay; onPick: (p?: PlanOffer) => void; onOtherDates: () => void; onPhotos: () => void }) {
->>>>>>> Stashed changes
   const t = useTranslations()
   const locale = useLocale()
-  const { room, state, left, occ, plans } = offer
-  const [planId, setPlanId] = useState<string>()
+  const { room, state, left, occ } = offer
   const off = state === 'sold_out' || state === 'too_small'
-<<<<<<< Updated upstream
-  const href = roomHref(hotel.slug, room.slug, stay)
-  // Mặc định gói rẻ nhất; nhiều gói thì khách chọn ngay trong cột giá.
-  const plan = plans.find(p => p.rate_plan_id === planId) ?? [...plans].sort((a, b) => a.total - b.total)[0]
-
-  return (
-    <article className="group grid overflow-hidden rounded-2xl border border-border bg-white transition-[border-color,box-shadow] duration-200 hover:border-border-strong hover:shadow-[0_8px_24px_-16px_rgba(6,87,73,0.35)] md:grid-cols-[232px_minmax(0,1fr)_240px]">
-      <Link href={href} tabIndex={-1} aria-hidden className="relative block overflow-hidden">
-        <Photo src={room.images[0]} alt={room.name} sizes="(min-width: 768px) 232px, 100vw"
-          className={cn('h-52 w-full transition-transform duration-500 ease-out group-hover:scale-[1.035] md:h-full md:min-h-[232px]', off && 'opacity-60 grayscale-[.6]')} />
-        {room.images.length > 0 && (
-          <span className="absolute bottom-3 left-3 inline-flex h-7 items-center gap-1.5 rounded-full bg-white/95 px-2.5 text-[12px] font-semibold text-foreground">
-            <Images className="size-3.5" aria-hidden />{t('Rooms.photos', { n: room.images.length })}
-          </span>
-        )}
-      </Link>
-
-      <div className="flex min-w-0 flex-col gap-2 p-4 md:px-5 md:py-5">
-        <h3 className="text-[20px] leading-tight font-bold md:text-[22px]">
-          <Link href={href} className={cn('decoration-1 underline-offset-4 hover:underline', off ? 'text-muted-foreground' : 'text-brand')}>{room.name}</Link>
-        </h3>
-        <p className="flex flex-wrap gap-x-1.5 text-[13px] leading-relaxed text-muted-foreground">
-          {[room.size, room.view, occ?.adults ? t('Common.capacity', { adults: occ.adults, children: occ.children }) : null].filter(Boolean).join(' · ')}
-        </p>
-        <p className={cn('mt-1 text-[14px] leading-relaxed', off ? 'text-muted-foreground' : 'text-foreground/85')}>{room.description}</p>
-        {room.note && <p className="flex gap-2 text-[13px] text-muted-foreground"><Info className="mt-0.5 size-4 shrink-0 text-orange" aria-hidden />{room.note}</p>}
-        {room.features.length > 0 && (
-          <ul className="mt-auto flex flex-wrap gap-x-4 gap-y-1 pt-1.5 text-[13px]">
-            {room.features.map(f => <li key={f} className="inline-flex items-center gap-1.5"><Check className="size-3.5 text-brand-accent" strokeWidth={2.6} aria-hidden />{f}</li>)}
-          </ul>
-        )}
-=======
   const range = fmtRange(stay.checkin, stay.checkout, locale)
   const [planId, setPlanId] = useState<string>()
   const plan = offer.plans.find(p => p.rate_plan_id === planId) ?? offer.plans[0]
@@ -237,7 +184,7 @@ function RoomCard({ offer, hotel, stay, onPick, onOtherDates, onPhotos }: { offe
                 {t('Rooms.roomMax', { max: t('Common.guests', { adults: occ.adults, children: occ.children }), party: t('Common.guests', { adults: stay.adults, children: stay.children }) })}
               </p>
             ) : state === 'available' ? (
-              <div role="radiogroup" aria-label={t('Room.plansTitle')} className="mt-auto grid gap-2">
+              <div role="radiogroup" aria-label={t('Rooms.plansCount', { n: offer.plans.length })} className="mt-auto grid gap-2">
                 {offer.plans.map(p => {
                   const on = p === plan
                   return (
@@ -276,66 +223,7 @@ function RoomCard({ offer, hotel, stay, onPick, onOtherDates, onPhotos }: { offe
             </div>
           )}
         </div>
->>>>>>> Stashed changes
       </div>
-
-      {state === 'available' && plan ? (
-        <div className={cn(RAIL, plans.length > 1 ? 'flex-wrap' : 'flex-nowrap', 'items-end justify-between gap-x-3 gap-y-3 md:flex-nowrap md:items-stretch md:justify-start md:gap-0')}>
-          {plans.length > 1 ? (
-            <fieldset className="w-full">
-              <legend className="mb-2 text-[12px] text-muted-foreground">{t('Rooms.plansCount', { n: plans.length })}</legend>
-              <div className="grid gap-2">
-                {plans.map(p => (
-                  <label key={p.rate_plan_id} className={cn('flex cursor-pointer items-start gap-2.5 rounded-xl border bg-white px-3 py-2.5', p === plan ? 'border-brand ring-1 ring-brand' : 'border-border hover:border-border-strong')}>
-                    <input type="radio" name={`plan-${room.slug}`} checked={p === plan} onChange={() => setPlanId(p.rate_plan_id)} className="mt-1 accent-brand" />
-                    <span className="min-w-0"><span className="block text-[13px] font-semibold">{p.title}{p.has_breakfast ? ` · ${t('Rooms.breakfast')}` : ''}</span><span className="text-[14px] font-bold tabular-nums">{fmtPrice(nightly(p))}<span className="text-[12px] font-normal text-muted-foreground"> {t('Common.perNight')}</span></span></span>
-                  </label>
-                ))}
-              </div>
-            </fieldset>
-          ) : (
-            <div className="flex w-full items-center justify-between gap-2 max-md:hidden">
-              <span className="inline-flex h-6 items-center rounded-full border border-[#d5e2de] bg-white px-2.5 text-[12px] font-medium">{plan.title}{plan.has_breakfast ? ` · ${t('Rooms.breakfast')}` : ''}</span>
-              {left <= 3 && <span className="text-[12px] font-semibold whitespace-nowrap text-orange">{t('Rooms.lowStock', { n: left })}</span>}
-            </div>
-          )}
-          <div className="min-w-0 md:mt-auto md:pt-4">
-            <p className="text-[12px] text-muted-foreground max-md:hidden">{t('Rooms.perNightLabel')}</p>
-            <p className="text-[20px] leading-tight font-bold tracking-tight whitespace-nowrap text-brand tabular-nums md:mt-0.5 md:text-[26px]">
-              {fmtPrice(nightly(plan))}<span className="text-[12px] font-normal tracking-normal text-muted-foreground md:hidden"> {t('Common.perNight')}</span>
-            </p>
-            <p className="mt-1 text-[12px] whitespace-nowrap text-muted-foreground tabular-nums">
-              {t.rich('Rooms.totalLine', { total: fmtPrice(plan.total), nights: t('Common.nights', { n: plan.days_breakdown.length }), b: c => <b className="font-semibold text-foreground">{c}</b> })}
-            </p>
-            {left <= 3 && <p className="mt-0.5 text-[12px] font-semibold text-orange md:hidden">{t('Rooms.lowStock', { n: left })}</p>}
-          </div>
-          <div className="shrink-0 md:mt-3.5">
-            <Link href={roomHref(hotel.slug, room.slug, stay, plan.rate_plan_id)}
-              className="group/cta inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-brand px-4 text-[14px] md:h-[46px] md:px-6 md:text-[15px] font-semibold tracking-[0.01em] text-white transition-[background-color,box-shadow] duration-200 hover:bg-[#04443a] hover:shadow-[0_6px_16px_-8px_rgba(6,87,73,0.6)]">
-              {t('Rooms.choose')}<ArrowRight className="size-4 transition-transform duration-200 group-hover/cta:translate-x-[3px]" strokeWidth={2.2} aria-hidden />
-            </Link>
-            <p className="mt-2.5 hidden items-center justify-center gap-1.5 text-[12px] whitespace-nowrap text-foreground/80 md:flex"><ShieldCheck className="size-3.5 text-brand-accent" aria-hidden />{t('Room.noChargeYet')}</p>
-          </div>
-        </div>
-      ) : state === 'sold_out' || state === 'too_small' ? (
-        <div className={cn(RAIL, 'items-center justify-between gap-3 md:items-stretch md:justify-start md:gap-1.5')}>
-          <div className="min-w-0">
-            <p className="text-[15px] font-semibold">{state === 'sold_out' ? t('Rooms.soldOutShort') : t('Rooms.notFitShort')}</p>
-            <p className="text-[13px] text-muted-foreground tabular-nums">
-              {state === 'sold_out' ? fmtRange(stay.checkin, stay.checkout, locale) : occ && t('Rooms.roomMaxShort', { max: t('Common.guests', { adults: occ.adults, children: occ.children }) })}
-            </p>
-          </div>
-          <button type="button" onClick={onOtherDates} className={cn(RAIL_OUT, 'md:mt-auto')}>{state === 'sold_out' ? t('Rooms.otherDates') : t('Rooms.changeGuests')}</button>
-        </div>
-      ) : (
-        <div className={cn(RAIL, 'items-center justify-between gap-3 md:items-stretch md:justify-start md:gap-1.5')}>
-          <div className="min-w-0">
-            <p className="text-[15px] font-semibold">{t('Rooms.byDate')}</p>
-            <p className="text-[13px] leading-snug text-muted-foreground">{t('Rooms.byDateBody')}</p>
-          </div>
-          <button type="button" onClick={() => onPick()} className={cn(RAIL_OUT, 'md:mt-auto')}>{t('Rooms.book')}</button>
-        </div>
-      )}
     </article>
   )
 }

@@ -8,11 +8,7 @@ import { firstCheckin } from '@/lib/stay'
 import { BTN, GlowCard, IncludedGrid } from '@/components/site/kit'
 import { DateRangeField, GuestsField } from '@/components/site/stay-fields'
 import { useStay } from './use-stay'
-<<<<<<< Updated upstream
-import type { Contact } from '@/types/hotel'
-=======
-import type { Contact, Hotel } from '@/lib/types'
->>>>>>> Stashed changes
+import type { Contact, Hotel } from '@/types/hotel'
 
 export function PriceCard({ fromPrice, opening, contact, cover, included }: { fromPrice: number | null; opening: string | null; contact: Contact; cover: string | null; included: Hotel['included'] }) {
   const t = useTranslations()

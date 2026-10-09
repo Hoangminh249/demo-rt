@@ -33,11 +33,7 @@ export function QuickBar({ hotels, now, initial }: { hotels: QuickHotel[]; now: 
     <form
       aria-label={t('search')}
       onSubmit={e => { e.preventDefault(); router.push(`${hotelHref(slug, stay)}#phong`) }}
-<<<<<<< Updated upstream
-      className="grid overflow-hidden rounded-xl bg-white p-1.5 shadow-[0_30px_60px_-30px_rgb(4_38_32/0.45),0_0_0_1px_rgb(6_87_73/0.06)] lg:grid-cols-[1.1fr_2fr_1fr_auto]"
-=======
-      className="glass-light grid gap-3 rounded-2xl p-4 md:grid-cols-2 md:p-5 lg:grid-cols-[1.2fr_1.3fr_1fr_auto] lg:items-end"
->>>>>>> Stashed changes
+      className="glass-light grid overflow-hidden rounded-xl p-1.5 lg:grid-cols-[1.1fr_2fr_1fr_auto]"
     >
       <div className="border-b border-border lg:border-r lg:border-b-0"><HotelField id="qb-hotel" boxed value={slug} hotels={hotels} onChange={pickHotel} /></div>
       <div className="border-b border-border lg:border-r lg:border-b-0"><DateRangeField id="qb-dates" boxed stay={stay} min={min} onChange={setStay} /></div>

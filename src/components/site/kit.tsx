@@ -4,12 +4,8 @@ import type { ReactNode } from 'react'
 import { Bus, CableCar, Check, ChevronDown, Clock, Coffee, DoorOpen, FerrisWheel, ImageOff, MapPin, Plane, Receipt, Shirt, WashingMachine, Wifi, type LucideIcon } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
 import { cn } from 'cn'
-<<<<<<< Updated upstream
-import type { IconKey } from '@/types/global'
-=======
 import { fmtDayMonth, fmtPrice, fmtWeekday } from '@/lib/format'
-import type { IconKey } from '@/lib/types'
->>>>>>> Stashed changes
+import type { IconKey } from '@/types/global'
 
 /** Khung nội dung — độ rộng khai báo một lần ở globals.css (--site-width). */
 export const CONTAINER = 'container-site'
