@@ -23,7 +23,6 @@ const SPAN: Record<number, string[]> = { 3: ['sm:col-span-2', '', ''], 2: ['sm:c
 
 export function Gallery({ name, images }: { name: string; images: string[] }) {
   const t = useTranslations('Hotel')
-  const locale = useLocale()
   const [index, setIndex] = useState(-1)
   const alt = (i: number) => t('photoN', { name, n: i + 1 })
   const more = <><Images className="size-4" aria-hidden />{t('viewAll', { n: images.length })}</>
@@ -84,7 +83,30 @@ export function Gallery({ name, images }: { name: string; images: string[] }) {
           </div>
         ))}
       </div>
+<<<<<<< Updated upstream
       {lightbox}
+=======
+      <PhotoLightbox name={name} images={images} index={index} onClose={() => setIndex(-1)} />
+>>>>>>> Stashed changes
     </>
+  )
+}
+
+/** Lightbox dùng chung: bộ ảnh đầu trang và nút xem ảnh trên card phòng. index < 0 = đóng. */
+export function PhotoLightbox({ name, images, index, onClose }: { name: string; images: string[]; index: number; onClose: () => void }) {
+  const t = useTranslations('Hotel')
+  const locale = useLocale()
+  return (
+    <Lightbox
+      open={index >= 0}
+      index={index}
+      close={onClose}
+      slides={images.map((src, i) => ({ src, alt: t('photoN', { name, n: i + 1 }) }))}
+      plugins={[Counter, Thumbnails, Zoom]}
+      labels={locale === 'vi' ? VI_LABELS : undefined}
+      controller={{ closeOnBackdropClick: true }}
+      thumbnails={{ width: 96, height: 64, border: 0, borderRadius: 8, padding: 0, gap: 8 }}
+      styles={{ container: { backgroundColor: 'rgb(8 24 21 / 0.95)' }, thumbnailsContainer: { backgroundColor: 'rgb(8 24 21 / 0.95)' } }}
+    />
   )
 }

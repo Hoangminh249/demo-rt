@@ -1,5 +1,5 @@
 // Trang khách sạn — khuôn trang tour rootytrip: đường dẫn · bộ ảnh · thanh mục lục dính · nội dung trái
-// (tổng quan, chọn phòng, đã gồm, đi lại & vị trí, chính sách, hỏi đáp) · thẻ giá dính phải.
+// (tổng quan, chọn phòng, đi lại & vị trí, chính sách, hỏi đáp) · thẻ giá dính phải (kính, kèm "Đã gồm trong giá phòng").
 // Khối nào nội dung chưa có thì không vẽ (cả tab của nó).
 import { notFound } from 'next/navigation'
 import { Suspense, type ReactNode } from 'react'
@@ -11,7 +11,7 @@ import { siteApi } from '@/api/site'
 import { fmtDate, fmtPrice, today } from '@/lib/format'
 import type { Locale } from '@/types/global'
 import { InfoTable } from '@/components/hotel/info-table'
-import { BTN, BTN_OUT, CheckItem, CONTAINER, EYEBROW, ICONS } from '@/components/site/kit'
+import { BTN, BTN_OUT, CheckItem, CONTAINER, EYEBROW, ICONS, IncludedGrid } from '@/components/site/kit'
 import { Gallery } from '@/components/hotel/gallery'
 import { TabNav } from '@/components/hotel/tab-nav'
 import { Rooms } from '@/components/hotel/rooms'
@@ -44,9 +44,8 @@ export default async function HotelPage({ params }: PageProps<'/[locale]/hotel/[
   const sections = [
     ['tong-quan', true],
     ['phong', true],
-    ['tien-ich', h.included.length + h.not_available.length > 0],
     ['di-lai', true],
-    ['chinh-sach', h.policies.length > 0 || !!h.children],
+    ['chinh-sach', h.policies.length > 0 || !!h.children || h.not_available.length > 0],
     ['hoi-dap', h.faq.length > 0],
   ] as const
   const tabs = sections.filter(([, show]) => show).map(([id]) => [t(`Hotel.tabs.${id}`), id] as [string, string])
@@ -83,35 +82,13 @@ export default async function HotelPage({ params }: PageProps<'/[locale]/hotel/[
               <ul className="mt-3 grid gap-2.5 sm:grid-cols-2">{h.highlights.map(x => <CheckItem key={x}>{x}</CheckItem>)}</ul>
             </>}
             <p className="mt-5 text-[14px] text-muted-foreground">{t('Hotel.operator', { name: h.operator })}</p>
+            {/* Điện thoại không có cột phải: "Đã gồm" hiện ngay dưới tổng quan */}
+            <div className="mt-6 lg:hidden"><IncludedGrid items={h.included} title={t('Hotel.included')} more={n => t('Hotel.moreIncluded', { n })} /></div>
           </section>
 
           <Suspense fallback={<section id="phong" className="scroll-mt-36 border-t border-border pt-10"><h2 className="text-[26px] font-bold text-brand">{t('Rooms.title')}</h2><div className="mt-6 h-64 animate-pulse rounded-2xl bg-muted" /></section>}>
-            <Rooms hotel={{ slug: h.slug, name: h.name, online: h.online, opening: h.opening, cancel_summary: h.cancel_summary }} rooms={h.rooms} contact={contact} />
+            <Rooms hotel={{ slug: h.slug, name: h.name, online: h.online, opening: h.opening, cancel_summary: h.cancel_summary, included: h.included }} rooms={h.rooms} contact={contact} />
           </Suspense>
-
-          {h.included.length + h.not_available.length > 0 && (
-            <Section id="tien-ich" title={t('Hotel.included')}>
-              <ul className="mt-6 grid gap-x-6 gap-y-5 sm:grid-cols-2">
-                {h.included.map(a => {
-                  const Icon = ICONS[a.icon]
-                  return (
-                    <li key={a.label} className="flex gap-3 text-[15px]">
-                      <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-mint text-brand"><Icon className="size-5" aria-hidden /></span>
-                      <span className="min-w-0"><b className="block font-semibold">{a.label}</b>{a.desc && <span className="text-muted-foreground">{a.desc}</span>}</span>
-                    </li>
-                  )
-                })}
-              </ul>
-              {h.not_available.length > 0 && (
-                <div className="mt-6 rounded-xl border border-border px-5 py-4">
-                  <p className="font-semibold text-brand">{t('Hotel.notAvailable')}</p>
-                  <ul className="mt-2 flex flex-wrap gap-x-5 gap-y-1.5 text-[15px] text-muted-foreground">
-                    {h.not_available.map(x => <li key={x} className="inline-flex items-center gap-1.5"><Ban className="size-4 shrink-0" aria-hidden />{x}</li>)}
-                  </ul>
-                </div>
-              )}
-            </Section>
-          )}
 
           <Section id="di-lai" title={t('Hotel.gettingHere')}>
             <div className="mt-6 flex flex-wrap items-start justify-between gap-4 rounded-xl bg-mint px-5 py-4">
@@ -128,11 +105,21 @@ export default async function HotelPage({ params }: PageProps<'/[locale]/hotel/[
             ))}
           </Section>
 
-          {(h.policies.length > 0 || h.children) && (
+          {(h.policies.length > 0 || h.children || h.not_available.length > 0) && (
             <Section id="chinh-sach" title={t('Hotel.policies')}>
-              <dl className="mt-6 divide-y divide-border rounded-xl border border-border">
-                {h.policies.map(([k, v]) => <div key={k} className="grid gap-1 px-5 py-4 sm:grid-cols-[180px_1fr] sm:gap-6"><dt className="font-semibold text-brand">{k}</dt><dd className="text-[15px]">{v}</dd></div>)}
-              </dl>
+              {h.policies.length > 0 && (
+                <dl className="mt-6 divide-y divide-border rounded-xl border border-border">
+                  {h.policies.map(([k, v]) => <div key={k} className="grid gap-1 px-5 py-4 sm:grid-cols-[180px_1fr] sm:gap-6"><dt className="font-semibold text-brand">{k}</dt><dd className="text-[15px]">{v}</dd></div>)}
+                </dl>
+              )}
+              {h.not_available.length > 0 && (
+                <div className="mt-4 rounded-xl border border-border px-5 py-4">
+                  <p className="font-semibold text-brand">{t('Hotel.notAvailable')}</p>
+                  <ul className="mt-2 flex flex-wrap gap-x-5 gap-y-1.5 text-[15px] text-muted-foreground">
+                    {h.not_available.map(x => <li key={x} className="inline-flex items-center gap-1.5"><Ban className="size-4 shrink-0" aria-hidden />{x}</li>)}
+                  </ul>
+                </div>
+              )}
               {h.children && <InfoTable table={h.children} />}
             </Section>
           )}
@@ -155,7 +142,7 @@ export default async function HotelPage({ params }: PageProps<'/[locale]/hotel/[
 
         <aside className="hidden lg:block" aria-label={t('Hotel.bookAria')}>
           <div className="sticky top-[calc(var(--header-offset)+78px)] transition-[top] duration-300">
-            <Suspense fallback={<div className="h-[390px] animate-pulse rounded-2xl bg-muted" />}><PriceCard fromPrice={from} opening={h.opening} contact={contact} /></Suspense>
+            <Suspense fallback={<div className="h-[390px] animate-pulse rounded-2xl bg-muted" />}><PriceCard fromPrice={from} opening={h.opening} contact={contact} cover={h.cover} included={h.included} /></Suspense>
           </div>
         </aside>
       </div>

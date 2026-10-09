@@ -52,6 +52,7 @@ export default async function RoomPage({ params }: PageProps<'/[locale]/hotel/[s
   const hotel = { slug: h.slug, code: h.code, name: h.name, online: h.online, opening: h.opening, cancel_summary: h.cancel_summary }
   const others = h.rooms.filter(r => r.slug !== room.slug)
   // File khách sạn luôn mở đầu chính sách bằng Nhận phòng, Trả phòng (src/content/*.ts).
+<<<<<<< Updated upstream
   const [[, checkin], [, checkout]] = h.policies
   const cancel = h.cancel_summary.split(' · ').map(x => x.split(': '))
   const included = h.included.filter(i => i.desc)
@@ -62,6 +63,10 @@ export default async function RoomPage({ params }: PageProps<'/[locale]/hotel/[s
       <BookingCard hotel={hotel} room={room} contact={contact} idPrefix={prefix} vatIncluded={vatIncluded} />
     </Suspense>
   )
+=======
+  const [checkin, checkout] = h.policies
+  const card = (prefix: string) => <Suspense fallback={<div className="h-[420px] animate-pulse rounded-2xl bg-muted" />}><BookingCard hotel={hotel} room={room} contact={contact} idPrefix={prefix} included={h.included} /></Suspense>
+>>>>>>> Stashed changes
 
   return (
     <div className="bg-[#f7f9f8] pb-24">

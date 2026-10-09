@@ -7,17 +7,27 @@ import { useLocale, useTranslations } from 'next-intl'
 import { ArrowRight, CalendarX, Check, Info, MessageCircle, RotateCw, ShieldCheck, Users, WifiOff } from 'lucide-react'
 import { cn } from 'cn'
 import { Link } from '@/i18n/navigation'
+<<<<<<< Updated upstream
 import { fmtDayMonth, fmtPrice, fmtWeekday, today } from '@/lib/format'
 import { nightly } from '@/lib/rooms'
 import { firstCheckin } from '@/lib/stay'
 import { selectionQuery } from '@/lib/booking'
 import type { Contact, Room } from '@/types/hotel'
 import { BTN_OUT } from '@/components/site/kit'
+=======
+import { diffDays, fmtPrice, fmtRange, today } from '@/lib/format'
+import { nightly } from '@/lib/rooms'
+import { firstCheckin } from '@/lib/stay'
+import { selectionQuery } from '@/lib/booking'
+import type { Contact, Hotel, Room } from '@/lib/types'
+import { BTN, BTN_OUT, GlowCard, IncludedGrid, NightlyPrices } from '@/components/site/kit'
+>>>>>>> Stashed changes
 import { DateRangeField, GuestsField } from '@/components/site/stay-fields'
 import { ContactDialog } from '@/components/hotel/rooms'
 import { useRoomOffer, type OfferHotel } from './use-room-offer'
 
 type Props = { hotel: OfferHotel; room: Room; contact: Contact }
+type IncludedItem = Hotel['included'][number]
 
 const bookHref = (hotel: OfferHotel, room: Room, o: ReturnType<typeof useRoomOffer>) =>
   `/dat-phong?${selectionQuery({ hotel: hotel.slug, room: room.slug, plan: o.plan?.rate_plan_id }, o.stay)}`
@@ -34,12 +44,17 @@ export function RoomCapacity({ hotel, room }: { hotel: OfferHotel; room: Room })
   return <>{occ?.adults ? t('Common.capacity', { adults: occ.adults, children: occ.children }) : '—'}</>
 }
 
+<<<<<<< Updated upstream
 /** Thẻ đặt phòng: giá mỗi đêm · ngày + khách (một khung) · gói (nhiều gói thì chọn) · giá từng đêm · tổng · Đặt phòng. */
 export function BookingCard({ hotel, room, contact, idPrefix, vatIncluded }: Props & { idPrefix: string; vatIncluded: boolean }) {
+=======
+/** Thẻ đặt phòng: ngày, khách, gói đang chọn, giá từng đêm, tổng, nút Đặt phòng. */
+export function BookingCard({ hotel, room, contact, idPrefix, included }: Props & { idPrefix: string; included: IncludedItem[] }) {
+>>>>>>> Stashed changes
   const t = useTranslations()
-  const locale = useLocale()
   const o = useRoomOffer(hotel, room)
   const [asking, setAsking] = useState(false)
+<<<<<<< Updated upstream
   const p = o.status === 'available' ? o.plan : undefined
 
   return (
@@ -131,6 +146,68 @@ export function BookingCard({ hotel, room, contact, idPrefix, vatIncluded }: Pro
       </a>
       <ContactDialog hotel={hotel} stay={o.stay} picked={asking ? { room } : undefined} contact={contact} onClose={() => setAsking(false)} />
     </>
+=======
+  const p = o.plan
+  const left = o.status === 'available' ? o.offer?.left ?? 0 : 0
+  return (
+    <GlowCard src={room.images[0]}>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="inline-flex items-center gap-1.5 text-[12px] font-bold tracking-[0.04em] text-primary uppercase"><ShieldCheck className="size-4" aria-hidden />{t('Room.direct')}</span>
+        {left > 0 && left <= 3 && <span className="inline-flex h-6 items-center rounded-full bg-yellow px-2.5 text-[12px] font-semibold text-yellow-foreground">{t('Rooms.lowStock', { n: left })}</span>}
+      </div>
+      {p ? (
+        <p className="mt-1"><span className="text-[30px] font-bold text-brand">{fmtPrice(nightly(p))}</span><span className="text-[14px] text-muted-foreground"> {t('Common.perNight')}</span></p>
+      ) : <p className="mt-1 text-[17px] font-semibold text-brand">{t('Room.cardTitle')}</p>}
+
+      <div className="mt-4 grid gap-3">
+        <DateRangeField id={`${idPrefix}-dates`} label={t('Fields.datesShort')} stay={o.stay} min={firstCheckin(today(), hotel.opening)} onChange={o.setStay} />
+        <GuestsField id={`${idPrefix}-guests`} stay={o.stay} onChange={o.setStay} />
+      </div>
+
+      <div className="mt-4" aria-live="polite">
+        {o.status === 'loading' ? (
+          <div className="grid gap-2" role="status" aria-label={t('Rooms.loading')}>
+            {[0, 1, 2].map(i => <div key={i} className="h-5 animate-pulse rounded bg-muted" />)}
+            <div className="mt-2 h-12 animate-pulse rounded-lg bg-muted" />
+          </div>
+        ) : o.status === 'available' && p ? (
+          <>
+            <p className="text-[14px] font-semibold text-brand">{p.title}{p.has_breakfast && <span className="font-normal text-muted-foreground"> · {t('Rooms.breakfast')}</span>}</p>
+            <NightlyPrices days={p.days_breakdown} className="mt-1 border-b border-border pb-3" />
+            <p className="mt-3 flex items-baseline justify-between gap-3">
+              <span className="text-[15px] font-semibold">{t('Room.totalFor', { nights: t('Common.nights', { n: p.days_breakdown.length }) })}</span>
+              <span className="text-xl font-bold text-brand tabular-nums">{fmtPrice(p.total)}</span>
+            </p>
+            <Link href={bookHref(hotel, room, o)} className={`${BTN} mt-4 h-13 w-full rounded-xl text-[16px] shadow-[inset_0_1px_0_rgb(255_255_255/0.25),0_6px_16px_rgb(35_128_111/0.22)]`}>{t('Room.book')}<ArrowRight className="size-4" aria-hidden /></Link>
+            <p className="mt-2.5 flex items-center justify-center gap-1.5 text-[13px] text-muted-foreground"><ShieldCheck className="size-4 text-brand" aria-hidden />{t('Room.noChargeYet')}</p>
+          </>
+        ) : o.status === 'sold_out' ? (
+          <p className="flex gap-2.5 rounded-xl bg-muted px-4 py-3 text-[14px]"><CalendarX className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />{t('Room.soldOut')}</p>
+        ) : o.status === 'too_small' && o.offer?.occ ? (
+          <p className="flex gap-2.5 rounded-xl bg-muted px-4 py-3 text-[14px]"><Users className="mt-0.5 size-4 shrink-0 text-orange" aria-hidden />
+            {t('Rooms.roomMax', { max: t('Common.guests', { adults: o.offer.occ.adults, children: o.offer.occ.children }), party: t('Common.guests', { adults: o.stay.adults, children: o.stay.children }) })}
+          </p>
+        ) : (
+          <>
+            <p className="flex gap-2.5 rounded-xl bg-muted px-4 py-3 text-[14px]">
+              {o.status === 'error' ? <WifiOff className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden /> : <Info className="mt-0.5 size-4 shrink-0 text-brand" aria-hidden />}
+              {o.status === 'error' ? t('Rooms.errorBody') : t('Room.contactOnly')}
+            </p>
+            <div className="mt-3 flex gap-2">
+              {o.status === 'error' && <button type="button" onClick={o.retry} className={`${BTN_OUT} h-12 px-4`} aria-label={t('Rooms.retry')}><RotateCw className="size-4" aria-hidden /></button>}
+              <button type="button" onClick={() => setAsking(true)} className={`${BTN} h-12 flex-1`}>{t('Rooms.book')}</button>
+            </div>
+          </>
+        )}
+      </div>
+
+      <div className="mt-4"><IncludedGrid items={included} title={t('Hotel.included')} more={n => t('Hotel.moreIncluded', { n })} /></div>
+      <a href={contact.zalo} target="_blank" rel="noopener" className="mt-2 flex min-h-10 items-center gap-1.5 text-[14px] text-muted-foreground hover:text-primary">
+        <MessageCircle className="size-4 shrink-0 text-orange" aria-hidden />{t('Hotel.bookVia', { phone: contact.phone_display })}
+      </a>
+      <ContactDialog hotel={hotel} stay={o.stay} picked={asking ? { room } : undefined} contact={contact} onClose={() => setAsking(false)} />
+    </GlowCard>
+>>>>>>> Stashed changes
   )
 }
 

@@ -92,7 +92,7 @@ function Loading() {
 export function OverviewView() {
   const { data, isPending, isError, refetch } = useAdminOverview()
   return (
-    <div className="grid max-w-[1200px] grid-cols-1 gap-4">
+    <div className="grid max-w-site grid-cols-1 gap-4">
       {isPending ? <Loading /> : isError || !data ? <LoadFailed onRetry={() => refetch()} /> : (
         <>
           <ApiStatus status={data.status} error={data.error} />
