@@ -11,7 +11,8 @@
     "guests": "{adults} người lớn{children, plural, =0 {} other {, # trẻ em}}",
     "capacity": "{adults} người lớn{children, plural, =0 {} other { + # trẻ em}}",
     "seeRooms": "Xem phòng trống",
-    "opening": "Khai trương {date}"
+    "opening": "Khai trương {date}",
+    "nightly": "Giá từng đêm"
   },
   "Header": {
     "home": "Rooty Hospitality, trang chủ",
@@ -34,17 +35,16 @@
     "title": "Ngôn ngữ"
   },
   "Footer": {
-    "contactTitle": "Liên hệ Rooty Hospitality",
-    "booking": "Đặt phòng",
-    "hotline": "hotline",
-    "email": "Email",
     "hotels": "Khách sạn",
     "ecosystem": "Hệ sinh thái Rooty",
     "rootyTrip": "Rooty Trip · tour, combo, vé",
     "rivus": "RIVUS · cano, du thuyền",
-    "companyId": "MSDN {id}",
-    "address": "Trụ sở: {address}",
-    "copyright": "© {year} Rooty Hospitality · thuộc Công ty Cổ phần Rooty Trip Phú Quốc"
+    "inviteEyebrow": "Đặt trực tiếp với khách sạn",
+    "inviteA": "Kỳ nghỉ tiếp theo,",
+    "inviteB": "bắt đầu từ một cuộc gọi.",
+    "support": "Hỗ trợ",
+    "opening": "mở cửa {date}",
+    "legal": "© {year} Rooty Hospitality · thuộc {company} · MSDN {id} · {address}"
   },
   "Home": {
     "eyebrow": "Rooty Hospitality · Phú Quốc",
@@ -78,9 +78,18 @@
     "viewHotel": "Xem khách sạn",
     "priceByDate": "Xem phòng và giá theo ngày",
     "ecoLead": "Trọn chuyến đi cùng",
-    "ecoSub": "Khách sạn của Rooty nằm trong cùng hệ sinh thái với tour, cano và du thuyền ở Phú Quốc.",
+    "ecoSub": "Từ sân bay đến những hòn đảo nhỏ, mọi trải nghiệm đều có người đồng hành từ Rooty Trip.",
     "eco": [
       [
+<<<<<<< Updated upstream
+=======
+        "Đã gồm khi đặt phòng",
+        "Xe đón sân bay",
+        "Đón tiễn theo khung giờ cố định, đã gồm trong giá phòng.",
+        "Hỏi lịch xe"
+      ],
+      [
+>>>>>>> Stashed changes
         "Rooty Trip",
         "Tour, combo, vé tham quan",
         "Tour Phú Quốc, combo và vé tham quan.",
@@ -93,6 +102,7 @@
         "Xem trên RIVUS"
       ]
     ],
+<<<<<<< Updated upstream
     "checks": [
       "Ăn sáng mỗi ngày",
       "Xe đón tiễn sân bay",
@@ -130,6 +140,43 @@
     "ctaTitle": "Sẵn sàng cho kỳ nghỉ tiếp theo?",
     "ctaBody": "Nhắn đội Rooty — chúng tôi kiểm tra phòng trống và xác nhận cho bạn.",
     "ctaZalo": "Nhắn Zalo"
+=======
+    "hotelsEyebrow": "Gợi ý cho kỳ nghỉ",
+    "hotelsSub": "Chọn nhịp nghỉ dưỡng của bạn: bình yên trên đảo hay sôi động giữa phố biển.",
+    "sampleTag": "Khách sạn mẫu",
+    "sampleDesc": "Ảnh minh họa — thông tin mẫu",
+    "samplePrice": "Giá sẽ cập nhật",
+    "offer": {
+      "badge": "Ưu đãi mẫu · Chờ Rooty xác nhận",
+      "sub": "Đặt trực tiếp cùng Rooty · Không qua trung gian",
+      "title": "Giảm đến 15% cho kỳ nghỉ của bạn",
+      "note": "* Ưu đãi minh họa · Mức giảm và điều kiện áp dụng cần xác nhận trước khi công bố",
+      "cta": "Xem ưu đãi mẫu",
+      "call": "Gọi {phone}"
+    },
+    "story": {
+      "eyebrow": "Người Phú Quốc đồng hành",
+      "title": "Từ lúc hạ cánh, bạn đã được chăm sóc.",
+      "body": "Rooty không chỉ là nơi lưu trú. Chúng tôi kết nối phòng nghỉ, xe đón sân bay và những trải nghiệm đáng nhớ — cùng một đội ngũ người địa phương đồng hành.",
+      "items": [
+        [
+          "Giá rõ ràng, lựa chọn dễ dàng",
+          "Xem giá theo đêm, đã gồm VAT và phí phục vụ."
+        ],
+        [
+          "Một đầu mối cho cả chuyến đi",
+          "Đặt xe, tour cano và du thuyền cùng đội ngũ Rooty."
+        ],
+        [
+          "Người địa phương đồng hành",
+          "Tư vấn lịch trình và hỗ trợ trong suốt kỳ nghỉ."
+        ]
+      ],
+      "cta": "Tìm kỳ nghỉ của bạn"
+    },
+    "ecoEyebrow": "Dịch vụ & trải nghiệm",
+    "ecoAll": "Xem tất cả dịch vụ"
+>>>>>>> Stashed changes
   },
   "Fields": {
     "hotel": "Khách sạn",
@@ -154,7 +201,6 @@
     "tabs": {
       "tong-quan": "Tổng quan",
       "phong": "Phòng",
-      "tien-ich": "Đã gồm",
       "di-lai": "Đi lại",
       "chinh-sach": "Chính sách",
       "hoi-dap": "Hỏi đáp"
@@ -172,7 +218,8 @@
     "priceByDate": "Xem phòng và giá theo ngày",
     "bookVia": "Đặt qua Zalo/hotline {phone}",
     "viewAll": "Xem {n} ảnh",
-    "photoN": "{name} — ảnh {n}"
+    "photoN": "{name} — ảnh {n}",
+    "moreIncluded": "+{n} mục khác"
   },
   "Rooms": {
     "title": "Chọn phòng",
@@ -204,6 +251,7 @@
     "contactNote": "Gửi các thông tin trên qua Zalo, điện thoại hoặc email. Khách sạn kiểm tra phòng trống và gửi hướng dẫn thanh toán; đặt phòng chỉ có hiệu lực khi khách sạn gửi xác nhận có mã đặt phòng.",
     "zalo": "Nhắn Zalo",
     "mailSubject": "Yêu cầu đặt phòng — {hotel}",
+<<<<<<< Updated upstream
     "choose": "Chọn phòng",
     "edit": "Đổi",
     "typesCount": "{n} hạng phòng",
@@ -218,6 +266,13 @@
     "byDate": "Giá theo ngày",
     "byDateBody": "Khách sạn báo giá và giữ phòng qua Zalo.",
     "cancelPolicy": "Chính sách huỷ"
+=======
+    "choose": "Chọn",
+    "included": "Đã gồm",
+    "bookThis": "Đặt ngay",
+    "viewPhotos": "Xem ảnh phòng {name}",
+    "totalLabel": "Tổng"
+>>>>>>> Stashed changes
   },
   "NotFound": {
     "title": "Không tìm thấy trang",
@@ -246,6 +301,7 @@
     "allPolicies": "Toàn bộ chính sách khách sạn",
     "cancelPolicy": "Chính sách huỷ và hoàn tiền",
     "others": "Phòng khác tại {hotel}",
+<<<<<<< Updated upstream
     "statSize": "Diện tích",
     "statView": "Hướng nhìn",
     "statCapacity": "Sức chứa",
@@ -262,6 +318,9 @@
     "adviceTitle": "Cần tư vấn trước khi đặt?",
     "adviceZalo": "Nhắn Zalo {phone}",
     "notPaid": "chưa thanh toán"
+=======
+    "direct": "Đặt trực tiếp"
+>>>>>>> Stashed changes
   },
   "Booking": {
     "steps": {

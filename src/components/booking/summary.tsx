@@ -5,10 +5,15 @@ import type { ReactNode } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import { AlertTriangle, ChevronDown, Coffee, PencilLine, ShieldCheck } from 'lucide-react'
 import { Link } from '@/i18n/navigation'
-import { diffDays, fmtDate, fmtDayMonth, fmtPrice, fmtWeekday } from '@/lib/format'
+import { diffDays, fmtDate, fmtPrice, fmtWeekday } from '@/lib/format'
 import { roomHref } from '@/lib/booking'
+<<<<<<< Updated upstream
 import type { BookingTarget } from '@/types/booking'
 import { Photo, TEXT_LINK } from '@/components/site/kit'
+=======
+import type { BookingTarget } from '@/lib/types'
+import { NightlyPrices, Photo, TEXT_LINK } from '@/components/site/kit'
+>>>>>>> Stashed changes
 import { useRoomOffer } from '@/components/room/use-room-offer'
 
 function Body({ target, extra }: { target: BookingTarget; extra?: ReactNode }) {
@@ -40,9 +45,7 @@ function Body({ target, extra }: { target: BookingTarget; extra?: ReactNode }) {
         <div className="mt-4 grid gap-2" role="status" aria-label={t('Rooms.loading')}>{[0, 1, 2].map(i => <div key={i} className="h-5 animate-pulse rounded bg-muted" />)}</div>
       ) : o.status === 'available' && p ? (
         <>
-          <ul className="mt-4 grid gap-1.5 text-[14px] tabular-nums">
-            {p.days_breakdown.map(d => <li key={d.day} className="flex justify-between gap-3"><span className="text-muted-foreground">{fmtWeekday(d.day, locale)}, {fmtDayMonth(d.day, locale)}</span><span>{fmtPrice(d.price)}</span></li>)}
-          </ul>
+          <NightlyPrices days={p.days_breakdown} className="mt-3" />
           <p className="mt-3 flex items-baseline justify-between gap-3 border-t border-border pt-3">
             <span className="font-semibold">{t('Booking.total')}</span><span className="text-xl font-bold text-brand tabular-nums">{fmtPrice(p.total)}</span>
           </p>

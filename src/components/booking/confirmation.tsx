@@ -19,7 +19,7 @@ export function Confirmation({ target, contact }: { target: BookingTarget; conta
   const sp = useSearchParams()
   const draft = useDraft()
   const [copied, setCopied] = useState(false)
-  if (!draft) return <div className="mx-auto mt-10 h-96 max-w-[1200px] animate-pulse rounded-2xl bg-muted" />
+  if (!draft) return <div className="mx-auto mt-10 h-96 max-w-site animate-pulse rounded-2xl bg-muted" />
   const { guest: g, payment: pay } = draft
   if (!g || !pay) return <BookingMissing title={t('Booking.noPayTitle')} body={t('Booking.noPayBody')} href={`/hotel/${target.hotel.slug}`} cta={t('Booking.noPayCta')} />
 
@@ -35,7 +35,7 @@ export function Confirmation({ target, contact }: { target: BookingTarget; conta
   ] as const
 
   return (
-    <div className="mx-auto w-full max-w-[1200px] px-4 pt-8 pb-16 sm:px-6">
+    <div className="container-site pt-8 pb-16">
       <section className="flex flex-col gap-5 rounded-3xl bg-mint p-6 sm:flex-row sm:items-center sm:p-8">
         <span className="grid size-16 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground"><Check className="size-8" strokeWidth={3} aria-hidden /></span>
         <div className="min-w-0 flex-1">

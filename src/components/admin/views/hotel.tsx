@@ -231,14 +231,14 @@ export function HotelView({ slug }: { slug: string }) {
   const tabParam = sp.get('tab')
   const tab: Tab = TABS.some(([id]) => id === tabParam) ? (tabParam as Tab) : 'phong'
   const { data, isPending, isError, refetch } = useAdminHotel(slug)
-  if (isPending) return <div className="max-w-[1200px]"><Loading /></div>
-  if (isError || !data) return <div className="max-w-[1200px]"><LoadFailed onRetry={() => refetch()} /></div>
+  if (isPending) return <div className="max-w-site"><Loading /></div>
+  if (isError || !data) return <div className="max-w-site"><LoadFailed onRetry={() => refetch()} /></div>
 
   const { check: c, error, properties } = data
   const file = `src/content/${slug}.ts`
   const counts: Partial<Record<Tab, number>> = { phong: c.state === 'ok' ? c.ghRooms.length : undefined, anh: c.photos.length }
   return (
-    <div className="max-w-[1200px]">
+    <div className="max-w-site">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1">
           <h1 className="text-lg font-semibold text-balance">{c.name}</h1>

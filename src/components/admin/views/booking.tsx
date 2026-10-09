@@ -31,13 +31,13 @@ export function BookingView({ code }: { code: string }) {
   const property = useSearchParams().get('property')
   const { data, isPending, isError, refetch } = useAdminBooking(property, code)
   if (!property || data?.error === 'NOT_FOUND') return missing
-  if (isPending) return <div className="@container max-w-[1200px]"><Loading /></div>
-  if (isError || !data) return <div className="max-w-[1200px]"><h1 className="font-mono text-lg font-semibold">{code}</h1><div className="mt-4"><LoadFailed onRetry={() => refetch()} /></div></div>
+  if (isPending) return <div className="@container max-w-site"><Loading /></div>
+  if (isError || !data) return <div className="max-w-site"><h1 className="font-mono text-lg font-semibold">{code}</h1><div className="mt-4"><LoadFailed onRetry={() => refetch()} /></div></div>
   const b = data.data
-  if (data.error || !b) return <div className="max-w-[1200px]"><h1 className="font-mono text-lg font-semibold">{code}</h1><div className="mt-4"><GohostError code={data.error ?? 'UPSTREAM'} /></div></div>
+  if (data.error || !b) return <div className="max-w-site"><h1 className="font-mono text-lg font-semibold">{code}</h1><div className="mt-4"><GohostError code={data.error ?? 'UPSTREAM'} /></div></div>
 
   return (
-    <div className="@container max-w-[1200px]">
+    <div className="@container max-w-site">
       <h1 className="font-mono text-lg font-semibold">{b.code}</h1>
       <div className="mt-1.5 flex flex-wrap items-center gap-2">
         <BookingStatus status={b.status} />

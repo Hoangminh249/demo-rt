@@ -122,7 +122,7 @@ export function BookingsView() {
   else body = <Results q={q!} data={bookings.data.data} fetching={bookings.isPlaceholderData} />
 
   return (
-    <div className="grid max-w-[1200px] grid-cols-1 gap-4">
+    <div className="grid max-w-site grid-cols-1 gap-4">
       {property && (
         <form key={`${property.id}|${start}|${end}|${status}`} onSubmit={submit} className="flex flex-wrap items-end gap-3">
           <div className="grid gap-1.5">
