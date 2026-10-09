@@ -142,11 +142,13 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
         </div>
       </section>
 
-      {/* Banner ưu đãi theo Figma: ảnh tràn, phủ xanh từ trái sang, chỉ nhãn là kính */}
-      <section aria-labelledby="uu-dai" className="relative isolate flex min-h-[340px] items-center overflow-hidden bg-[#0f2a29] text-[#fffdf8]">
+      {/* Ưu đãi + câu chuyện: hai khối bo góc trong khung nội dung, cách nhau một khe nhỏ */}
+      <div className={`${CONTAINER} grid gap-4 sm:gap-5 `}>
+      {/* Banner ưu đãi theo Figma: ảnh, phủ xanh từ trái sang, chỉ nhãn là kính */}
+      <section aria-labelledby="uu-dai" className="relative isolate flex min-h-[340px] items-center overflow-hidden rounded-2xl bg-[#0f2a29] text-[#fffdf8]">
         <Photo src="/home/hero-2.jpg" alt="" className="absolute! inset-0 -z-10" />
         <div className="absolute inset-0 -z-10 bg-gradient-to-r from-[rgb(8_56_48/0.95)] via-[rgb(8_56_48/0.6)] to-transparent" />
-        <div className={`${CONTAINER} flex flex-col items-start gap-5 py-12`}>
+        <div className="flex flex-col items-start gap-5 px-6 py-12 sm:px-12">
           <span className="glass-tag glass-tag-warm px-3.5 py-1.5">{t('offer.badge')}</span>
           <div>
             <p className="text-[13px] font-semibold text-[#a8d5c4]">{t('offer.sub')}</p>
@@ -160,12 +162,12 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
         </div>
       </section>
 
-      {/* Câu chuyện thương hiệu: ảnh tràn, khối chữ trên tấm kính */}
-      <section aria-labelledby="cau-chuyen" className="relative isolate overflow-hidden py-16 text-white lg:py-24">
+      {/* Câu chuyện thương hiệu: ảnh nền, khối chữ trên tấm kính */}
+      <section aria-labelledby="cau-chuyen" className="relative isolate overflow-hidden rounded-2xl px-4 py-12 text-white sm:px-10 lg:py-20">
         <Photo src="/home/story.jpg" alt="" className="absolute! inset-0 -z-10" />
         <div className="absolute inset-0 -z-10 bg-gradient-to-r from-[rgb(8_56_48/0.15)] to-[rgb(8_56_48/0.6)]" />
-        <div className={`${CONTAINER} flex justify-end`}>
-          <div className="glass-dark flex max-w-[560px] flex-col gap-5 rounded-[28px] p-6 sm:p-10">
+        <div className="flex justify-end">
+          <div className="glass-dark flex max-w-[560px] flex-col gap-5 rounded-2xl p-6 sm:p-10">
             <p className="text-[12px] font-bold tracking-[0.08em] text-[#f8d09c] uppercase">{t('story.eyebrow')}</p>
             <h2 id="cau-chuyen" className="text-[28px] leading-tight font-bold sm:text-[36px]">{t('story.title')}</h2>
             <p className="text-[15px] leading-[1.8] text-[#d6eee6]">{t('story.body')}</p>
@@ -181,8 +183,9 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
           </div>
         </div>
       </section>
+      </div>
 
-      <section id="trai-nghiem" className={`${CONTAINER} scroll-mt-20 py-16 lg:py-20`}>
+      <section id="trai-nghiem" className={`${CONTAINER} scroll-mt-20 pt-16 lg:pt-20`}>
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-[12px] font-bold tracking-[0.08em] text-orange uppercase">{t('ecoEyebrow')}</p>
