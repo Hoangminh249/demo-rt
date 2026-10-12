@@ -62,11 +62,11 @@ function Cell({ day, rt, plan, inRange, onPick }: { day: string; rt: RoomCal; pl
   )
 }
 
-function BulkForm({ slug, rt, planId, range, setRange }: {
-  slug: string; rt: RoomCal; planId: string | undefined
+function BulkForm({ rt, planId, range, setRange }: {
+  rt: RoomCal; planId: string | undefined
   range: { from: string; to: string; weekdays: number[] }; setRange: (r: { from: string; to: string; weekdays: number[] }) => void
 }) {
-  const write = useAdminWrite(slug)
+  const write = useAdminWrite()
   const [clearPrice, setClearPrice] = useState(false)
   const n = range.from <= range.to ? datesIn(range.from, range.to, range.weekdays).length : 0
 
@@ -131,8 +131,8 @@ function BulkForm({ slug, rt, planId, range, setRange }: {
   )
 }
 
-function RulesPanel({ slug, plan }: { slug: string; plan: DbPlan }) {
-  const write = useAdminWrite(slug)
+function RulesPanel({ plan }: { plan: DbPlan }) {
+  const write = useAdminWrite()
   const [weekdays, setWeekdays] = useState<number[]>([])
   const [gen, setGen] = useState({ from: today(), to: addDays(today(), 89) })
 
@@ -263,10 +263,10 @@ export function RatesPanel({ slug }: { slug: string }) {
             “còn x/y”: phòng web còn bán / số phòng chia cho web (phần còn lại bán OTA qua Gohost). “—”: chưa có giá. Viền đứt: chưa mở bán · nền xám: đóng · nền vàng: chưa bán được (thiếu giá hoặc hết phòng).
           </p>
         </section>
-        <BulkForm key={rt.id} slug={slug} rt={rt} planId={plan?.id} range={range} setRange={setRange} />
+        <BulkForm key={rt.id} rt={rt} planId={plan?.id} range={range} setRange={setRange} />
       </div>
 
-      {fullPlan ? <RulesPanel key={fullPlan.id} slug={slug} plan={fullPlan} /> : plans.isError ? <DbFailed error={plans.error} onRetry={() => plans.refetch()} /> : null}
+      {fullPlan ? <RulesPanel key={fullPlan.id} plan={fullPlan} /> : plans.isError ? <DbFailed error={plans.error} onRetry={() => plans.refetch()} /> : null}
     </div>
   )
 }

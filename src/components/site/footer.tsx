@@ -57,7 +57,7 @@ export async function SiteFooter() {
         <nav aria-label={t('Header.hotels')} className={COL}>
           <p className={HEAD}>{t('Header.hotels')}</p>
           <ul className="grid gap-1">
-            {hotelApi.list(locale).map(h => (
+            {(await hotelApi.list(locale)).map(h => (
               <li key={h.slug}><Link href={hotelHref(h.slug)} className={LINK}>{h.name}</Link>{h.opening && h.opening > today() &&<span className="ml-1.5 text-[13px] text-[#cfe3dc]">· {t('Footer.opening', { date: fmtDate(h.opening, locale) })}</span>}</li>
             ))}
           </ul>

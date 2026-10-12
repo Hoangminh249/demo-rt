@@ -375,3 +375,65 @@ export async function readBooking(db: Db, code: string, now = new Date()) {
     include: { hotel: { select: { slug: true, name: true, phone: true, email: true, zalo: true, checkInTime: true, checkOutTime: true } }, rooms: { select: { roomTypeId: true } } },
   })
 }
+
+// ---------- Vận hành tại khách sạn (admin) ----------
+
+export type OpsResult = { ok: true; note: string } | { ok: false; error: string }
+
+/** Ghi nhận tiền khách trả thêm (thường là phần còn lại tại quầy): Payment BALANCE đã thu, cập nhật đã trả / còn lại. */
+export async function recordPayment(db: Db, bookingId: string, p: { amount: number; method: string; note?: string | null; byUserId: string | null }, now = new Date()): Promise<OpsResult> {
+  return db.$transaction(async tx => {
+    const [b] = await tx.$queryRaw<{ status: string; total: number; paidAmount: number }[]>`
+      SELECT status, total, "paidAmount" FROM "Booking" WHERE id = ${bookingId} FOR UPDATE`
+    if (!b) return { ok: false, error: 'Không thấy booking.' } as const
+    if (!['CONFIRMED', 'CHECKED_IN', 'CHECKED_OUT'].includes(b.status)) return { ok: false, error: `Booking đang ${b.status} — chỉ ghi nhận tiền cho booking đã xác nhận.` } as const
+    if (p.amount > b.total - b.paidAmount) return { ok: false, error: `Số tiền vượt phần còn lại (${b.total - b.paidAmount}).` } as const
+    const paid = b.paidAmount + p.amount
+    await tx.payment.create({ data: { bookingId, kind: 'BALANCE', provider: `desk:${p.method}`, providerRef: `DESK-${crypto.randomUUID()}`, amount: p.amount, status: 'SUCCEEDED', paidAt: now, rawPayload: json({ note: p.note ?? null, byUserId: p.byUserId }) } })
+    await tx.booking.update({ where: { id: bookingId }, data: { paidAmount: paid, balanceDue: b.total - paid, paymentStatus: paid >= b.total ? 'PAID' : 'DEPOSIT_PAID' } })
+    await tx.bookingStatusHistory.create({ data: { bookingId, from: b.status as 'CONFIRMED', to: b.status as 'CONFIRMED', byUserId: p.byUserId, note: `Thu ${p.amount} (${p.method})${p.note ? ` · ${p.note}` : ''}` } })
+    return { ok: true, note: paid >= b.total ? 'Đã thu đủ.' : `Đã ghi nhận. Còn ${b.total - paid}.` } as const
+  })
+}
+
+const STAY_FLOW: Record<'CHECKED_IN' | 'CHECKED_OUT', 'CONFIRMED' | 'CHECKED_IN'> = { CHECKED_IN: 'CONFIRMED', CHECKED_OUT: 'CHECKED_IN' }
+
+/** Nhận phòng / trả phòng (đúng thứ tự: CONFIRMED → CHECKED_IN → CHECKED_OUT). */
+export async function setStayStatus(db: Db, bookingId: string, to: 'CHECKED_IN' | 'CHECKED_OUT', byUserId: string | null): Promise<OpsResult> {
+  return db.$transaction(async tx => {
+    const [b] = await tx.$queryRaw<{ status: string }[]>`SELECT status FROM "Booking" WHERE id = ${bookingId} FOR UPDATE`
+    if (!b) return { ok: false, error: 'Không thấy booking.' } as const
+    if (b.status !== STAY_FLOW[to]) return { ok: false, error: `Booking đang ${b.status} — ${to === 'CHECKED_IN' ? 'chỉ nhận phòng booking đã xác nhận' : 'chỉ trả phòng booking đã nhận phòng'}.` } as const
+    await tx.booking.update({ where: { id: bookingId }, data: { status: to } })
+    await tx.bookingStatusHistory.create({ data: { bookingId, from: STAY_FLOW[to], to, byUserId } })
+    return { ok: true, note: to === 'CHECKED_IN' ? 'Đã nhận phòng.' : 'Đã trả phòng.' } as const
+  })
+}
+
+/** Xử lý một khoản hoàn: DONE (đã chuyển tiền) / REJECTED. Hết khoản chờ → bỏ cờ needsRefund; cập nhật đã trả + trạng thái tiền. */
+export async function resolveRefund(db: Db, refundId: string, status: 'DONE' | 'REJECTED', byUserId: string | null, now = new Date()): Promise<OpsResult> {
+  return db.$transaction(async tx => {
+    const [r] = await tx.$queryRaw<{ bookingId: string; amount: number; status: string }[]>`SELECT "bookingId", amount, status FROM "Refund" WHERE id = ${refundId} FOR UPDATE`
+    if (!r) return { ok: false, error: 'Không thấy khoản hoàn.' } as const
+    if (r.status !== 'PENDING') return { ok: false, error: 'Khoản hoàn đã xử lý trước đó.' } as const
+    const [b] = await tx.$queryRaw<{ status: string; paidAmount: number }[]>`SELECT status, "paidAmount" FROM "Booking" WHERE id = ${r.bookingId} FOR UPDATE`
+    await tx.refund.update({ where: { id: refundId }, data: { status, processedById: byUserId, processedAt: now } })
+    const pending = await tx.refund.count({ where: { bookingId: r.bookingId, status: 'PENDING' } })
+    const paid = status === 'DONE' ? Math.max(0, b.paidAmount - r.amount) : b.paidAmount
+    await tx.booking.update({
+      where: { id: r.bookingId },
+      data: { needsRefund: pending > 0, paidAmount: paid, ...(status === 'DONE' ? { paymentStatus: paid === 0 ? 'REFUNDED' : 'PARTIALLY_REFUNDED' } : {}) },
+    })
+    await tx.bookingStatusHistory.create({ data: { bookingId: r.bookingId, from: b.status as 'CANCELLED', to: b.status as 'CANCELLED', byUserId, note: `Hoàn ${r.amount}: ${status === 'DONE' ? 'đã chuyển' : 'từ chối'}` } })
+    return { ok: true, note: status === 'DONE' ? 'Đã ghi nhận hoàn tiền.' : 'Đã đánh dấu từ chối hoàn.' } as const
+  })
+}
+
+/** Tiền phạt nếu huỷ ngay bây giờ (xem trước trên màn admin). */
+export function penaltyPreview(b: { status: string; total: number; paidAmount: number; checkIn: Date; policySnapshot: unknown }, now = new Date()) {
+  const snap = (b.policySnapshot as { cancellation?: CancelPolicySnap }).cancellation
+  if (!snap) return null
+  const penalty = b.status === 'PENDING_PAYMENT' ? 0 : cancelPenalty(snap, b.total, iso(b.checkIn), todayAt(now))
+  const noShow = cancelPenalty(snap, b.total, iso(b.checkIn), todayAt(now), true)
+  return { penalty, refund: Math.max(0, b.paidAmount - penalty), noShow, noShowRefund: Math.max(0, b.paidAmount - noShow) }
+}

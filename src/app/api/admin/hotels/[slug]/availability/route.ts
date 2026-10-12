@@ -7,7 +7,7 @@ import { adminGet, badRequest, notFoundJson } from '../../../_lib'
 
 export const GET = adminGet(async (req, ctx: RouteContext<'/api/admin/hotels/[slug]/availability'>) => {
   const { slug } = await ctx.params
-  const hotel = hotelApi.get(slug, 'vi')
+  const hotel = await hotelApi.get(slug, 'vi')
   if (!hotel) return notFoundJson()
   const checkin = req.nextUrl.searchParams.get('in')
   const checkout = req.nextUrl.searchParams.get('out')

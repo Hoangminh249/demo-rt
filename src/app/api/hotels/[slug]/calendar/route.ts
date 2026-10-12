@@ -10,7 +10,7 @@ const NO_STORE = { 'Cache-Control': 'no-store' }
 export async function GET(req: NextRequest, ctx: RouteContext<'/api/hotels/[slug]/calendar'>) {
   const { slug } = await ctx.params
   const room = req.nextUrl.searchParams.get('room')
-  const hotel = hotelApi.get(slug, 'vi')
+  const hotel = await hotelApi.get(slug, 'vi')
   if (!hotel || (room && !hotel.rooms.some(r => r.slug === room))) return Response.json({ error: 'BAD_REQUEST' }, { status: 400, headers: NO_STORE })
   try {
     const days = await hotelApi.calendar(slug, firstCheckin(today(), hotel.opening), room)

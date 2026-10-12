@@ -1,20 +1,49 @@
 'use client'
-// Đăng nhập admin (form.md · A "Một cột giữa màn"): logo · tiêu đề · tên đăng nhập · mật khẩu (nút mắt) · câu lỗi · nút.
-// Không "Quên mật khẩu?" và không nút Google: tài khoản là một cặp trong env, chưa có luồng đặt lại hay SSO.
+// Đăng nhập admin (form.md · A "Một cột giữa màn"): logo · tiêu đề · khối đăng nhập dùng chung (Google / email + mã, User.role
+// ADMIN hoặc STAFF) · tài khoản env gập lại làm đường dự phòng (tên đăng nhập · mật khẩu, luôn là ADMIN).
 import { useState, type FormEvent } from 'react'
 import Image from 'next/image'
 import { isAxiosError } from 'axios'
 import { Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { useLogin } from '@/hooks/use-admin'
+import { useLogin, useLogout } from '@/hooks/use-admin'
+import { LoginPanel } from '@/components/auth/login'
 
 const ERRORS: Record<number, string> = {
   401: 'Sai tên đăng nhập hoặc mật khẩu.',
   503: 'Máy chủ chưa cấu hình tài khoản admin (ADMIN_USER, ADMIN_PASSWORD).',
 }
 
-export function LoginForm({ next }: { next: string }) {
+/** `account`: bật đăng nhập Google / email (có DB + AUTH_SECRET). `denied`: email đã đăng nhập nhưng không có quyền admin. */
+export function AdminLogin({ next, account, denied }: { next: string; account: boolean; denied: string | null }) {
+  const logout = useLogout()
+  return (
+    <div className="w-full max-w-md rounded-2xl bg-card p-6 sm:p-8">
+      <div className="flex items-center gap-3">
+        <Image src="/images/brand/rooty-trip-logo.png" alt="Rooty Trip" width={286} height={84} priority className="logo-green h-9 w-auto" />
+        <span className="text-sm font-semibold text-brand">Admin</span>
+      </div>
+      <h1 className="mt-6 text-xl font-semibold">Đăng nhập</h1>
+      <p className="mt-1 text-sm text-muted-foreground">Trang quản trị rootyhospitality.com</p>
+      {denied && (
+        <div role="alert" className="mt-5 rounded-xl bg-amber-50 p-4 text-sm text-amber-800">
+          Tài khoản <b>{denied}</b> chưa có quyền quản trị (role ADMIN / STAFF).
+          <button type="button" onClick={() => logout.mutate()} className="mt-2 block font-medium underline underline-offset-2">Đăng xuất để dùng tài khoản khác</button>
+        </div>
+      )}
+      {account && !denied && <div className="mt-6"><LoginPanel callbackUrl={next} /></div>}
+      <details className="group mt-6 border-t border-border pt-4" open={!account}>
+        <summary className="cursor-pointer list-none text-sm font-medium text-muted-foreground hover:text-foreground [&::-webkit-details-marker]:hidden">
+          Tài khoản quản trị dự phòng <span className="group-open:hidden">▸</span><span className="hidden group-open:inline">▾</span>
+        </summary>
+        <EnvLoginForm next={next} />
+      </details>
+    </div>
+  )
+}
+
+function EnvLoginForm({ next }: { next: string }) {
   const login = useLogin()
   const [show, setShow] = useState(false)
   const [empty, setEmpty] = useState<{ user?: boolean; password?: boolean }>({})
@@ -32,17 +61,10 @@ export function LoginForm({ next }: { next: string }) {
   }
 
   return (
-    <div className="w-full max-w-md rounded-2xl bg-card p-6 sm:p-8">
-      <div className="flex items-center gap-3">
-        <Image src="/images/brand/rooty-trip-logo.png" alt="Rooty Trip" width={286} height={84} priority className="logo-green h-9 w-auto" />
-        <span className="text-sm font-semibold text-brand">Admin</span>
-      </div>
-      <h1 className="mt-6 text-xl font-semibold">Đăng nhập</h1>
-      <p className="mt-1 text-sm text-muted-foreground">Trang quản trị rootyhospitality.com</p>
-      <form onSubmit={submit} noValidate className="mt-6 grid gap-4">
+      <form onSubmit={submit} noValidate className="mt-4 grid gap-4">
         <div className="grid gap-1.5">
           <label htmlFor="login-user" className="text-sm font-medium">Tên đăng nhập</label>
-          <Input id="login-user" name="user" autoComplete="username" autoFocus placeholder="Nhập tên đăng nhập" className="h-12 md:h-12"
+          <Input id="login-user" name="user" autoComplete="username" placeholder="Nhập tên đăng nhập" className="h-12 md:h-12"
             aria-invalid={empty.user || undefined} aria-describedby={empty.user ? 'login-user-err' : undefined} />
           {empty.user && <p id="login-user-err" className="text-sm text-red-700">Chưa nhập tên đăng nhập</p>}
         </div>
@@ -63,6 +85,5 @@ export function LoginForm({ next }: { next: string }) {
           {login.isPending || login.isSuccess ? 'Đang đăng nhập…' : 'Đăng nhập'}
         </Button>
       </form>
-    </div>
   )
 }

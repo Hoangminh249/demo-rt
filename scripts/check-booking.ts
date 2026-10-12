@@ -5,7 +5,7 @@
 // (5) phiên khách (CUSTOMER) gọi API admin → bị từ chối · (6) huỷ → phạt theo chính sách lúc đặt + Refund.
 import assert from 'node:assert/strict'
 import { randomUUID } from 'node:crypto'
-import { cancelBooking, createHold, expireDue, handleWebhook, quoteSelection, startPayment, todayAt, type Selection } from '../src/lib/booking-engine'
+import { cancelBooking, createHold, expireDue, handleWebhook, quoteSelection, recordPayment, resolveRefund, setStayStatus, startPayment, todayAt, type Selection } from '../src/lib/booking-engine'
 import { sendBookingEmails } from '../src/lib/email'
 import { isSession } from '../src/lib/admin-auth'
 import { addDays } from '../src/lib/format'
@@ -171,6 +171,31 @@ async function main() {
   const w6 = await handleWebhook(db, 'mock', { eventId: `EVT-${randomUUID()}`, providerRef: p6.providerRef, status: 'succeeded', amount: 1, raw: { providerRef: p6.providerRef } })
   assert.ok(!w6.duplicate && !w6.confirmedNow)
   assert.equal((await db.booking.findUniqueOrThrow({ where: { code: h6.code } })).status, 'PENDING_PAYMENT')
+
+  // (7) Vận hành tại khách sạn: tiền về đúng → CONFIRMED; thu nốt tại quầy → PAID; nhận / trả phòng đúng thứ tự; đã trả phòng thì không huỷ được
+  const w7 = await handleWebhook(db, 'mock', { eventId: `EVT-${randomUUID()}`, providerRef: p6.providerRef, status: 'succeeded', amount: p6.amount, raw: { providerRef: p6.providerRef } })
+  assert.ok(!w7.duplicate && w7.confirmedNow)
+  const b7 = await db.booking.findUniqueOrThrow({ where: { code: h6.code } })
+  assert.deepEqual(await recordPayment(db, b7.id, { amount: b7.balanceDue + 1, method: 'cash', byUserId: null }), { ok: false, error: `Số tiền vượt phần còn lại (${b7.balanceDue}).` })
+  assert.ok((await recordPayment(db, b7.id, { amount: b7.balanceDue, method: 'cash', byUserId: null })).ok)
+  const paid7 = await db.booking.findUniqueOrThrow({ where: { id: b7.id } })
+  assert.equal(paid7.paymentStatus, 'PAID')
+  assert.equal(paid7.balanceDue, 0)
+  assert.equal((await setStayStatus(db, b7.id, 'CHECKED_OUT', null)).ok, false, 'chưa nhận phòng thì chưa trả phòng')
+  assert.ok((await setStayStatus(db, b7.id, 'CHECKED_IN', null)).ok)
+  assert.ok((await setStayStatus(db, b7.id, 'CHECKED_OUT', null)).ok)
+  assert.deepEqual(await cancelBooking(db, b7.id, { userId: null, reason: 'x' }), { ok: false, error: 'NOT_CANCELLABLE' })
+  console.log('✓ (7) thu tiền tại quầy → PAID, nhận / trả phòng đúng thứ tự, đã trả phòng thì không huỷ')
+
+  // (8) Xử lý hoàn tiền: DONE → bỏ cờ needsRefund, trừ đã trả, trạng thái REFUNDED
+  const ref = await db.refund.findFirstOrThrow({ where: { bookingId: b5.id } })
+  assert.ok((await resolveRefund(db, ref.id, 'DONE', null)).ok)
+  assert.equal((await resolveRefund(db, ref.id, 'DONE', null)).ok, false, 'không xử lý hai lần')
+  const b8 = await db.booking.findUniqueOrThrow({ where: { id: b5.id } })
+  assert.equal(b8.needsRefund, false)
+  assert.equal(b8.paidAmount, 0)
+  assert.equal(b8.paymentStatus, 'REFUNDED')
+  console.log('✓ (8) xử lý hoàn tiền → hết cờ cần hoàn, REFUNDED')
 
   // (5) Phiên khách (CUSTOMER) gọi API admin → bị từ chối
   const token = randomUUID()

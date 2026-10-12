@@ -14,7 +14,7 @@ export default async function Page({ params }: PageProps<'/[locale]/chinh-sach-h
   setRequestLocale(locale as Locale)
   const fees = (
     <div className="mt-5 grid gap-4">
-      {siteApi.cancelPolicies(locale as Locale).map(h => (
+      {(await siteApi.cancelPolicies(locale as Locale)).map(h => (
         <div key={h.slug} className="overflow-hidden rounded-2xl border border-border">
           <p className="bg-mint px-5 py-3 font-bold text-brand">{h.name}</p>
           <dl className="divide-y divide-border">

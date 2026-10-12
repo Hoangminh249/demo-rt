@@ -7,6 +7,7 @@ import { Resend } from 'resend'
 import type { Prisma, PrismaClient } from '@/generated/prisma/client'
 import { BookingConfirmed } from '@/emails/booking-confirmed'
 import { NewBookingNotice } from '@/emails/new-booking-notice'
+import { LoginCode } from '@/emails/login-code'
 import { NOTIFY_HOTEL } from './booking-rules'
 import type { QuoteNight } from './quote'
 import type { L } from '@/types/global'
@@ -34,7 +35,7 @@ interface Snapshot {
   quote: { nights: QuoteNight[]; rooms: number; promoCode: string | null }
 }
 
-function cancellationText(c: Snapshot['cancellation']) {
+export function cancellationText(c: Snapshot['cancellation']) {
   if (c.description?.vi) return c.description.vi
   if (!c.refundable) return 'Gói không hoàn huỷ: huỷ hoặc không đến thu 100%.'
   const tiers = [...c.tiers].sort((a, b) => b.daysBefore - a.daysBefore)
@@ -74,6 +75,21 @@ async function deliver(db: Prisma.TransactionClient, bookingId: string, template
     console.error('[email] gửi lỗi', template, bookingId, e)
     return db.emailLog.create({ data: { bookingId, to, template, subject, status: 'FAILED', error: e instanceof Error ? e.message.slice(0, 500) : 'Lỗi không rõ' } })
   }
+}
+
+/** Mã đăng nhập (Auth.js gọi). Không có RESEND_API_KEY → in console (máy dev). Gửi lỗi → ném lỗi để màn đăng nhập báo. */
+export async function sendLoginCode(to: string, code: string, minutes: number) {
+  const subject = `Mã đăng nhập Rooty Hospitality: ${code}`
+  const key = process.env.RESEND_API_KEY
+  if (!key) {
+    console.info(`[email:console] Mã đăng nhập → ${to}: ${code} (hiệu lực ${minutes} phút)`)
+    return
+  }
+  const element = createElement(LoginCode, { code, minutes })
+  const [html, text] = await Promise.all([render(element), render(element, { plainText: true })])
+  const from = process.env.EMAIL_FROM || 'Rooty Hospitality <booking@rootyhospitality.com>'
+  const { error } = await new Resend(key).emails.send({ from, to, subject, html, text })
+  if (error) throw new Error(`Resend: ${error.name}: ${error.message}`)
 }
 
 /**

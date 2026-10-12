@@ -31,12 +31,12 @@ export default async function DonePage({ params, searchParams }: PageProps<'/[lo
     return (
       <>
         <Steps current={3} />
-        <LiveResult initial={b} image={hotelApi.bookingTarget(b.hotel.slug, b.room.slug, locale as Locale)?.room.images[0]} />
+        <LiveResult initial={b} image={(await hotelApi.bookingTarget(b.hotel.slug, b.room.slug, locale as Locale))?.room.images[0]} />
       </>
     )
   }
 
-  const target = hotelApi.bookingTarget(sp.hotel as string, sp.room as string, locale as Locale)
+  const target = await hotelApi.bookingTarget(sp.hotel as string, sp.room as string, locale as Locale)
   if (!target) return <BookingMissing title={t('missingTitle')} body={t('missingBody')} href="/#khach-san" cta={t('missingCta')} />
   return (
     <>

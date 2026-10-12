@@ -123,3 +123,88 @@ export interface AdminPlans {
 
 /** Kết quả POST /api/admin/db. */
 export interface AdminWriteResult { ok: true; message: string }
+
+// ---------- Sản phẩm (Postgres) — GET /api/admin/catalog/{slug}, /amenities, /media, /promotions, /users ----------
+
+export interface AdminMediaItem { id: string; path: string; alt: L | null; source: 'STATIC' | 'UPLOAD'; used: number }
+export interface AdminMediaLink { mediaId: string; path: string; isCover: boolean; focus: string | null }
+
+export interface AdminRoomTypeEdit {
+  id: string; slug: string; status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED'
+  name: L; description: L; size: L; beds: L | null
+  maxAdults: number; maxChildren: number; maxOccupancy: number; baseOccupancy: number; totalRooms: number; sortOrder: number
+  gohostRoomTypeId: string | null
+  content: { features: L[]; view?: L; tagline?: L; note?: L }
+  rooms: { id: string; number: string; floor: number | null; note: string | null; active: boolean }[]
+  media: AdminMediaLink[]
+  bookings: number
+}
+
+export interface AdminHotelEdit {
+  hotel: {
+    id: string; slug: string; code: string; name: string; status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED'
+    area: L; address: L; mapQuery: string; lat: number | null; lng: number | null; stars: number | null
+    checkInTime: string; checkOutTime: string; phone: string | null; email: string | null; zalo: string | null; notifyEmail: string | null
+    operator: string; openingDate: string | null; gohostTenantId: string | null; sortOrder: number
+    content: import('@/lib/catalog-commands').HotelContentInput
+    bookings: number
+  }
+  roomTypes: AdminRoomTypeEdit[]
+  gallery: AdminMediaLink[]
+  hero: AdminMediaLink[]
+  amenities: { amenityId: string; available: boolean; description: L | null }[]
+  taxFees: { id: string; name: L; type: 'PERCENT' | 'PER_NIGHT' | 'PER_BOOKING'; value: number; included: boolean; active: boolean; sortOrder: number }[]
+}
+
+export interface AdminAmenity { id: string; code: string; name: L; icon: string | null; used: number }
+
+export interface AdminMediaLibrary { items: AdminMediaItem[]; uploadEnabled: boolean }
+
+export interface AdminPromotion {
+  id: string; code: string; name: L; type: 'PERCENT' | 'FIXED'; value: number
+  hotelId: string | null; ratePlanId: string | null
+  bookStart: string | null; bookEnd: string | null; stayStart: string | null; stayEnd: string | null
+  minNights: number; maxRedemptions: number | null; perUserLimit: number | null; active: boolean; used: number
+}
+export interface AdminPromotions {
+  items: AdminPromotion[]
+  hotels: { id: string; name: string }[]
+  ratePlans: { id: string; hotelId: string; label: string }[]
+}
+
+export interface AdminUser { id: string; name: string | null; email: string | null; role: 'CUSTOMER' | 'STAFF' | 'ADMIN'; createdAt: string; bookings: number }
+
+// ---------- Booking web (Postgres) — GET /api/admin/orders, /orders/{code} ----------
+
+export type OrderStatus = 'PENDING_PAYMENT' | 'CONFIRMED' | 'CANCELLED' | 'EXPIRED' | 'NO_SHOW' | 'CHECKED_IN' | 'CHECKED_OUT'
+export type OrderPaymentStatus = 'UNPAID' | 'DEPOSIT_PAID' | 'PAID' | 'PARTIALLY_REFUNDED' | 'REFUNDED'
+
+export interface AdminOrderRow {
+  code: string; status: OrderStatus; paymentStatus: OrderPaymentStatus; hotel: string
+  checkIn: string; checkOut: string; guest: string; email: string; phone: string
+  total: number; paidAmount: number; balanceDue: number; needsRefund: boolean; createdAt: string
+}
+
+export interface AdminOrders {
+  rows: AdminOrderRow[]; total: number; page: number; pages: number
+  hotels: { slug: string; name: string }[]
+  needsRefund: number
+}
+
+export interface AdminOrder {
+  code: string; status: OrderStatus; paymentStatus: OrderPaymentStatus; source: string
+  hotel: { slug: string; name: string }
+  checkIn: string; checkOut: string; adults: number; children: number; childAges: number[]
+  contact: { name: string; phone: string; email: string; guestName: string | null; account: string | null }
+  specialRequests: string | null
+  room: string; plan: string; rooms: { roomType: string; adults: number; children: number; nights: { date: string; price: number; extraFee: number }[] }[]
+  subtotal: number; discount: number; promoCode: string | null; taxFees: number; total: number
+  depositAmount: number; paidAmount: number; balanceDue: number; balanceDueAt: string | null
+  holdExpiresAt: string | null; needsRefund: boolean; cancelledAt: string | null; cancelReason: string | null; createdAt: string
+  cancellation: string
+  preview: { penalty: number; refund: number; noShow: number; noShowRefund: number } | null
+  payments: { id: string; kind: string; provider: string; amount: number; status: string; paidAt: string | null; createdAt: string }[]
+  refunds: { id: string; amount: number; status: 'PENDING' | 'DONE' | 'REJECTED'; reason: string; processedAt: string | null; createdAt: string }[]
+  history: { from: string | null; to: string; by: string | null; note: string | null; at: string }[]
+  emails: { template: string; to: string; status: string; error: string | null; at: string }[]
+}

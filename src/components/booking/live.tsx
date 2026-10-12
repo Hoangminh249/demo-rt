@@ -7,18 +7,17 @@ import { diffDays, fmtDate, fmtPrice, fmtWeekday } from '@/lib/format'
 import type { Contact } from '@/types/hotel'
 import type { LiveBooking } from '@/types/booking'
 import { BTN, BTN_OUT, Photo } from '@/components/site/kit'
+import { OpenLoginButton } from '@/components/auth/account'
 
-/** Chưa đăng nhập: một nút Google. `action` là server action gọi signIn('google', { redirectTo: trang hiện tại }). */
-export function LoginCard({ action }: { action: () => Promise<void> }) {
+/** Chưa đăng nhập: nút mở modal đăng nhập (Google / email + mã); xong quay lại đúng trang này (lựa chọn trên URL). */
+export function LoginCard() {
   const t = useTranslations('Live')
   return (
     <section className="rounded-2xl border border-border bg-white p-6 sm:p-8">
       <span className="grid size-11 place-items-center rounded-xl bg-mint"><Lock className="size-5 text-brand" aria-hidden /></span>
       <h2 className="mt-4 text-xl font-bold text-brand">{t('loginTitle')}</h2>
       <p className="mt-2 max-w-prose text-[15px] text-muted-foreground">{t('loginBody')}</p>
-      <form action={action} className="mt-6">
-        <button type="submit" className={`${BTN} h-12 px-6`}><LogIn className="size-4" aria-hidden />{t('loginCta')}</button>
-      </form>
+      <OpenLoginButton className={`${BTN} mt-6 h-12 px-6`}><LogIn className="size-4" aria-hidden />{t('loginCta')}</OpenLoginButton>
     </section>
   )
 }

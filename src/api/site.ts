@@ -1,10 +1,11 @@
-// Nội dung chung của website: kênh liên hệ + pháp nhân, 4 trang tĩnh (menu Hỗ trợ). Chỉ đọc src/content, không gọi Gohost.
+// Nội dung chung của website: kênh liên hệ + pháp nhân, 4 trang tĩnh (menu Hỗ trợ). Không gọi Gohost.
 import 'server-only'
-import { HOTELS, SITE } from '@/content'
+import { SITE } from '@/content'
 import { PAGES } from '@/content/pages'
 import { tr } from '@/lib/tr'
 import type { L, Locale } from '@/types/global'
 import type { Page, PageSlug } from '@/types/page'
+import { catalogApi } from './catalog'
 
 // Các dòng chính sách khách sạn mà trang huỷ đọc thẳng (khớp theo nhãn tiếng Việt trong src/content/*.ts).
 const CANCEL_KEYS = ['Huỷ phòng', 'Đổi ngày', 'Lễ, Tết', 'Gián đoạn phương tiện ra đảo']
@@ -23,7 +24,7 @@ export const siteApi = {
   },
 
   /** Huỷ / đổi ngày / lễ Tết / gián đoạn trong chính sách từng khách sạn — trang huỷ đọc thẳng, không chép lại. */
-  cancelPolicies: (locale: Locale) => HOTELS.map(h => ({
+  cancelPolicies: async (locale: Locale) => (await catalogApi.contents()).map(h => ({
     slug: h.slug,
     name: h.name,
     rows: h.policies.filter(([k]) => CANCEL_KEYS.includes(k.vi)).map(([k, v]) => [tr(k, locale), tr(v, locale)] as [string, string]),

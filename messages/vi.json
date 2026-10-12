@@ -28,7 +28,10 @@
     "contactPage": "Liên hệ",
     "cancel": "Chính sách huỷ và hoàn tiền",
     "terms": "Điều khoản đặt phòng",
-    "privacy": "Chính sách bảo mật"
+    "privacy": "Chính sách bảo mật",
+    "login": "Đăng nhập",
+    "logout": "Đăng xuất",
+    "account": "Tài khoản"
   },
   "Picker": {
     "trigger": "Ngôn ngữ: {lang}",
@@ -527,8 +530,8 @@
   },
   "Live": {
     "loginTitle": "Đăng nhập để đặt phòng",
-    "loginBody": "Đăng nhập bằng Google để giữ phòng, nhận email xác nhận và xem lại đặt phòng. Lựa chọn của quý khách được giữ nguyên.",
-    "loginCta": "Tiếp tục với Google",
+    "loginBody": "Đăng nhập bằng Google hoặc email (nhận mã 6 số qua email) để giữ phòng, nhận email xác nhận và xem lại đặt phòng. Lựa chọn của quý khách được giữ nguyên.",
+    "loginCta": "Đăng nhập",
     "closedTitle": "Hệ thống đặt phòng chưa mở",
     "closedBody": "Đặt phòng trực tuyến đang được chuẩn bị. Vui lòng liên hệ khách sạn qua Zalo hoặc hotline để đặt phòng.",
     "signedInAs": "Đang đặt với tài khoản {email}",

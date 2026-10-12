@@ -5,6 +5,7 @@ import { Prisma } from '@/generated/prisma/client'
 import { db } from '@/lib/db'
 import { type ParsedCommand } from '@/lib/admin-commands'
 import { datesIn, priceFromRules } from '@/lib/pricing'
+import { audit } from '@/lib/audit'
 import type { L } from '@/types/global'
 import type { AdminPlans, AdminRates, DbInventory } from '@/types/admin'
 
@@ -20,8 +21,6 @@ const json = (v: unknown) => v as Prisma.InputJsonValue
 const fmtDays = (ds: string[]) => ds.slice(0, 6).map(d => `${d.slice(8)}/${d.slice(5, 7)}`).join(', ') + (ds.length > 6 ? ` … (+${ds.length - 6})` : '')
 
 type Tx = Prisma.TransactionClient
-const audit = (tx: Tx, action: string, entity: string, entityId: string, after: unknown, before?: unknown) =>
-  tx.auditLog.create({ data: { action, entity, entityId, after: json(after), before: before === undefined ? undefined : json(before) } })
 
 // ---------- Đọc ----------
 

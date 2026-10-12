@@ -51,7 +51,7 @@ Anh Hoang Minh xác nhận 12/10/2026, thay hướng "web chỉ đọc Gohost" (
 
 Vẫn không tự xây: Channel Manager / Agent Portal / Loyalty / AI.
 
-Tiến độ: Phase 1 (schema, migration, seed) + Phase 2 (`DATA_SOURCE=db|gohost`, lịch giá 90 ngày, `yarn db:import-gohost`) + Phase 4a (admin: tab Lịch giá & tồn, Gói giá & chính sách — ghi qua `POST /api/admin/db`) + Phase 3 (đăng nhập Google, giữ phòng 15', cọc qua cổng giả lập, webhook, email — `src/lib/booking-engine.ts`, kiểm `yarn check:quote`, `yarn check:booking`) xong 12/10/2026, chạy trên Postgres **local** của anh Minh. Prod: chỉ làm sau khi anh test full luồng ở local.
+Đã xong toàn luồng (12/10/2026, Postgres **local** của anh Minh): web đọc nội dung + giá/tồn từ DB (`DATA_SOURCE=db`), lịch giá 90 ngày, đặt phòng thật (đăng nhập → giữ phòng 15' → cọc qua cổng giả lập → webhook → email), modal đăng nhập toàn dự án (Google + email/mã 6 số), admin sửa sản phẩm / lịch giá / gói / khuyến mãi / booking web, role ADMIN-STAFF. Chi tiết: `docs/2026-10-12-booking-engine-db-phase0.md`, cách dựng DB: `docs/db-setup.md`. Prod: chỉ làm sau khi anh test full luồng ở local.
 
 ## Nối Gohost API
 
@@ -65,9 +65,8 @@ Spec + giới hạn: `docs/api-docs/gohost-api.md`. Đợt pre-production **ch�
 
 ## Admin
 
-~~Đã chốt (07/10/2026)~~ — thay bởi hướng 12/10/2026: admin có DB, CRUD sản phẩm + lịch giá/tồn. Cho tới khi Postgres chạy, admin cũ dưới đây vẫn là bản đang dùng.
-
-Bản cũ (07/10/2026): admin **chỉ xem**, nội dung + ánh xạ ID nằm trong `src/content/*.ts` (sửa bằng commit), **không database**. Màn: Tổng quan (dữ liệu thiếu/lệch) · Khách sạn (ánh xạ phòng, giá & phòng trống, nội dung, ảnh) · Booking (đọc từ Gohost, bỏ CCCD/ảnh giấy tờ). Đăng nhập ở `/admin/login` (`ADMIN_USER` / `ADMIN_PASSWORD`, phiên cookie httpOnly ký HMAC, `src/lib/admin-auth.ts`). Muốn sửa nội dung trong admin hay thêm CMS/DB → hỏi trước.
+Từ 12/10/2026 (`DATA_SOURCE=db`): admin sửa sản phẩm, lịch giá/tồn, gói, chính sách, khuyến mãi, booking web — mọi lệnh ghi qua zod + transaction + AuditLog (người thao tác). Quyền: `User.role` ADMIN (mọi thứ) / STAFF (booking web: xem, nhận/trả phòng; Booking Gohost); kiểm ở layout `/admin` + từng route (`src/lib/admin-actor.ts`). Đăng nhập: modal dùng chung (Google / email + mã) hoặc `ADMIN_USER`/`ADMIN_PASSWORD` (dự phòng, luôn ADMIN). Đổi role bằng SQL, không có UI.
+Nguồn `gohost`: admin cũ chỉ xem (nội dung ở `src/content/*.ts`, booking đọc Gohost, bỏ CCCD/ảnh giấy tờ).
 
 ## Câu hỏi mở — hỏi, đừng đoán
 
@@ -88,6 +87,6 @@ Bản cũ (07/10/2026): admin **chỉ xem**, nội dung + ánh xạ ID nằm tro
 
 - **yarn**, không npm. `yarn build` là bước kiểm tra type.
 - **`src/api/`** (ngang `src/app`): mỗi file một object (`hotelApi`, `siteApi`, `gohostApi`, `adminApi`), chỉ server. Payload/request dùng riêng cho một endpoint khai báo ngay trong file đó; kiểu dùng lại ở `src/types/` (`global.ts` + `hotel`, `booking`, `page`, `admin`, `gohost`). Kiểu response của `/api/admin/*` ở `src/types/admin.ts`.
-- Component **không import `src/content`, `src/lib/gohost` hay `src/api`** — trang server đọc qua `src/api`; component client chỉ gọi hook trong `src/hooks` (TanStack Query khai báo ở đó, gọi `/api` bằng axios `src/lib/http.ts`). Không gọi Gohost từ trình duyệt. Tên field Gohost giữ nguyên (`src/types/gohost.ts`).
+- Component **không import `src/content`, `src/lib/gohost`, `src/api` hay `src/lib/booking-engine`** — trang server đọc qua `src/api`; component client chỉ gọi hook trong `src/hooks` (TanStack Query khai báo ở đó, gọi `/api` bằng axios `src/lib/http.ts`). Không gọi Gohost từ trình duyệt. Tên field Gohost giữ nguyên (`src/types/gohost.ts`).
 - `yarn test` kiểm logic thuần (`src/lib/stay.ts`, `src/lib/rooms.ts`); `yarn photos` tải ảnh từ Drive theo `scripts/fetch-photos.ts`.
 - Không dùng `createNextIntlPlugin` (bẫy `@swc/core` trên máy này) — xem `next.config.ts`.

@@ -21,7 +21,7 @@ export default async function ContactPage({ params }: PageProps<'/[locale]/lien-
   setRequestLocale(locale as Locale)
   const t = await getTranslations('Pages.contact')
   const site = siteApi.info(locale as Locale)
-  const hotels = hotelApi.list(locale as Locale)
+  const hotels = await hotelApi.list(locale as Locale)
   const mail = (subject: string, body: string) => `mailto:${site.email}?${new URLSearchParams({ subject, body }).toString().replace(/\+/g, '%20')}`
   const h2 = 'text-[26px] font-bold text-brand'
 

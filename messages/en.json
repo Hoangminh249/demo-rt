@@ -28,7 +28,10 @@
     "contactPage": "Contact",
     "cancel": "Cancellation & refunds",
     "terms": "Booking terms",
-    "privacy": "Privacy policy"
+    "privacy": "Privacy policy",
+    "login": "Sign in",
+    "logout": "Sign out",
+    "account": "Account"
   },
   "Picker": {
     "trigger": "Language: {lang}",
@@ -527,8 +530,8 @@
   },
   "Live": {
     "loginTitle": "Sign in to book",
-    "loginBody": "Sign in with Google to hold your room, receive the confirmation email and review your booking. Your selection is kept.",
-    "loginCta": "Continue with Google",
+    "loginBody": "Sign in with Google or email (we send you a 6-digit code) to hold your room, receive the confirmation email and review your booking. Your selection is kept.",
+    "loginCta": "Sign in",
     "closedTitle": "Online booking is not open yet",
     "closedBody": "Online booking is being prepared. Please contact the hotel via Zalo or hotline to book.",
     "signedInAs": "Booking as {email}",

@@ -1,5 +1,7 @@
-// Đăng nhập (POST) / đăng xuất (DELETE) admin. Tài khoản trong env, phiên là cookie httpOnly ký HMAC (src/lib/admin-auth.ts).
+// Đăng nhập (POST) bằng tài khoản env — phiên cookie httpOnly ký HMAC (src/lib/admin-auth.ts).
+// Đăng xuất (DELETE): xoá cả phiên env lẫn phiên Auth.js (Google / email + mã).
 import { NextResponse, type NextRequest } from 'next/server'
+import { signOut } from '@/auth'
 import { checkLogin, createSession, SESSION_COOKIE, SESSION_MAX_AGE } from '@/lib/admin-auth'
 
 export async function POST(req: NextRequest) {
@@ -17,6 +19,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE() {
+  await signOut({ redirect: false }).catch(() => {}) // không có phiên Auth.js / chưa có DB thì bỏ qua
   const res = NextResponse.json({ ok: true })
   res.cookies.delete(SESSION_COOKIE)
   return res

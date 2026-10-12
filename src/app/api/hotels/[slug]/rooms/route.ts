@@ -14,7 +14,7 @@ export async function GET(req: NextRequest, ctx: RouteContext<'/api/hotels/[slug
   const { slug } = await ctx.params
   const checkin = req.nextUrl.searchParams.get('in')
   const checkout = req.nextUrl.searchParams.get('out')
-  const hotel = hotelApi.get(slug, 'vi')
+  const hotel = await hotelApi.get(slug, 'vi')
   if (!hotel || !validRange(checkin, checkout, today(), hotel.opening)) return Response.json({ error: 'BAD_REQUEST' }, { status: 400, headers: NO_STORE })
   if (!hotel.online) return Response.json({ error: 'NOT_CONNECTED' }, { status: 503, headers: NO_STORE })
   try {

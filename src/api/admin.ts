@@ -2,7 +2,6 @@
 // Không ghi gì: sửa nội dung là sửa src/content/*.ts (commit), sửa giá / phòng / booking là làm trong Gohost.
 import 'server-only'
 import { cache } from 'react'
-import { HOTELS } from '@/content'
 import { gohostStatus, isGohostError } from '@/lib/gohost'
 import type { L } from '@/types/global'
 import type { HotelContent } from '@/types/hotel'
@@ -10,6 +9,7 @@ import type { GohostErrorCode } from '@/types/gohost'
 import type { AdminAvailability, AdminBooking, AdminBookings, AdminHotel, AdminOverview, AdminProperties, ConnectState, ContentRow, HotelCheck, Issue } from '@/types/admin'
 import { gohostApi, type BookingsQuery } from './gohost'
 import { hotelApi } from './hotel'
+import { catalogApi } from './catalog'
 
 // ---------- Đếm chữ thiếu bản dịch ----------
 const isL = (v: unknown): v is L => !!v && typeof v === 'object' && 'vi' in v && typeof (v as L).vi === 'string'
@@ -95,13 +95,13 @@ function issuesOf(checks: HotelCheck[]): Issue[] {
 
 /** Tổng quan: dùng chung cho trang Tổng quan và số đếm trên sidebar (cache() gộp trong một lượt render). */
 const overview = cache(async (): Promise<AdminOverview> => {
-  const checks = await Promise.all(HOTELS.map(check))
+  const checks = await Promise.all((await catalogApi.contents(true)).map(check))
   const { error } = await readCatalog()
   return { status: gohostStatus(), error, checks, issues: issuesOf(checks) }
 })
 
 async function hotel(slug: string): Promise<AdminHotel | null> {
-  const h = HOTELS.find(x => x.slug === slug)
+  const h = (await catalogApi.contents(true)).find(x => x.slug === slug)
   if (!h) return null
   const [c, { properties, error }] = await Promise.all([check(h), readCatalog()])
   // Khách sạn chưa nối: liệt kê mọi property key đọc được, kèm hạng phòng, để chọn đúng property mà chép ID.
@@ -136,9 +136,9 @@ async function availability(slug: string, checkin: string, checkout: string): Pr
 // ---------- Booking ----------
 // Booking là dữ liệu Gohost: lọc theo property Gohost mà key đọc được (kể cả property chưa gắn khách sạn Rooty nào).
 async function properties(): Promise<AdminProperties> {
-  const { properties, error } = await readCatalog()
+  const [{ properties, error }, hotels] = await Promise.all([readCatalog(), catalogApi.contents(true)])
   return {
-    properties: properties?.map(p => ({ id: p.id, title: p.title, prefix: p.prefix, hotel: HOTELS.find(h => h.gohost_tenant_id === p.id)?.name ?? null })) ?? null,
+    properties: properties?.map(p => ({ id: p.id, title: p.title, prefix: p.prefix, hotel: hotels.find(h => h.gohost_tenant_id === p.id)?.name ?? null })) ?? null,
     error,
   }
 }

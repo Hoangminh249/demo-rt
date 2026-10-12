@@ -2,8 +2,7 @@
 // Gọi qua HTTP client src/lib/gohost.ts (key, ngân sách lượt, lỗi). Chỉ server; UI đọc qua src/api/hotel.ts, src/api/admin.ts.
 import 'server-only'
 import { unstable_cache } from 'next/cache'
-import { cookies } from 'next/headers'
-import { isSession, SESSION_COOKIE } from '@/lib/admin-auth'
+import { adminActor } from '@/lib/admin-actor'
 import { get, GohostError, list } from '@/lib/gohost'
 import type { GhAvailRoomType, GhPagination, GhProperty } from '@/types/gohost'
 import type { BookingDetail, BookingPage, BookingRow } from '@/types/admin'
@@ -46,7 +45,7 @@ const maskEmail = (v: unknown) => { const e = str(v); if (!e?.includes('@')) ret
 
 /** Proxy và route handler đã kiểm phiên; đây là lớp thứ hai ngay trước khi đọc dữ liệu khách. */
 async function assertAdmin() {
-  if (!isSession((await cookies()).get(SESSION_COOKIE)?.value)) throw new Error('UNAUTHORIZED')
+  if (!(await adminActor())) throw new Error('UNAUTHORIZED') // ADMIN hoặc STAFF (xem booking)
 }
 
 function toRow(raw: unknown): BookingRow {

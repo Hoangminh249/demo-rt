@@ -11,6 +11,7 @@ import { Link, usePathname } from '@/i18n/navigation'
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/ui/sheet'
 import { CONTAINER } from './kit'
 import { LocalePicker } from './locale-picker'
+import { AccountButton } from '@/components/auth/account'
 
 export function Logo({ className = 'h-9 lg:h-10', white }: { className?: string; white?: boolean }) {
   return <Image src="/images/brand/rooty-trip-logo.png" alt="Rooty Trip" width={286} height={84} className={cn('w-auto', !white && 'logo-green', className)} />
@@ -85,6 +86,7 @@ export function SiteHeader() {
         </nav>
         <div className="ml-auto flex items-center gap-1">
           <LocalePicker className={cn('hidden lg:inline-flex', icon)} />
+          <AccountButton className={cn('hidden lg:inline-flex', icon)} />
           <button type="button" onClick={() => setOpen(true)} className={cn('inline-flex size-10 cursor-pointer items-center justify-center rounded-lg transition-colors lg:hidden', icon)} aria-label={t('openMenu')}>
             <Menu className="size-6" aria-hidden />
           </button>
@@ -100,7 +102,10 @@ export function SiteHeader() {
           <p className="mt-2 px-3 pb-1 text-[13px] font-semibold tracking-wide text-muted-foreground uppercase">{t('support')}</p>
           {SUPPORT.map(([label, href, Icon]) => <Link key={href} href={href} onClick={() => setOpen(false)} className="flex h-11 items-center gap-3 rounded-lg px-3 text-[15px] hover:bg-mint"><Icon className="size-4 shrink-0 text-brand" aria-hidden />{label}</Link>)}
           <a href="https://rootytrip.com" className="mt-2 flex h-11 items-center gap-1 rounded-lg px-3 text-[15px] font-medium uppercase hover:bg-mint">Rooty Trip <ArrowUpRight className="size-3.5" aria-hidden /></a>
-          <div className="mt-4 border-t border-border pt-4"><LocalePicker className="w-full justify-start rounded-lg border border-border-strong text-brand hover:bg-mint" /></div>
+          <div className="mt-4 grid gap-2 border-t border-border pt-4">
+            <AccountButton full className="h-11 w-full justify-start rounded-lg border border-border-strong text-brand hover:bg-mint" />
+            <LocalePicker className="w-full justify-start rounded-lg border border-border-strong text-brand hover:bg-mint" />
+          </div>
         </SheetContent>
       </Sheet>
     </header>

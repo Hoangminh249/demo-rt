@@ -31,11 +31,11 @@ function Row({ summary, children, open }: { summary: ReactNode; children: ReactN
 }
 
 /** Form gửi một lệnh; hiện kết quả ngay dưới. `build` đọc FormData → lệnh (server kiểm lại bằng zod). */
-function CommandForm({ slug, build, submit, danger, children }: {
-  slug: string; build: (fd: FormData) => Command; submit: string; children: ReactNode
+function CommandForm({ build, submit, danger, children }: {
+  build: (fd: FormData) => Command; submit: string; children: ReactNode
   danger?: { label: string; confirm: string; cmd: Command }
 }) {
-  const write = useAdminWrite(slug)
+  const write = useAdminWrite()
   function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
     write.mutate(build(new FormData(e.currentTarget)))
@@ -56,7 +56,7 @@ function CommandForm({ slug, build, submit, danger, children }: {
   )
 }
 
-function PlanForm({ slug, roomTypeId, plan, policies }: { slug: string; roomTypeId: string; plan?: DbPlan; policies: Pick<AdminPlans, 'cancellation' | 'deposit'> }) {
+function PlanForm({ roomTypeId, plan, policies }: { roomTypeId: string; plan?: DbPlan; policies: Pick<AdminPlans, 'cancellation' | 'deposit'> }) {
   const build = (fd: FormData): Command => ({
     op: 'plan.save', id: plan?.id, roomTypeId,
     code: String(fd.get('code') ?? '').trim().toUpperCase(),
@@ -72,7 +72,7 @@ function PlanForm({ slug, roomTypeId, plan, policies }: { slug: string; roomType
     active: fd.get('active') === 'on',
   })
   return (
-    <CommandForm slug={slug} build={build} submit={plan ? 'Lưu gói' : 'Tạo gói'}
+    <CommandForm build={build} submit={plan ? 'Lưu gói' : 'Tạo gói'}
       danger={plan && { label: 'Xoá gói', confirm: `Xoá gói "${plan.name.vi}" và toàn bộ lịch giá của gói? Gói đã có booking thì chỉ ngừng bán.`, cmd: { op: 'plan.delete', id: plan.id } }}>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Field label="Mã" hint="Chữ in hoa, số, - _"><input name="code" required defaultValue={plan?.code} maxLength={20} className={INPUT} /></Field>
@@ -122,7 +122,7 @@ function TiersInput({ initial }: { initial: DbCancelPolicy['tiers'] }) {
   )
 }
 
-function CancelForm({ slug, c }: { slug: string; c?: DbCancelPolicy }) {
+function CancelForm({ c }: { c?: DbCancelPolicy }) {
   const build = (fd: FormData): Command => {
     const days = fd.getAll('days').map(Number)
     const pct = fd.getAll('pct').map(Number)
@@ -135,7 +135,7 @@ function CancelForm({ slug, c }: { slug: string; c?: DbCancelPolicy }) {
     }
   }
   return (
-    <CommandForm slug={slug} build={build} submit={c ? 'Lưu chính sách' : 'Tạo chính sách'}
+    <CommandForm build={build} submit={c ? 'Lưu chính sách' : 'Tạo chính sách'}
       danger={c && { label: 'Xoá', confirm: `Xoá chính sách "${c.name}"?`, cmd: { op: 'cancel.delete', id: c.id } }}>
       <Field label="Tên (nội bộ)"><input name="name" required maxLength={120} defaultValue={c?.name} className={INPUT} /></Field>
       <TiersInput initial={c?.tiers ?? []} />
@@ -148,7 +148,7 @@ function CancelForm({ slug, c }: { slug: string; c?: DbCancelPolicy }) {
   )
 }
 
-function DepositForm({ slug, d }: { slug: string; d?: DbDepositPolicy }) {
+function DepositForm({ d }: { d?: DbDepositPolicy }) {
   const build = (fd: FormData): Command => ({
     op: 'deposit.save', id: d?.id, name: String(fd.get('name') ?? ''),
     type: fd.get('type') as DbDepositPolicy['type'],
@@ -157,7 +157,7 @@ function DepositForm({ slug, d }: { slug: string; d?: DbDepositPolicy }) {
     balanceDueDaysBefore: parseInt0(fd.get('due')) ?? 0,
   })
   return (
-    <CommandForm slug={slug} build={build} submit={d ? 'Lưu chính sách' : 'Tạo chính sách'}
+    <CommandForm build={build} submit={d ? 'Lưu chính sách' : 'Tạo chính sách'}
       danger={d && { label: 'Xoá', confirm: `Xoá chính sách "${d.name}"?`, cmd: { op: 'deposit.delete', id: d.id } }}>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Field label="Tên (nội bộ)" className="sm:col-span-2"><input name="name" required maxLength={120} defaultValue={d?.name} className={INPUT} /></Field>
@@ -203,11 +203,11 @@ export function PlansPanel({ slug }: { slug: string }) {
                 </span>
               </div>
             }>
-              <PlanForm slug={slug} roomTypeId={rt.id} plan={p} policies={data} />
+              <PlanForm roomTypeId={rt.id} plan={p} policies={data} />
             </Row>
           ))}
           {!rt.plans.length && <Empty>Chưa có gói — hạng phòng này chưa bán được trên web.</Empty>}
-          <Row summary={add}><PlanForm slug={slug} roomTypeId={rt.id} policies={data} /></Row>
+          <Row summary={add}><PlanForm roomTypeId={rt.id} policies={data} /></Row>
         </Section>
       ))}
 
@@ -215,18 +215,18 @@ export function PlansPanel({ slug }: { slug: string }) {
         <Section title="Chính sách huỷ" desc="Dùng chung mọi khách sạn. Booking cũ giữ chính sách lúc đặt.">
           {data.cancellation.map(c => (
             <Row key={c.id} summary={<div className="text-sm"><p className="font-medium">{c.name} <span className="font-normal text-muted-foreground">· {c.used} gói</span></p><p className="text-xs text-muted-foreground tabular-nums">{tiersText(c)}</p></div>}>
-              <CancelForm slug={slug} c={c} />
+              <CancelForm c={c} />
             </Row>
           ))}
-          <Row summary={add}><CancelForm slug={slug} /></Row>
+          <Row summary={add}><CancelForm /></Row>
         </Section>
         <Section title="Chính sách cọc" desc="Phần còn lại trả tại quầy (admin ghi nhận).">
           {data.deposit.map(d => (
             <Row key={d.id} summary={<div className="text-sm"><p className="font-medium">{d.name} <span className="font-normal text-muted-foreground">· {d.used} gói</span></p><p className="text-xs text-muted-foreground">{depositText(d)} · giữ phòng {d.holdMinutes} phút · {d.balanceDueDaysBefore ? `trả nốt trước ${d.balanceDueDaysBefore} ngày` : 'trả nốt tại quầy'}</p></div>}>
-              <DepositForm slug={slug} d={d} />
+              <DepositForm d={d} />
             </Row>
           ))}
-          <Row summary={add}><DepositForm slug={slug} /></Row>
+          <Row summary={add}><DepositForm /></Row>
         </Section>
       </div>
     </div>

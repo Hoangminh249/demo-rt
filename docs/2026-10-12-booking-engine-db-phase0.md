@@ -199,3 +199,12 @@ Chống bán quá / tiền:
 Đã thử E2E trên trình duyệt (DB local, phiên đăng nhập tạo thẳng trong bảng Session vì chưa có Google OAuth): giữ phòng → cọc 1.632.000 → CONFIRMED, email in console; thanh toán thất bại → vẫn PENDING, thử lại được; giá giả từ trình duyệt → 409; xem booking người khác → 404. Dữ liệu thử đã dọn.
 
 Chưa làm: cổng thanh toán thật; khách tự huỷ trên web (hàm `cancelBooking` có, nút cho admin ở 4c); admin đăng nhập bằng Google + role (cùng 4c).
+
+## 13. Hoàn thiện toàn luồng (12/10/2026)
+
+- **Đăng nhập dùng chung toàn dự án**: modal (header web, bước đặt phòng) + trang `/admin/login` — Google (khi có `AUTH_GOOGLE_*`) hoặc **email + mã 6 số** (provider email của Auth.js gửi mã thay link; mã băm trong `VerificationToken`, hết hạn 10'). Kiểm mã qua `/api/auth/otp/verify`: mỗi mã sai 5 lần → huỷ mã; gửi mã 1 lần/phút, 5 lần/giờ/email, 20 lần/giờ/IP (đếm trong bộ nhớ — nhiều instance thì chuyển Postgres/Redis). Phiên đọc ở trình duyệt (`/api/auth/session`) nên trang tĩnh vẫn tĩnh.
+- **Quyền admin**: `src/lib/admin-actor.ts` — env (ADMIN, dự phòng) hoặc `User.role` ADMIN / STAFF. Proxy lọc thô (có cookie), layout + từng route kiểm thật. AuditLog ghi `userId` (AsyncLocalStorage, `src/lib/audit.ts`).
+- **Web đọc nội dung từ DB** (`src/api/catalog.ts`): dựng lại đúng kiểu `HotelContent`, cache tag `catalog`; admin ghi xong `revalidateTag` + `revalidatePath` → web thấy ngay. DB lỗi / đang build → quay về `src/content`. Khách sạn mới: `dynamicParams = true`.
+- **Admin sản phẩm** (`src/lib/catalog-commands.ts` → `src/api/catalog-admin.ts`, chung endpoint `POST /api/admin/db`): khách sạn (tạo nháp, sửa thông tin + nội dung song ngữ, phần có bảng sửa JSON có zod), hạng phòng, phòng vật lý, tiện ích (thư viện + gán), bộ ảnh / banner / ảnh hạng phòng, thư viện ảnh + tải lên (`UPLOAD_DIR`, phát qua `/media/…`, kiểm byte đầu file), khuyến mãi, thuế phí, người dùng (chỉ xem). Thứ đã có booking → lưu trữ / tắt, không xoá hẳn. Slug chỉ đổi khi còn nháp.
+- **Booking web** (`/admin/orders`, `src/api/booking-admin.ts`): lọc trạng thái / khách sạn / ngày đến / cần hoàn / tìm; chi tiết (tiền từng đêm, thanh toán, hoàn tiền, lịch sử, email); thao tác: thu tiền tại quầy, nhận / trả phòng (STAFF được), huỷ / không đến (xem trước tiền phạt), gửi lại email, xử lý hoàn tiền.
+- Kiểm: `check:booking` thêm ca (7) thu tiền + nhận/trả phòng đúng thứ tự, (8) hoàn tiền. E2E trình duyệt: đăng nhập email + mã, CUSTOMER bị chặn admin, STAFF chỉ thấy booking, ADMIN thu tiền + check-in, sửa nội dung → web đổi ngay, tải ảnh. Dữ liệu thử đã dọn.

@@ -16,13 +16,15 @@ import { fmtDayMonth, today } from '@/lib/format'
 import { defaultStay, firstCheckin, validRange } from '@/lib/stay'
 import { useAdminAvailability, useAdminHotel } from '@/hooks/use-admin'
 import { RatesPanel } from './rates'
+import { InfoPanel, PhotosEditPanel, RoomTypesPanel } from './catalog'
 import { PlansPanel } from './plans'
 import type { AdminHotel } from '@/types/admin'
 import type { HotelCheck } from '@/types/admin'
 
-// [id, nhãn, nhãn dưới sm]: rút chữ để 4 tab vừa 375px, không phải cuộn ngang (R10 bước 1)
-const TABS = [['phong', 'Phòng & ánh xạ', 'Phòng'], ['gia', 'Giá Gohost', 'Gohost'], ['noi-dung', 'Nội dung', 'Nội dung'], ['anh', 'Ảnh', 'Ảnh'], ['lich', 'Lịch giá & tồn', 'Lịch'], ['goi', 'Gói giá & chính sách', 'Gói']] as const
-type Tab = (typeof TABS)[number][0]
+// [id, nhãn, nhãn dưới sm]. Nguồn gohost: 4 tab chỉ xem (nội dung đọc file). Nguồn db: sản phẩm + giá/tồn sửa được, Gohost để đối chiếu.
+const TABS_FILE = [['phong', 'Phòng & ánh xạ', 'Phòng'], ['gia', 'Giá & phòng trống', 'Giá'], ['noi-dung', 'Nội dung', 'Nội dung'], ['anh', 'Ảnh', 'Ảnh']] as const
+const TABS_DB = [['thong-tin', 'Thông tin', 'Thông tin'], ['hang-phong', 'Hạng phòng', 'Phòng'], ['anh-ks', 'Ảnh', 'Ảnh'], ['lich', 'Lịch giá & tồn', 'Lịch'], ['goi', 'Gói giá & chính sách', 'Gói'], ['phong', 'Ánh xạ Gohost', 'Gohost'], ['gia', 'Giá Gohost', 'Giá GH']] as const
+type Tab = (typeof TABS_FILE)[number][0] | (typeof TABS_DB)[number][0]
 
 // ---------- Tab Phòng & ánh xạ ----------
 type GhRoom = HotelCheck['ghRooms'][number]
@@ -229,10 +231,11 @@ function Loading() {
   )
 }
 
-export function HotelView({ slug }: { slug: string }) {
+export function HotelView({ slug, db }: { slug: string; db: boolean }) {
   const sp = useSearchParams()
   const tabParam = sp.get('tab')
-  const tab: Tab = TABS.some(([id]) => id === tabParam) ? (tabParam as Tab) : 'phong'
+  const TABS: readonly (readonly [Tab, string, string])[] = db ? TABS_DB : TABS_FILE
+  const tab: Tab = TABS.some(([id]) => id === tabParam) ? (tabParam as Tab) : TABS[0][0]
   const { data, isPending, isError, refetch } = useAdminHotel(slug)
   if (isPending) return <div className="max-w-site"><Loading /></div>
   if (isError || !data) return <div className="max-w-site"><LoadFailed onRetry={() => refetch()} /></div>
@@ -273,6 +276,9 @@ export function HotelView({ slug }: { slug: string }) {
         {tab === 'gia' && <PricePanel c={c} opening={data.content.opening} />}
         {tab === 'noi-dung' && <ContentPanel data={data} file={file} />}
         {tab === 'anh' && <PhotoPanel c={c} />}
+        {tab === 'thong-tin' && <InfoPanel slug={slug} />}
+        {tab === 'hang-phong' && <RoomTypesPanel slug={slug} />}
+        {tab === 'anh-ks' && <PhotosEditPanel slug={slug} />}
         {tab === 'lich' && <RatesPanel slug={slug} />}
         {tab === 'goi' && <PlansPanel slug={slug} />}
       </div>

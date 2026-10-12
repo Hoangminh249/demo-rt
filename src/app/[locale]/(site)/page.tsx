@@ -79,7 +79,7 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
   const locale = (await params).locale as Locale
   setRequestLocale(locale)
   const t = await getTranslations('Home')
-  const hotels = hotelApi.list(locale)
+  const hotels = await hotelApi.list(locale)
   const prices = await Promise.all(hotels.map(h => hotelApi.fromPrice(h.slug)))
   const site = siteApi.info(locale)
   const now = today()

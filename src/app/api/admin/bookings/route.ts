@@ -19,4 +19,4 @@ export const GET = adminGet(async req => {
   if (!properties) return { data: null, error }
   if (!properties.some(p => p.id === property)) return badRequest()
   return adminApi.bookings(property, { start, end, status, page })
-})
+}, ['ADMIN', 'STAFF'])

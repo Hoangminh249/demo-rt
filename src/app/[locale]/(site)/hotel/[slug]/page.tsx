@@ -17,14 +17,15 @@ import { TabNav } from '@/components/hotel/tab-nav'
 import { Rooms } from '@/components/hotel/rooms'
 import { PriceCard } from '@/components/hotel/price-card'
 
-export const dynamicParams = false
-export const generateStaticParams = () => hotelApi.slugs().map(slug => ({ slug }))
+// Khách sạn mới thêm ở admin (nguồn db) không có trong danh sách dựng sẵn lúc build → dựng khi có người xem.
+export const dynamicParams = true
+export const generateStaticParams = async () => (await hotelApi.slugs()).map(slug => ({ slug }))
 // Dựng tĩnh, làm mới mỗi 10 phút ("Giá từ" lấy từ Gohost, cache 1 giờ). Phòng trống theo ngày tải ở trình duyệt.
 export const revalidate = 600
 
 export async function generateMetadata({ params }: PageProps<'/[locale]/hotel/[slug]'>) {
   const { locale, slug } = await params
-  const h = hotelApi.get(slug, locale as Locale)
+  const h = await hotelApi.get(slug, locale as Locale)
   return h ? { title: `${h.name} — ${h.area}`, description: h.tagline } : {}
 }
 
@@ -35,7 +36,7 @@ function Section({ id, title, children }: { id: string; title: string; children:
 export default async function HotelPage({ params }: PageProps<'/[locale]/hotel/[slug]'>) {
   const { locale, slug } = await params
   setRequestLocale(locale as Locale)
-  const h = hotelApi.get(slug, locale as Locale)
+  const h = await hotelApi.get(slug, locale as Locale)
   if (!h) notFound()
   const t = await getTranslations()
   const from = await hotelApi.fromPrice(slug)

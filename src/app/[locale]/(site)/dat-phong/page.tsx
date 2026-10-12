@@ -1,12 +1,12 @@
 // Bước 2 đặt phòng — thông tin khách & yêu cầu lưu trú. URL: ?hotel=&room=&plan=&in=&out=&a=&c=
-// Nguồn gohost: bản minh hoạ chạy ở trình duyệt. Nguồn db: bắt đăng nhập Google (quay lại đúng URL này, lựa chọn nằm trên URL),
+// Nguồn gohost: bản minh hoạ chạy ở trình duyệt. Nguồn db: bắt đăng nhập (modal Google / email + mã, quay lại đúng URL này),
 // báo giá server + mã khuyến mãi, bấm nút là giữ phòng.
 import { Suspense, type ReactNode } from 'react'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { bookingApi } from '@/api/booking'
 import { hotelApi } from '@/api/hotel'
 import { siteApi } from '@/api/site'
-import { authConfigured, currentUser, signIn } from '@/auth'
+import { authConfigured, currentUser } from '@/auth'
 import type { Locale } from '@/types/global'
 import { BookingMissing, BookingShell } from '@/components/booking/shell'
 import { MobileSummary, Summary } from '@/components/booking/summary'
@@ -23,7 +23,7 @@ export default async function GuestPage({ params, searchParams }: PageProps<'/[l
   setRequestLocale(locale as Locale)
   const sp = await searchParams
   const t = await getTranslations('Booking')
-  const target = hotelApi.bookingTarget(sp.hotel as string, sp.room as string, locale as Locale)
+  const target = await hotelApi.bookingTarget(sp.hotel as string, sp.room as string, locale as Locale)
   if (!target) return <BookingMissing title={t('missingTitle')} body={t('missingBody')} href="/#khach-san" cta={t('missingCta')} />
   const shell = (body: ReactNode) => (
     <BookingShell step={1} title={t('guestPageTitle')} lead={t('guestPageLead')} aside={<Suspense><Summary target={target} /></Suspense>}>
@@ -35,15 +35,7 @@ export default async function GuestPage({ params, searchParams }: PageProps<'/[l
   if (bookingApi.enabled()) {
     if (!authConfigured()) return shell(<ClosedCard contact={siteApi.info(locale as Locale)} />)
     const user = await currentUser()
-    if (!user) {
-      const query = new URLSearchParams(Object.entries(sp).flatMap(([k, v]) => (typeof v === 'string' ? [[k, v]] : [])))
-      const back = `${locale === 'en' ? '/en' : ''}/dat-phong?${query}`
-      async function login() {
-        'use server'
-        await signIn('google', { redirectTo: back })
-      }
-      return shell(<LoginCard action={login} />)
-    }
+    if (!user) return shell(<LoginCard />)
     live = { name: user.name ?? null, email: user.email ?? null }
   }
   return shell(<GuestForm target={target} live={live} />)

@@ -9,4 +9,4 @@ export const GET = adminGet(async (req, ctx: RouteContext<'/api/admin/bookings/[
   if (!properties) return { data: null, error }
   if (!properties.some(p => p.id === property)) return badRequest()
   return adminApi.booking(property, code)
-})
+}, ['ADMIN', 'STAFF'])

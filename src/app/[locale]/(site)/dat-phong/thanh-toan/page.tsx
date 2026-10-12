@@ -30,7 +30,7 @@ export default async function PaymentPage({ params, searchParams }: PageProps<'/
     const user = await currentUser()
     const b = user && typeof sp.code === 'string' ? await bookingApi.get(user.id, sp.code) : null
     if (!b) return <BookingMissing title={tl('notFoundTitle')} body={tl('notFoundBody')} href="/#khach-san" cta={t('missingCta')} />
-    const image = hotelApi.bookingTarget(b.hotel.slug, b.room.slug, locale as Locale)?.room.images[0]
+    const image = (await hotelApi.bookingTarget(b.hotel.slug, b.room.slug, locale as Locale))?.room.images[0]
     return (
       <BookingShell step={2} title={t('payPageTitle')} lead={t('payPageLead')} aside={<LiveSummary b={b} image={image} />}>
         <div className="mb-5 lg:hidden"><LiveSummary b={b} image={image} /></div>
@@ -39,7 +39,7 @@ export default async function PaymentPage({ params, searchParams }: PageProps<'/
     )
   }
 
-  const target = hotelApi.bookingTarget(sp.hotel as string, sp.room as string, locale as Locale)
+  const target = await hotelApi.bookingTarget(sp.hotel as string, sp.room as string, locale as Locale)
   if (!target) return missing
   return (
     <BookingShell step={2} title={t('payPageTitle')} lead={t('payPageLead')} demo aside={<Suspense><Summary target={target} /></Suspense>}>

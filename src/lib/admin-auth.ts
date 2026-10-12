@@ -6,6 +6,8 @@
 import { createHash, createHmac, timingSafeEqual } from 'node:crypto'
 
 export const SESSION_COOKIE = 'rh_admin'
+/** Cookie phiên Auth.js (http / https). Proxy chỉ kiểm có cookie; quyền thật (role ADMIN/STAFF) kiểm ở src/lib/admin-actor.ts. */
+export const AUTHJS_COOKIES = ['authjs.session-token', '__Secure-authjs.session-token']
 export const SESSION_MAX_AGE = 7 * 24 * 3600 // giây
 
 const env = () => {
