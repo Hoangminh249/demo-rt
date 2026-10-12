@@ -1,11 +1,17 @@
-// Bước 2 đặt phòng — thông tin khách & yêu cầu lưu trú (bản minh hoạ, chạy ở trình duyệt). URL: ?hotel=&room=&plan=&in=&out=&a=&c=
-import { Suspense } from 'react'
+// Bước 2 đặt phòng — thông tin khách & yêu cầu lưu trú. URL: ?hotel=&room=&plan=&in=&out=&a=&c=
+// Nguồn gohost: bản minh hoạ chạy ở trình duyệt. Nguồn db: bắt đăng nhập Google (quay lại đúng URL này, lựa chọn nằm trên URL),
+// báo giá server + mã khuyến mãi, bấm nút là giữ phòng.
+import { Suspense, type ReactNode } from 'react'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
+import { bookingApi } from '@/api/booking'
 import { hotelApi } from '@/api/hotel'
+import { siteApi } from '@/api/site'
+import { authConfigured, currentUser, signIn } from '@/auth'
 import type { Locale } from '@/types/global'
 import { BookingMissing, BookingShell } from '@/components/booking/shell'
 import { MobileSummary, Summary } from '@/components/booking/summary'
-import { GuestForm } from '@/components/booking/guest-form'
+import { GuestForm, type LiveAccount } from '@/components/booking/guest-form'
+import { ClosedCard, LoginCard } from '@/components/booking/live'
 
 export async function generateMetadata() {
   const t = await getTranslations('Booking')
@@ -19,12 +25,26 @@ export default async function GuestPage({ params, searchParams }: PageProps<'/[l
   const t = await getTranslations('Booking')
   const target = hotelApi.bookingTarget(sp.hotel as string, sp.room as string, locale as Locale)
   if (!target) return <BookingMissing title={t('missingTitle')} body={t('missingBody')} href="/#khach-san" cta={t('missingCta')} />
-  return (
+  const shell = (body: ReactNode) => (
     <BookingShell step={1} title={t('guestPageTitle')} lead={t('guestPageLead')} aside={<Suspense><Summary target={target} /></Suspense>}>
-      <Suspense>
-        <MobileSummary target={target} />
-        <GuestForm target={target} />
-      </Suspense>
+      <Suspense><MobileSummary target={target} />{body}</Suspense>
     </BookingShell>
   )
+
+  let live: LiveAccount | undefined
+  if (bookingApi.enabled()) {
+    if (!authConfigured()) return shell(<ClosedCard contact={siteApi.info(locale as Locale)} />)
+    const user = await currentUser()
+    if (!user) {
+      const query = new URLSearchParams(Object.entries(sp).flatMap(([k, v]) => (typeof v === 'string' ? [[k, v]] : [])))
+      const back = `${locale === 'en' ? '/en' : ''}/dat-phong?${query}`
+      async function login() {
+        'use server'
+        await signIn('google', { redirectTo: back })
+      }
+      return shell(<LoginCard action={login} />)
+    }
+    live = { name: user.name ?? null, email: user.email ?? null }
+  }
+  return shell(<GuestForm target={target} live={live} />)
 }

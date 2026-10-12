@@ -25,7 +25,7 @@ import { Link } from '@/i18n/navigation'
 import { useStay } from './use-stay'
 
 export interface RoomsHotel {
-  slug: string; name: string; online: boolean; opening: string | null; cancel_summary: string
+  slug: string; name: string; online: boolean; calendar: boolean; opening: string | null; cancel_summary: string
   included: { icon: IconKey; label: string; desc?: string }[]; not_available: string[]
   checkin: string; checkout: string // 2 dòng đầu chính sách khách sạn (src/content luôn mở đầu bằng Nhận phòng, Trả phòng)
 }
@@ -128,7 +128,7 @@ export function Rooms({ hotel, rooms, contact }: { hotel: RoomsHotel; rooms: Roo
 
       <Dialog open={editing} onClose={() => setEditing(false)} title={t('Rooms.change')}>
         <div className="grid gap-4">
-          <DateRangeField id="rooms-dates" stay={stay} min={firstCheckin(today(), hotel.opening)} onChange={setStay} />
+          <DateRangeField id="rooms-dates" stay={stay} min={firstCheckin(today(), hotel.opening)} onChange={setStay} prices={hotel.calendar ? hotel.slug : undefined} />
           <GuestsField id="rooms-guests" stay={stay} onChange={setStay} />
         </div>
         <button type="button" onClick={() => setEditing(false)} className={`${BTN} mt-5 w-full`}>{t('Common.seeRooms')}</button>

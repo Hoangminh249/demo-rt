@@ -1,22 +1,29 @@
-// Khách sạn + phòng: nội dung Rooty (src/content) ghép với phòng trống, giá Gohost (src/api/gohost.ts) theo ID.
+// Khách sạn + phòng: nội dung Rooty (src/content) ghép với phòng trống + giá theo ID.
+// Nguồn giá + tồn: DATA_SOURCE=db → Postgres của Rooty (src/api/inventory.ts, ghép theo slug hạng phòng);
+// mặc định → Gohost (src/api/gohost.ts, ghép theo gohost_room_type_id).
 // Cửa duy nhất để trang server lấy dữ liệu khách sạn — component KHÔNG import src/content hay src/lib/gohost.
 // Đổi nơi lưu nội dung (CMS) sau này: chỉ sửa file này, giữ nguyên tên hàm và kiểu trả về.
 import 'server-only'
 import { HOTELS } from '@/content'
+import { isDbSource } from '@/lib/db'
+import { today } from '@/lib/format'
 import { isGohostError } from '@/lib/gohost'
 import { minDefaultRate } from '@/lib/rooms'
+import { firstCheckin } from '@/lib/stay'
 import { table, tr } from '@/lib/tr'
 import type { Locale, L } from '@/types/global'
-import type { Hotel, HotelContent, RoomAvailability } from '@/types/hotel'
+import type { DayPrice, Hotel, HotelContent, RoomAvailability } from '@/types/hotel'
 import type { BookingTarget } from '@/types/booking'
 import { gohostApi } from './gohost'
+import { inventoryApi } from './inventory'
 
 function localize(h: HotelContent, locale: Locale): Hotel {
   const t = (l: L) => tr(l, locale)
   return {
     slug: h.slug,
     code: h.code,
-    online: h.gohost_tenant_id !== null,
+    online: isDbSource() || h.gohost_tenant_id !== null,
+    calendar: isDbSource(),
     opening: h.opening,
     name: h.name,
     area: t(h.area),
@@ -38,7 +45,7 @@ function localize(h: HotelContent, locale: Locale): Hotel {
     gallery: h.gallery,
     hero: h.hero,
     rooms: h.rooms.map(r => ({
-      room_type_id: r.gohost_room_type_id,
+      room_type_id: isDbSource() ? r.slug : r.gohost_room_type_id,
       slug: r.slug,
       name: t(r.name),
       size: t(r.size),
@@ -77,10 +84,16 @@ export const hotelApi = {
     }
   },
 
-  // --- Gohost ---
-  /** "Giá từ …/đêm". null khi KS chưa nối Gohost, chưa ánh xạ phòng, hoặc Gohost lỗi — UI ẩn giá, không đoán. */
+  // --- Giá + phòng trống (Gohost hoặc Postgres) ---
+  /** "Giá từ …/đêm". null khi chưa có giá, chưa nối nguồn, hoặc nguồn lỗi — UI ẩn giá, không đoán. */
   async fromPrice(slug: string): Promise<number | null> {
     const h = content(slug)
+    if (h && isDbSource()) {
+      return inventoryApi.fromPrice(slug, firstCheckin(today(), h.opening)).catch(e => {
+        if (!(e instanceof Error && e.message === 'DB_UNAVAILABLE')) console.error('[db] fromPrice', e)
+        return null
+      })
+    }
     if (!h?.gohost_tenant_id) return null
     try {
       const property = (await gohostApi.properties()).find(p => p.id === h.gohost_tenant_id)
@@ -92,8 +105,9 @@ export const hotelApi = {
     }
   },
 
-  /** Phòng trống + gói giá theo khoảng ngày, mọi hạng phòng Gohost (kể cả hết phòng). Ném GohostError khi lỗi. */
+  /** Phòng trống + gói giá theo khoảng ngày, mọi hạng phòng (kể cả hết phòng). Ném GohostError / lỗi DB khi lỗi. */
   async availability(slug: string, checkin: string, checkout: string): Promise<RoomAvailability[]> {
+    if (isDbSource()) return inventoryApi.availability(slug, checkin, checkout)
     const tenant = content(slug)?.gohost_tenant_id
     if (!tenant) return []
     return (await gohostApi.roomTypes({ tenant, checkin, checkout })).map(rt => ({
@@ -112,4 +126,8 @@ export const hotelApi = {
       })),
     }))
   },
+
+  /** Lịch giá thấp nhất từng đêm, 90 ngày từ `from` (chỉ nguồn db; Gohost không có giá theo ngày rẻ lượt gọi). */
+  calendar: (slug: string, from: string, room: string | null): Promise<DayPrice[]> =>
+    isDbSource() ? inventoryApi.calendar(slug, from, undefined, room) : Promise.resolve([]),
 }

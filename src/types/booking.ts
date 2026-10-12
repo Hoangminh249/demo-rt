@@ -41,3 +41,34 @@ export interface PaymentDraft {
   breakfast: boolean
   at: string
 }
+
+// ---------- Đặt phòng thật (DATA_SOURCE=db) — /api/bookings/* ----------
+
+/** Báo giá server trả về (src/lib/quote.ts). */
+export interface LiveQuote {
+  nights: { date: string; price: number; extraFee: number; total: number }[]
+  subtotal: number; discount: number; promoCode: string | null
+  taxLines: { name: string; amount: number; included: boolean }[]; taxFees: number
+  total: number; deposit: number; balanceDue: number; balanceDueAt: string | null; holdMinutes: number
+  errors: { code: string; date?: string }[]
+}
+
+export type HoldResponse =
+  | { ok: true; code: string; reused: boolean }
+  | { ok: false; error: 'NOT_FOUND' | 'TOO_MANY_PENDING' | 'SOLD_OUT' | 'UNAUTHORIZED' }
+  | { ok: false; error: 'UNAVAILABLE' | 'PRICE_CHANGED'; quote: LiveQuote }
+
+/** Booking của chính khách đang đăng nhập (GET /api/bookings/{code}). */
+export interface LiveBooking {
+  code: string
+  status: 'PENDING_PAYMENT' | 'CONFIRMED' | 'CANCELLED' | 'EXPIRED' | 'NO_SHOW' | 'CHECKED_IN' | 'CHECKED_OUT'
+  paymentStatus: 'UNPAID' | 'DEPOSIT_PAID' | 'PAID' | 'PARTIALLY_REFUNDED' | 'REFUNDED'
+  hotel: { slug: string; name: string }
+  room: { slug: string; name: string }
+  planName: string
+  checkIn: string; checkOut: string; rooms: number; adults: number; children: number
+  total: number; depositAmount: number; paidAmount: number; balanceDue: number; balanceDueAt: string | null
+  holdExpiresAt: string | null
+  needsRefund: boolean
+  lastPaymentFailed: boolean
+}

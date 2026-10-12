@@ -13,4 +13,11 @@ export function adminGet<C>(handler: (req: NextRequest, ctx: C) => Promise<unkno
 }
 
 export const badRequest = () => NextResponse.json({ error: 'BAD_REQUEST' }, { status: 400 })
+
+/** Lỗi Postgres → 503 cho admin: thiếu DATABASE_URL (DB_UNAVAILABLE) hoặc không kết nối/truy vấn được (DB_ERROR, ghi log). */
+export function dbFail(e: unknown) {
+  if (e instanceof Error && e.message === 'DB_UNAVAILABLE') return NextResponse.json({ error: 'DB_UNAVAILABLE' }, { status: 503 })
+  console.error('[db] admin', e)
+  return NextResponse.json({ error: 'DB_ERROR' }, { status: 503 })
+}
 export const notFoundJson = () => NextResponse.json({ error: 'NOT_FOUND' }, { status: 404 })

@@ -2,7 +2,8 @@
 // Component admin chỉ gọi các hook dưới đây; khoá cache tập trung ở adminKeys để làm mới đúng chỗ.
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/http'
-import type { AdminAvailability, AdminBooking, AdminBookings, AdminHotel, AdminOverview, AdminProperties } from '@/types/admin'
+import type { Command } from '@/lib/admin-commands'
+import type { AdminAvailability, AdminBooking, AdminBookings, AdminHotel, AdminOverview, AdminPlans, AdminProperties, AdminRates, AdminWriteResult } from '@/types/admin'
 
 /** Query của GET /api/admin/bookings (phía trình duyệt). */
 export interface BookingQuery { property: string; in: string; out: string; status: string; page: number }
@@ -15,6 +16,8 @@ export const adminKeys = {
   properties: () => [...adminKeys.all, 'properties'] as const,
   bookings: (q: BookingQuery) => [...adminKeys.all, 'bookings', q] as const,
   booking: (property: string, code: string) => [...adminKeys.all, 'booking', property, code] as const,
+  rates: (slug: string, from: string, to: string) => [...adminKeys.hotel(slug), 'rates', from, to] as const,
+  plans: (slug: string) => [...adminKeys.hotel(slug), 'plans'] as const,
 }
 
 const get = <T>(url: string, params?: object) => api.get<T>(url, { params }).then(r => r.data)
@@ -65,4 +68,33 @@ export function useLogout() {
       window.location.assign('/admin/login')
     },
   })
+}
+
+// ---------- Postgres của Rooty: lịch giá & tồn, gói giá, chính sách ----------
+
+/** Lịch giá + tồn web một khoảng ngày (≤ 62 ngày). Giữ tháng cũ trên màn khi chuyển tháng. */
+export const useAdminRates = (slug: string, from: string, to: string) => useQuery({
+  queryKey: adminKeys.rates(slug, from, to),
+  queryFn: () => get<AdminRates>(`/admin/hotels/${slug}/rates`, { from, to }),
+  placeholderData: keepPreviousData,
+})
+
+export const useAdminPlans = (slug: string) => useQuery({ queryKey: adminKeys.plans(slug), queryFn: () => get<AdminPlans>(`/admin/hotels/${slug}/plans`) })
+
+/** Mọi lệnh ghi (POST /api/admin/db). Xong thì làm mới mọi dữ liệu của khách sạn (lịch, gói, chính sách). */
+export function useAdminWrite(slug: string) {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: (c: Command) => api.post<AdminWriteResult>('/admin/db', c).then(r => r.data),
+    onSuccess: () => client.invalidateQueries({ queryKey: adminKeys.hotel(slug) }),
+  })
+}
+
+/** Câu báo lỗi từ /api/admin (message tiếng Việt của server), không có thì câu chung. */
+export function adminErrorText(e: unknown): string {
+  const res = (e as { response?: { status?: number; data?: { error?: string; message?: string } } })?.response
+  if (res?.data?.message) return res.data.message
+  if (res?.data?.error === 'DB_UNAVAILABLE') return 'Chưa có Postgres: đặt DATABASE_URL rồi chạy lại.'
+  if (res?.data?.error === 'DB_ERROR') return 'Không kết nối được Postgres (service đang tắt?). Bật lại rồi thử lại.'
+  return 'Không lưu được. Kiểm tra mạng rồi thử lại.'
 }

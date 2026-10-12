@@ -1,6 +1,7 @@
 'use client'
 // Khách sạn (wireframe A · "Đầu trang + 4 tab"): tab đầu là ánh xạ hạng phòng Gohost ↔ nội dung (có nút chép ID),
-// sau đó Giá & phòng trống (cùng lời gọi web đang dùng), Nội dung (VI/EN), Ảnh. Chỉ xem: sửa ở src/content hoặc trong Gohost.
+// sau đó Giá & phòng trống (cùng lời gọi web đang dùng), Nội dung (VI/EN), Ảnh — 4 tab này chỉ xem (sửa ở src/content hoặc trong Gohost).
+// Hai tab cuối ghi Postgres của Rooty: Lịch giá & tồn (views/rates.tsx), Gói giá & chính sách (views/plans.tsx).
 import type { FormEvent } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -14,11 +15,13 @@ import { Badge, CARD, Empty, GohostError, LoadFailed, Photo, Skel, shortVnd, vnd
 import { fmtDayMonth, today } from '@/lib/format'
 import { defaultStay, firstCheckin, validRange } from '@/lib/stay'
 import { useAdminAvailability, useAdminHotel } from '@/hooks/use-admin'
+import { RatesPanel } from './rates'
+import { PlansPanel } from './plans'
 import type { AdminHotel } from '@/types/admin'
 import type { HotelCheck } from '@/types/admin'
 
 // [id, nhãn, nhãn dưới sm]: rút chữ để 4 tab vừa 375px, không phải cuộn ngang (R10 bước 1)
-const TABS = [['phong', 'Phòng & ánh xạ', 'Phòng'], ['gia', 'Giá & phòng trống', 'Giá'], ['noi-dung', 'Nội dung', 'Nội dung'], ['anh', 'Ảnh', 'Ảnh']] as const
+const TABS = [['phong', 'Phòng & ánh xạ', 'Phòng'], ['gia', 'Giá Gohost', 'Gohost'], ['noi-dung', 'Nội dung', 'Nội dung'], ['anh', 'Ảnh', 'Ảnh'], ['lich', 'Lịch giá & tồn', 'Lịch'], ['goi', 'Gói giá & chính sách', 'Gói']] as const
 type Tab = (typeof TABS)[number][0]
 
 // ---------- Tab Phòng & ánh xạ ----------
@@ -270,6 +273,8 @@ export function HotelView({ slug }: { slug: string }) {
         {tab === 'gia' && <PricePanel c={c} opening={data.content.opening} />}
         {tab === 'noi-dung' && <ContentPanel data={data} file={file} />}
         {tab === 'anh' && <PhotoPanel c={c} />}
+        {tab === 'lich' && <RatesPanel slug={slug} />}
+        {tab === 'goi' && <PlansPanel slug={slug} />}
       </div>
     </div>
   )

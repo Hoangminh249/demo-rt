@@ -1,6 +1,7 @@
 // /admin (chỉ xem): booking Gohost đã lọc field + kiểu trả về của /api/admin/* (src/api/admin.ts).
 import type { HotelContent, RoomAvailability, RoomContent } from './hotel'
 import type { GhRoomType, GohostErrorCode, GohostStatus } from './gohost'
+import type { L } from './global'
 
 // ---------- Booking (Gohost GET /bookings, /bookings/{id}) — chỉ admin, chỉ các field được phép (không CCCD, ảnh giấy tờ) ----------
 
@@ -85,3 +86,40 @@ export interface AdminProperties { properties: GohostPropertyOption[] | null; er
 export interface AdminBookings { data: BookingPage | null; error: Err }
 /** GET /api/admin/bookings/{code} */
 export interface AdminBooking { data: BookingDetail | null; error: Err }
+
+// ---------- Giá & tồn của Rooty (Postgres) — GET /api/admin/hotels/{slug}/rates, /plans ----------
+
+export interface DbInventory { allotment: number; booked: number; held: number; closed: boolean; minStay: number; maxStay: number | null; cta: boolean; ctd: boolean }
+
+/** Lịch một khoảng ngày: mỗi hạng phòng có tồn theo ngày + giá theo ngày của từng gói. Ngày thiếu = chưa có dòng (không bán). */
+export interface AdminRates {
+  from: string
+  to: string
+  roomTypes: {
+    id: string; slug: string; name: L; status: string; totalRooms: number
+    inventory: Record<string, DbInventory>
+    plans: { id: string; code: string; name: L; isDefault: boolean; active: boolean; rates: Record<string, number> }[]
+  }[]
+}
+
+export interface DbRule { id: string; name: string; startDate: string; endDate: string; weekdays: number[]; type: 'FIXED' | 'PERCENT'; value: number; priority: number; active: boolean }
+
+export interface DbPlan {
+  id: string; roomTypeId: string; code: string; name: L; mealPlan: 'RO' | 'BB' | 'HB' | 'FB' | 'AI'; refundable: boolean
+  basePrice: number | null; extraAdultFee: number; extraChildFee: number
+  cancellationPolicyId: string; depositPolicyId: string; isDefault: boolean; active: boolean
+  gohostRatePlanId: string | null
+  rules: DbRule[]
+}
+
+export interface DbCancelPolicy { id: string; name: string; description: L | null; tiers: { daysBefore: number; penaltyPercent: number }[]; noShowPercent: number; used: number }
+export interface DbDepositPolicy { id: string; name: string; type: 'PERCENT' | 'FIXED' | 'FIRST_NIGHT' | 'FULL'; value: number; holdMinutes: number; balanceDueDaysBefore: number; used: number }
+
+export interface AdminPlans {
+  roomTypes: { id: string; slug: string; name: L; status: string; totalRooms: number; plans: DbPlan[] }[]
+  cancellation: DbCancelPolicy[]
+  deposit: DbDepositPolicy[]
+}
+
+/** Kết quả POST /api/admin/db. */
+export interface AdminWriteResult { ok: true; message: string }

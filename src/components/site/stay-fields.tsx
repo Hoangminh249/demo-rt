@@ -1,15 +1,16 @@
 'use client'
 // Ô chọn khách sạn, khoảng ngày, số khách — dáng ô nhập của wireframe (cao 48px, viền, icon xanh, nhãn cam in hoa).
-import { useState, type ReactNode } from 'react'
+import { useMemo, useState, type ComponentProps, type ReactNode } from 'react'
 import { cn } from 'cn'
 import { CalendarDays, ChevronDown, Hotel as HotelIcon, Minus, Plus, Users } from 'lucide-react'
 import { enUS, vi } from 'react-day-picker/locale'
 import { useLocale, useTranslations } from 'next-intl'
 import type { DateRange } from 'react-day-picker'
-import { Calendar } from '@/components/ui/calendar'
+import { Calendar, CalendarDayButton } from '@/components/ui/calendar'
+import { useHotelCalendar } from '@/hooks/use-rooms'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { addDays, diffDays, fmtDayMonth, fmtRange, fmtWeekday, today } from '@/lib/format'
+import { addDays, diffDays, fmtDayMonth, fmtPrice, fmtRange, fmtWeekday, today } from '@/lib/format'
 import { fitAges, MAX_NIGHTS } from '@/lib/stay'
 import type { Stay } from '@/types/hotel'
 import { EYEBROW } from './kit'
@@ -57,10 +58,26 @@ export function HotelField({ id, value, hotels, onChange, boxed }: { id: string;
 
 /** `min`: ngày nhận sớm nhất (mặc định hôm nay; khách sạn chưa khai trương thì là ngày khai trương). */
 /** `boxed`: không nhãn ngoài, ô chia đôi Nhận phòng | Trả phòng — ghép trong khung của thẻ đặt phòng (trang phòng). */
-export function DateRangeField({ id, label, stay, min, onChange, boxed }: { id: string; label?: string; stay: Stay; min?: string; onChange: (s: Stay) => void; boxed?: boolean }) {
+/** `prices`: slug khách sạn → hiện giá thấp nhất từng đêm dưới mỗi ngày (lịch giá 90 ngày, chỉ khi KS có `calendar`). */
+export function DateRangeField({ id, label, stay, min, onChange, boxed, prices }: { id: string; label?: string; stay: Stay; min?: string; onChange: (s: Stay) => void; boxed?: boolean; prices?: string }) {
   const t = useTranslations()
   const locale = useLocale()
   const [open, setOpen] = useState(false)
+  const cal = useHotelCalendar(prices ?? '', !!prices && open)
+  const DayButton = useMemo(() => {
+    const data = cal.data
+    if (!data) return undefined
+    const short = new Intl.NumberFormat(locale === 'en' ? 'en' : 'vi', { notation: 'compact', maximumFractionDigits: 2 })
+    return function PricedDay(props: ComponentProps<typeof CalendarDayButton>) {
+      const price = data.get(toISO(props.day.date))
+      return (
+        <CalendarDayButton {...props}>
+          {props.children}
+          {price != null && !props.modifiers.disabled && <span className="!text-[10px] tabular-nums" title={fmtPrice(price)}>{short.format(price)}</span>}
+        </CalendarDayButton>
+      )
+    }
+  }, [cal.data, locale])
   const [draft, setDraft] = useState<DateRange | undefined>()
   const range = draft ?? { from: toDate(stay.checkin), to: toDate(stay.checkout) }
   const step = !draft ? t('Fields.pickCheckin') : t('Fields.pickCheckout')
@@ -107,6 +124,7 @@ export function DateRangeField({ id, label, stay, min, onChange, boxed }: { id: 
             disabled={[{ before: toDate(first) }, { after: toDate(until) }]}
             startMonth={toDate(first)}
             endMonth={toDate(last)}
+            components={DayButton && { DayButton }}
           />
           <p className="border-t border-border px-1 pt-3 text-sm text-muted-foreground" aria-live="polite">{step}</p>
         </PopoverContent>

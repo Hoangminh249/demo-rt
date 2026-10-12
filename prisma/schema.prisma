@@ -1,0 +1,737 @@
+// Rooty Hospitality — Postgres (database `hospitality`, schema `public`).
+// Hướng 12/10/2026: web tự quản giá theo ngày, tồn phòng bán trên web, sản phẩm, booking (docs/2026-10-12-booking-engine-db-phase0.md).
+// Quy ước:
+// - Tiền: Int, VND. Phần trăm: Int (8 = 8%).
+// - Ngày lưu trú: @db.Date, đêm = [checkIn, checkOut), tính theo Asia/Ho_Chi_Minh.
+// - Chữ song ngữ: Json dạng L = { vi, en } (src/types/global.ts).
+// - gohost*: ánh xạ tuỳ chọn sang Gohost; null = không dính Gohost.
+
+generator client {
+  provider        = "prisma-client"
+  output          = "../src/generated/prisma"
+  previewFeatures = ["partialIndexes"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============ Enum ============
+
+enum Role {
+  CUSTOMER
+  STAFF
+  ADMIN
+}
+
+enum PublishStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum MealPlan {
+  RO
+  BB
+  HB
+  FB
+  AI
+}
+
+enum AdjustType {
+  FIXED // value = giá VND/đêm
+  PERCENT // value = % điều chỉnh trên RatePlan.basePrice (vd -10)
+}
+
+enum DiscountType {
+  PERCENT
+  FIXED
+}
+
+enum DepositType {
+  PERCENT
+  FIXED
+  FIRST_NIGHT
+  FULL
+}
+
+enum TaxFeeType {
+  PERCENT
+  PER_NIGHT // VND / phòng / đêm
+  PER_BOOKING // VND / booking
+}
+
+enum MediaSource {
+  STATIC // file trong public/
+  UPLOAD // file trong UPLOAD_DIR (Render Persistent Disk)
+}
+
+enum HotelMediaKind {
+  GALLERY
+  HERO // banner trang chủ, dùng focus
+}
+
+enum BookingStatus {
+  PENDING_PAYMENT
+  CONFIRMED
+  CANCELLED
+  EXPIRED
+  NO_SHOW
+  CHECKED_IN
+  CHECKED_OUT
+}
+
+enum PaymentStatus {
+  UNPAID
+  DEPOSIT_PAID
+  PAID
+  PARTIALLY_REFUNDED
+  REFUNDED
+}
+
+enum PaymentKind {
+  DEPOSIT
+  BALANCE
+  FULL
+}
+
+enum PaymentTxStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+}
+
+enum RefundStatus {
+  PENDING // chờ xử lý tay
+  DONE
+  REJECTED
+}
+
+enum EmailStatus {
+  SENT
+  FAILED
+  CONSOLE // không có RESEND_API_KEY → chỉ log ra console
+}
+
+enum ReviewStatus {
+  PENDING
+  PUBLISHED
+  HIDDEN
+}
+
+// ============ Auth (chuẩn @auth/prisma-adapter) ============
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  role          Role      @default(CUSTOMER) // chủ dự án sửa tay trong DB, không có UI đổi role
+  phone         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts         Account[]
+  sessions         Session[]
+  bookings         Booking[]
+  redemptions      PromotionRedemption[]
+  reviews          Review[]
+  auditLogs        AuditLog[]
+  statusChanges    BookingStatusHistory[]
+  refundsProcessed Refund[]
+}
+
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+}
+
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@id([identifier, token])
+}
+
+// ============ Catalog ============
+
+model Hotel {
+  id             String        @id @default(cuid())
+  slug           String        @unique // rootyhospitality.com/hotel/{slug} — vĩnh viễn
+  code           String        @unique // mã Rooty, vd PITO
+  status         PublishStatus @default(DRAFT)
+  name           String
+  area           Json // L
+  address        Json // L
+  mapQuery       String
+  lat            Float?
+  lng            Float?
+  stars          Int?
+  checkInTime    String // "15:00"
+  checkOutTime   String // "12:00"
+  phone          String?
+  email          String?
+  zalo           String?
+  notifyEmail    String? // nhận email booking mới; trống = không gửi
+  operator       String // pháp nhân vận hành
+  openingDate    DateTime?     @db.Date // tương lai = nhãn khai trương, chặn nhận phòng trước ngày này
+  policyText     Json? // L — mô tả chính sách hiển thị
+  // Phần trình bày không cần truy vấn: tagline, description, highlights, facts, not_available,
+  // getting_here, policies, children, cancel_summary, faq, pending, en_review (kiểu HotelContent, src/types/hotel.ts)
+  content        Json
+  gohostTenantId String?       @unique
+  sortOrder      Int           @default(0)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  roomTypes  RoomType[]
+  amenities  HotelAmenity[]
+  media      HotelMedia[]
+  taxFees    TaxFee[]
+  promotions Promotion[]
+  bookings   Booking[]
+  reviews    Review[]
+
+  @@index([status, sortOrder])
+}
+
+model RoomType {
+  id               String        @id @default(cuid())
+  hotelId          String
+  slug             String
+  status           PublishStatus @default(DRAFT)
+  name             Json // L
+  description      Json // L
+  maxAdults        Int
+  maxChildren      Int
+  maxOccupancy     Int
+  baseOccupancy    Int // số khách đã gồm trong giá; vượt → phụ thu theo RatePlan
+  size             Json // L, vd "19–22 m²"
+  beds             Json? // L
+  totalRooms       Int // số phòng vật lý của hạng (cả OTA lẫn web)
+  // features, view, tagline, note (kiểu RoomContent)
+  content          Json
+  gohostRoomTypeId String?       @unique
+  sortOrder        Int           @default(0)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  hotel        Hotel             @relation(fields: [hotelId], references: [id])
+  rooms        Room[]
+  amenities    RoomTypeAmenity[]
+  media        RoomTypeMedia[]
+  ratePlans    RatePlan[]
+  inventory    DailyInventory[]
+  bookingRooms BookingRoom[]
+
+  @@unique([hotelId, slug])
+}
+
+model Room {
+  id         String  @id @default(cuid())
+  roomTypeId String
+  number     String // "101"
+  floor      Int?
+  note       String? // vd "không cửa sổ"
+  active     Boolean @default(true)
+
+  roomType     RoomType      @relation(fields: [roomTypeId], references: [id])
+  bookingRooms BookingRoom[]
+
+  @@unique([roomTypeId, number])
+}
+
+model Amenity {
+  id   String  @id @default(cuid())
+  code String  @unique
+  name Json // L
+  icon String? // IconKey (src/types/global.ts)
+
+  hotels    HotelAmenity[]
+  roomTypes RoomTypeAmenity[]
+}
+
+model HotelAmenity {
+  hotelId     String
+  amenityId   String
+  available   Boolean @default(true) // false = "không có" (not_available)
+  description Json? // L
+  sortOrder   Int     @default(0)
+
+  hotel   Hotel   @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  amenity Amenity @relation(fields: [amenityId], references: [id], onDelete: Cascade)
+
+  @@id([hotelId, amenityId])
+}
+
+model RoomTypeAmenity {
+  roomTypeId String
+  amenityId  String
+  sortOrder  Int    @default(0)
+
+  roomType RoomType @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+  amenity  Amenity  @relation(fields: [amenityId], references: [id], onDelete: Cascade)
+
+  @@id([roomTypeId, amenityId])
+}
+
+model MediaAsset {
+  id        String      @id @default(cuid())
+  path      String      @unique // "/images/pito-hon-thom/x.jpg" hoặc đường dẫn trong UPLOAD_DIR
+  alt       Json? // L
+  width     Int?
+  height    Int?
+  source    MediaSource @default(STATIC)
+  createdAt DateTime    @default(now())
+
+  hotels    HotelMedia[]
+  roomTypes RoomTypeMedia[]
+}
+
+model HotelMedia {
+  hotelId   String
+  mediaId   String
+  kind      HotelMediaKind @default(GALLERY)
+  sortOrder Int            @default(0)
+  isCover   Boolean        @default(false)
+  focus     String? // object-position cho HERO
+
+  hotel Hotel      @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  media MediaAsset @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@id([hotelId, mediaId, kind])
+}
+
+model RoomTypeMedia {
+  roomTypeId String
+  mediaId    String
+  sortOrder  Int     @default(0)
+  isCover    Boolean @default(false)
+
+  roomType RoomType   @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+  media    MediaAsset @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@id([roomTypeId, mediaId])
+}
+
+// ============ Giá & tồn ============
+
+model RatePlan {
+  id                   String   @id @default(cuid())
+  roomTypeId           String
+  code                 String
+  name                 Json // L
+  mealPlan             MealPlan @default(RO)
+  refundable           Boolean  @default(true)
+  basePrice            Int? // VND/đêm, gốc cho PricingRule PERCENT; null = chỉ dùng giá FIXED / nhập tay
+  extraAdultFee        Int      @default(0) // VND / người / đêm, vượt baseOccupancy
+  extraChildFee        Int      @default(0)
+  cancellationPolicyId String
+  depositPolicyId      String
+  isDefault            Boolean  @default(false)
+  active               Boolean  @default(true)
+  gohostRatePlanId     String?
+  sortOrder            Int      @default(0)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  roomType           RoomType           @relation(fields: [roomTypeId], references: [id])
+  cancellationPolicy CancellationPolicy @relation(fields: [cancellationPolicyId], references: [id])
+  depositPolicy      DepositPolicy      @relation(fields: [depositPolicyId], references: [id])
+  rates              DailyRate[]
+  rules              PricingRule[]
+  promotions         Promotion[]
+  bookingRooms       BookingRoom[]
+
+  @@unique([roomTypeId, code])
+}
+
+/// Giá bán một đêm. Không có dòng cho đêm nào → không bán đêm đó.
+model DailyRate {
+  id         String   @id @default(cuid())
+  ratePlanId String
+  date       DateTime @db.Date
+  price      Int
+  updatedAt  DateTime @updatedAt
+
+  ratePlan RatePlan @relation(fields: [ratePlanId], references: [id], onDelete: Cascade)
+
+  @@unique([ratePlanId, date])
+  @@index([date])
+}
+
+/// Tồn phòng BÁN TRÊN WEB theo ngày. allotment = số phòng dành cho web (phần còn lại bán OTA qua Gohost).
+/// Không có dòng cho đêm nào → không bán đêm đó. CHECK booked/held >= 0 thêm tay trong migration.
+model DailyInventory {
+  id                String   @id @default(cuid())
+  roomTypeId        String
+  date              DateTime @db.Date
+  allotment         Int      @default(0)
+  booked            Int      @default(0)
+  held              Int      @default(0)
+  closed            Boolean  @default(false)
+  minStay           Int      @default(1)
+  maxStay           Int?
+  closedToArrival   Boolean  @default(false)
+  closedToDeparture Boolean  @default(false)
+  updatedAt         DateTime @updatedAt
+
+  roomType RoomType @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+
+  @@unique([roomTypeId, date])
+  @@index([date])
+}
+
+/// Quy tắc để SINH DailyRate (nút "Sinh giá từ PricingRule"). Đêm khớp nhiều rule → priority cao nhất thắng.
+model PricingRule {
+  id         String     @id @default(cuid())
+  ratePlanId String
+  name       String
+  startDate  DateTime   @db.Date
+  endDate    DateTime   @db.Date // gồm cả ngày này
+  weekdays   Int[] // 0 = CN … 6 = T7; rỗng = mọi ngày
+  type       AdjustType
+  value      Int
+  priority   Int        @default(0)
+  active     Boolean    @default(true)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  ratePlan RatePlan @relation(fields: [ratePlanId], references: [id], onDelete: Cascade)
+
+  @@index([ratePlanId, startDate, endDate])
+}
+
+model TaxFee {
+  id        String     @id @default(cuid())
+  hotelId   String
+  name      Json // L
+  type      TaxFeeType
+  value     Int
+  included  Boolean    @default(true) // true = giá đã gồm (chỉ hiển thị), false = cộng thêm vào tổng
+  active    Boolean    @default(true)
+  sortOrder Int        @default(0)
+
+  hotel Hotel @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+
+  @@index([hotelId])
+}
+
+// ============ Chính sách ============
+
+model CancellationPolicy {
+  id            String   @id @default(cuid())
+  name          String
+  description   Json? // L — chữ hiện cho khách
+  // [{ daysBefore: 7, penaltyPercent: 50 }, { daysBefore: 0, penaltyPercent: 100 }]
+  // Huỷ khi còn >= daysBefore ngày trước check-in → phạt penaltyPercent (mốc lớn nhất khớp thắng).
+  tiers         Json
+  noShowPercent Int      @default(100)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  ratePlans RatePlan[]
+}
+
+model DepositPolicy {
+  id                   String      @id @default(cuid())
+  name                 String
+  type                 DepositType
+  value                Int // PERCENT: %, FIXED: VND; FIRST_NIGHT/FULL: bỏ qua
+  holdMinutes          Int         @default(15)
+  balanceDueDaysBefore Int         @default(0) // 0 = trả phần còn lại tại quầy khi nhận phòng
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+
+  ratePlans RatePlan[]
+}
+
+// ============ Khuyến mãi ============
+
+model Promotion {
+  id             String       @id @default(cuid())
+  code           String       @unique
+  name           Json // L
+  type           DiscountType
+  value          Int
+  hotelId        String? // null = mọi KS
+  ratePlanId     String? // null = mọi gói
+  bookStart      DateTime? // thời điểm đặt
+  bookEnd        DateTime?
+  stayStart      DateTime?    @db.Date // đêm lưu trú
+  stayEnd        DateTime?    @db.Date
+  minNights      Int          @default(1)
+  maxRedemptions Int?
+  perUserLimit   Int?
+  active         Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  hotel       Hotel?                @relation(fields: [hotelId], references: [id])
+  ratePlan    RatePlan?             @relation(fields: [ratePlanId], references: [id])
+  redemptions PromotionRedemption[]
+
+  @@index([active, stayStart, stayEnd])
+}
+
+model PromotionRedemption {
+  id          String   @id @default(cuid())
+  promotionId String
+  bookingId   String   @unique
+  userId      String
+  amount      Int
+  createdAt   DateTime @default(now())
+
+  promotion Promotion @relation(fields: [promotionId], references: [id])
+  booking   Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id])
+
+  @@index([promotionId])
+  @@index([userId])
+}
+
+// ============ Booking ============
+
+model Booking {
+  id              String        @id @default(cuid())
+  code            String        @unique // RH-PITO-261020-0001 (src/lib/booking.ts)
+  userId          String
+  hotelId         String
+  status          BookingStatus @default(PENDING_PAYMENT)
+  paymentStatus   PaymentStatus @default(UNPAID)
+  checkIn         DateTime      @db.Date
+  checkOut        DateTime      @db.Date
+  // snapshot liên hệ lúc đặt
+  contactName     String
+  contactPhone    String
+  contactEmail    String
+  guestName       String? // người nhận phòng nếu khác người đặt
+  adults          Int
+  children        Int           @default(0)
+  childAges       Int[]
+  specialRequests String?
+  // tiền (VND), do server tính
+  subtotal        Int
+  discount        Int           @default(0)
+  taxFees         Int           @default(0)
+  total           Int
+  depositAmount   Int
+  paidAmount      Int           @default(0)
+  balanceDue      Int
+  balanceDueAt    DateTime?
+  currency        String        @default("VND")
+  holdExpiresAt   DateTime?
+  // chính sách huỷ + cọc + giá từng đêm tại thời điểm đặt
+  policySnapshot  Json
+  // hotel|roomType|ratePlan|checkIn|checkOut|adults|childAges|qty — chống trùng booking chờ
+  selectionKey    String
+  needsRefund     Boolean       @default(false)
+  cancelledAt     DateTime?
+  cancelReason    String?
+  source          String        @default("web") // web | admin
+  gohostBookingId String?       @unique // khi đẩy sang Gohost (sau này)
+  gohostSyncError String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  user       User                   @relation(fields: [userId], references: [id])
+  hotel      Hotel                  @relation(fields: [hotelId], references: [id])
+  rooms      BookingRoom[]
+  history    BookingStatusHistory[]
+  payments   Payment[]
+  refunds    Refund[]
+  emails     EmailLog[]
+  redemption PromotionRedemption?
+  review     Review?
+
+  @@unique([userId, selectionKey], map: "Booking_one_pending_per_selection", where: raw("status = 'PENDING_PAYMENT'"))
+  @@index([status, holdExpiresAt])
+  @@index([hotelId, checkIn, checkOut])
+  @@index([userId, status])
+  @@index([needsRefund])
+}
+
+/// Một dòng = một phòng. Đặt N phòng = N dòng (gán phòng vật lý từng dòng).
+model BookingRoom {
+  id         String  @id @default(cuid())
+  bookingId  String
+  roomTypeId String
+  ratePlanId String
+  roomId     String? // gán khi check-in
+  adults     Int
+  children   Int     @default(0)
+  subtotal   Int
+
+  booking  Booking        @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  roomType RoomType       @relation(fields: [roomTypeId], references: [id])
+  ratePlan RatePlan       @relation(fields: [ratePlanId], references: [id])
+  room     Room?          @relation(fields: [roomId], references: [id])
+  nights   BookingNight[]
+
+  @@index([bookingId])
+  @@index([roomTypeId])
+}
+
+model BookingNight {
+  id            String   @id @default(cuid())
+  bookingRoomId String
+  date          DateTime @db.Date
+  price         Int // giá phòng đêm đó (snapshot DailyRate)
+  extraFee      Int      @default(0) // phụ thu người lớn/trẻ em
+
+  bookingRoom BookingRoom @relation(fields: [bookingRoomId], references: [id], onDelete: Cascade)
+
+  @@unique([bookingRoomId, date])
+  @@index([date])
+}
+
+model BookingStatusHistory {
+  id        String         @id @default(cuid())
+  bookingId String
+  from      BookingStatus?
+  to        BookingStatus
+  byUserId  String? // null = hệ thống (webhook, cron)
+  note      String?
+  createdAt DateTime       @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  byUser  User?   @relation(fields: [byUserId], references: [id])
+
+  @@index([bookingId, createdAt])
+}
+
+// ============ Thanh toán ============
+
+model Payment {
+  id          String          @id @default(cuid())
+  bookingId   String
+  kind        PaymentKind
+  provider    String // mock | onepay | vietqr | cash (ghi nhận tại quầy)
+  providerRef String          @unique
+  amount      Int
+  status      PaymentTxStatus @default(PENDING)
+  rawPayload  Json?
+  paidAt      DateTime?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  booking Booking  @relation(fields: [bookingId], references: [id])
+  refunds Refund[]
+
+  @@index([bookingId])
+  @@index([status, createdAt])
+}
+
+model Refund {
+  id            String       @id @default(cuid())
+  bookingId     String
+  paymentId     String?
+  amount        Int
+  status        RefundStatus @default(PENDING)
+  reason        String
+  processedById String?
+  processedAt   DateTime?
+  createdAt     DateTime     @default(now())
+
+  booking     Booking  @relation(fields: [bookingId], references: [id])
+  payment     Payment? @relation(fields: [paymentId], references: [id])
+  processedBy User?    @relation(fields: [processedById], references: [id])
+
+  @@index([status, createdAt])
+  @@index([bookingId])
+}
+
+/// Chống xử lý webhook 2 lần: unique (provider, eventId).
+model PaymentWebhookEvent {
+  id          String    @id @default(cuid())
+  provider    String
+  eventId     String
+  payload     Json
+  receivedAt  DateTime  @default(now())
+  processedAt DateTime?
+  error       String?
+
+  @@unique([provider, eventId])
+}
+
+// ============ Khác ============
+
+model EmailLog {
+  id         String      @id @default(cuid())
+  bookingId  String?
+  to         String
+  template   String // BookingConfirmed | NewBookingNotice
+  subject    String
+  status     EmailStatus
+  error      String?
+  providerId String?
+  createdAt  DateTime    @default(now())
+
+  booking Booking? @relation(fields: [bookingId], references: [id])
+
+  @@index([bookingId])
+  @@index([status, createdAt])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String // create | update | delete | bulk-rate | record-payment …
+  entity    String
+  entityId  String
+  before    Json?
+  after     Json?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([entity, entityId])
+  @@index([createdAt])
+}
+
+/// Chỉ schema, chưa có UI.
+model Review {
+  id        String       @id @default(cuid())
+  bookingId String       @unique
+  userId    String
+  hotelId   String
+  rating    Int
+  comment   String?
+  status    ReviewStatus @default(PENDING)
+  createdAt DateTime     @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+  hotel   Hotel   @relation(fields: [hotelId], references: [id])
+
+  @@index([hotelId, status])
+}

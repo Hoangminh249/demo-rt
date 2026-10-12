@@ -64,7 +64,7 @@ export type Contact = Pick<SiteContent, 'phone' | 'phone_display' | 'zalo' | 'em
 // ---------- Bản đã chọn ngôn ngữ, đưa cho UI ----------
 
 export interface Room {
-  room_type_id: string | null
+  room_type_id: string | null // khoá ghép với RoomAvailability: id Gohost (nguồn gohost) hoặc slug hạng phòng (nguồn db)
   slug: string
   name: string
   size: string
@@ -80,7 +80,8 @@ export interface Room {
 export interface Hotel {
   slug: string
   code: string
-  online: boolean // đã nối Gohost (có tenant) → có giá và phòng trống trực tuyến
+  online: boolean // có giá và phòng trống trực tuyến: nguồn db, hoặc đã nối Gohost (có tenant)
+  calendar: boolean // có lịch giá theo ngày (chỉ nguồn db)
   opening: string | null
   name: string
   area: string

@@ -1,8 +1,9 @@
-// GET /api/hotels/{slug}/rooms?in=YYYY-MM-DD&out=YYYY-MM-DD — phòng trống + giá từng đêm từ Gohost cho khối "Chọn phòng".
+// GET /api/hotels/{slug}/rooms?in=YYYY-MM-DD&out=YYYY-MM-DD — phòng trống + giá từng đêm (Gohost hoặc Postgres, xem hotelApi) cho khối "Chọn phòng".
 // Chỉ nhận ngày: số khách và ngôn ngữ không vào khoá cache (trình duyệt tự tính "đủ chỗ"), nên đổi số khách không tốn lượt gọi.
 // Kiểm tham số trước khi gọi Gohost (60 lượt / 5 phút cho cả key).
 import type { NextRequest } from 'next/server'
 import { hotelApi } from '@/api/hotel'
+import { isDbSource } from '@/lib/db'
 import { isGohostError } from '@/lib/gohost'
 import { today } from '@/lib/format'
 import { validRange } from '@/lib/stay'
@@ -18,9 +19,13 @@ export async function GET(req: NextRequest, ctx: RouteContext<'/api/hotels/[slug
   if (!hotel.online) return Response.json({ error: 'NOT_CONNECTED' }, { status: 503, headers: NO_STORE })
   try {
     const rooms = await hotelApi.availability(slug, checkin, checkout!)
-    return Response.json(rooms, { headers: { 'Cache-Control': 'public, s-maxage=180, stale-while-revalidate=600' } })
+    // Nguồn db: giá/tồn đổi khi admin sửa hoặc có booking → cache ngắn (giá vẫn tính lại ở server khi giữ phòng).
+    const cache = isDbSource() ? 'public, s-maxage=30, stale-while-revalidate=60' : 'public, s-maxage=180, stale-while-revalidate=600'
+    return Response.json(rooms, { headers: { 'Cache-Control': cache } })
   } catch (e) {
     if (isGohostError(e)) return Response.json({ error: e.message }, { status: 503, headers: NO_STORE })
-    throw e
+    if (!isDbSource()) throw e
+    console.error('[db] rooms', e)
+    return Response.json({ error: 'UPSTREAM' }, { status: 503, headers: NO_STORE })
   }
 }

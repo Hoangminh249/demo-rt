@@ -10,7 +10,8 @@ import { DateRangeField, GuestsField } from '@/components/site/stay-fields'
 import { useStay } from './use-stay'
 import type { Contact, Hotel } from '@/types/hotel'
 
-export function PriceCard({ fromPrice, opening, contact, cover, included }: { fromPrice: number | null; opening: string | null; contact: Contact; cover: string | null; included: Hotel['included'] }) {
+/** `calendarOf`: slug KS có lịch giá → ô chọn ngày hiện giá từng đêm. */
+export function PriceCard({ fromPrice, opening, contact, cover, included, calendarOf }: { fromPrice: number | null; opening: string | null; contact: Contact; cover: string | null; included: Hotel['included']; calendarOf?: string }) {
   const t = useTranslations()
   const [stay, setStay] = useStay(opening)
   return (
@@ -22,7 +23,7 @@ export function PriceCard({ fromPrice, opening, contact, cover, included }: { fr
         </>
       ) : <p className="text-[17px] font-semibold text-brand">{t('Hotel.priceByDate')}</p>}
       <div className="mt-4 grid gap-3">
-        <DateRangeField id="pc-dates" label={t('Fields.datesShort')} stay={stay} min={firstCheckin(today(), opening)} onChange={setStay} />
+        <DateRangeField id="pc-dates" label={t('Fields.datesShort')} stay={stay} min={firstCheckin(today(), opening)} onChange={setStay} prices={calendarOf} />
         <GuestsField id="pc-guests" stay={stay} onChange={setStay} />
       </div>
       <a href="#phong" className={`${BTN} mt-4 h-12 w-full rounded-xl shadow-[inset_0_1px_0_rgb(255_255_255/0.25),0_6px_16px_rgb(35_128_111/0.22)]`}>{t('Common.seeRooms')}</a>

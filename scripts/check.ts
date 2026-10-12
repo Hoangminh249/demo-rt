@@ -3,6 +3,8 @@ import assert from 'node:assert/strict'
 import { defaultStay, parseStay, validRange } from '../src/lib/stay'
 import { mergeRooms, minDefaultRate, nightly } from '../src/lib/rooms'
 import { bookingCode, deposit, isEmail, isPhone, roomHref, selectionQuery } from '../src/lib/booking'
+import { nightsOf, planOffers, roomsLeft, type InventoryDay } from '../src/lib/inventory'
+import { datesIn, priceFromRules, weekdayOf, type Rule } from '../src/lib/pricing'
 import type { Room, RoomAvailability } from '../src/types/hotel'
 
 // --- validRange: chặn ở route handler trước khi tốn lượt gọi Gohost ---
@@ -60,5 +62,47 @@ assert.equal(isEmail('minh.anh@example.com'), true)
 assert.equal(isEmail('minh.anh@example'), false)
 assert.equal(isPhone('+84 912 345 678'), true)
 assert.equal(isPhone('0912'), false)
+
+// --- tồn + giá của Rooty (nguồn db) ---
+const inv = (date: string, o: Partial<InventoryDay> = {}): InventoryDay =>
+  ({ date, allotment: 2, booked: 0, held: 0, closed: false, minStay: 1, maxStay: null, closedToArrival: false, closedToDeparture: false, ...o })
+const week = ['2026-11-01', '2026-11-02', '2026-11-03', '2026-11-04']
+assert.deepEqual(nightsOf('2026-11-01', '2026-11-04'), week.slice(0, 3), 'đêm = [nhận, trả)')
+assert.equal(roomsLeft(week.map(d => inv(d)), '2026-11-01', '2026-11-04'), 2)
+assert.equal(roomsLeft([inv(week[0]), inv(week[1], { booked: 1, held: 1 }), inv(week[2])], '2026-11-01', '2026-11-04'), 0, 'một đêm hết → cả khoảng hết')
+assert.equal(roomsLeft([inv(week[0]), inv(week[1], { held: 1 }), inv(week[2])], '2026-11-01', '2026-11-04'), 1, 'lấy đêm ít phòng nhất')
+assert.equal(roomsLeft([inv(week[0]), inv(week[2])], '2026-11-01', '2026-11-04'), 0, 'thiếu dòng tồn một đêm → không bán')
+assert.equal(roomsLeft([inv(week[0]), inv(week[1], { closed: true }), inv(week[2])], '2026-11-01', '2026-11-04'), 0, 'đêm đóng')
+assert.equal(roomsLeft([inv(week[0], { minStay: 4 }), inv(week[1]), inv(week[2])], '2026-11-01', '2026-11-04'), 0, 'minStay của ngày đến')
+assert.equal(roomsLeft([inv(week[0]), inv(week[1], { minStay: 4 }), inv(week[2])], '2026-11-01', '2026-11-04'), 2, 'minStay chỉ xét ngày đến')
+assert.equal(roomsLeft([inv(week[0], { maxStay: 2 }), inv(week[1]), inv(week[2])], '2026-11-01', '2026-11-04'), 0, 'maxStay')
+assert.equal(roomsLeft([inv(week[0], { closedToArrival: true }), inv(week[1]), inv(week[2])], '2026-11-01', '2026-11-04'), 0, 'CTA ngày đến')
+assert.equal(roomsLeft([...week.slice(0, 3).map(d => inv(d)), inv(week[3], { closedToDeparture: true })], '2026-11-01', '2026-11-04'), 0, 'CTD ngày đi')
+assert.equal(roomsLeft([inv(week[0], { closedToDeparture: true }), inv(week[1]), inv(week[2])], '2026-11-01', '2026-11-04'), 2, 'CTD chỉ xét ngày đi')
+assert.equal(roomsLeft(week.map(d => inv(d, { allotment: 1, booked: 2 })), '2026-11-01', '2026-11-04'), 0, 'bán quá (admin giảm allotment) → 0, không âm')
+const ratePlan = (id: string, rates: Record<string, number>) => ({ id, title: id, has_breakfast: true, rates })
+const offers = planOffers([ratePlan('bb', { [week[0]]: 2_000_000, [week[1]]: 2_500_000, [week[2]]: 3_000_000 }), ratePlan('ro', { [week[0]]: 1_000_000, [week[2]]: 1_000_000 })], '2026-11-01', '2026-11-04')
+assert.equal(offers.length, 1, 'gói thiếu giá một đêm → không bán')
+assert.equal(offers[0].total, 7_500_000)
+assert.deepEqual(offers[0].days_breakdown.map(d => d.price), [2_000_000, 2_500_000, 3_000_000])
+
+// --- admin: chọn ngày + sinh giá từ PricingRule ---
+assert.equal(weekdayOf('2026-10-12'), 1, '12/10/2026 là thứ Hai')
+assert.deepEqual(datesIn('2026-10-12', '2026-10-14'), ['2026-10-12', '2026-10-13', '2026-10-14'], 'gồm cả ngày cuối')
+assert.deepEqual(datesIn('2026-10-12', '2026-10-25', [5, 6]), ['2026-10-16', '2026-10-17', '2026-10-23', '2026-10-24'], 'T6 + T7')
+assert.deepEqual(datesIn('2026-10-14', '2026-10-12'), [], 'khoảng ngược')
+const rules: Rule[] = [
+  { startDate: '2026-10-01', endDate: '2026-12-31', weekdays: [5, 6], type: 'PERCENT', value: 20, priority: 1 },
+  { startDate: '2026-12-24', endDate: '2026-12-31', weekdays: [], type: 'FIXED', value: 3_500_000, priority: 5 },
+  { startDate: '2026-10-01', endDate: '2026-12-31', weekdays: [], type: 'PERCENT', value: -10, priority: 0 },
+]
+assert.equal(priceFromRules(rules, 2_720_000, '2026-10-13'), 2_448_000, 'ngày thường: -10%')
+assert.equal(priceFromRules(rules, 2_720_000, '2026-10-16'), 3_264_000, 'T6: +20% (priority cao hơn -10%)')
+assert.equal(priceFromRules(rules, 2_720_000, '2026-12-26'), 3_500_000, 'lễ: giá cố định thắng')
+assert.equal(priceFromRules(rules, 2_720_000, '2027-01-05'), 2_720_000, 'ngoài mọi rule → basePrice')
+assert.equal(priceFromRules(rules, null, '2027-01-05'), null, 'không rule, không basePrice → không ghi')
+assert.equal(priceFromRules(rules, null, '2026-10-13'), null, 'PERCENT thiếu basePrice → không ghi')
+assert.equal(priceFromRules(rules, null, '2026-12-26'), 3_500_000, 'FIXED không cần basePrice')
+assert.equal(priceFromRules([{ ...rules[0], type: 'PERCENT', value: -150, weekdays: [] }], 1_000_000, '2026-10-13'), 0, 'không ra giá âm')
 
 console.log('check: ok')

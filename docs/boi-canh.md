@@ -79,6 +79,7 @@ rootyhospitality.com: **1 web chung chứa tất cả khách sạn; mỗi khách
 1. **TourWell là bộ não của cả công ty** — thiết kế cho nhiều thương hiệu, pháp nhân, điểm đến.
 2. **Chia theo sản phẩm, không theo bộ phận**: bán phòng → Gohost; bán tour, tàu → TourWell; bất kể ai bán. Sales Rooty Trip bán combo có phòng → đặt phòng trên Gohost **như một đại lý**. Lễ tân khách sạn bán tour, tàu → bán trên TourWell.
 3. **Một chuẩn nhận diện chung**: một khách, một đại lý, một nguồn khách được nhận diện giống nhau ở cả 2 hệ thống. **Dữ liệu khách và giao dịch khách sạn luôn về TourWell. Tồn phòng chỉ nằm ở Gohost.**
+   - **12/10/2026 — đổi cho Hospitality** (anh Hoang Minh xác nhận): web Rooty tự giữ giá theo ngày + tồn phòng bán trên web; Gohost giữ phần bán OTA. Xem `docs/2026-10-12-booking-engine-db-phase0.md`. Cần CEO biết.
 
 ### Đổi được vs không đổi được
 - **Đổi được về sau**: Gohost (khách sạn là vệ tinh, đổi như đổi nhà cung cấp); nội dung trên website.

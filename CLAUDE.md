@@ -14,6 +14,7 @@ rooty-hospitality-web/
 │   ├── boi-canh.md               công ty, hệ thống đang chạy, tóm tắt chiến lược
 │   ├── review-v4-2026-10-06.md   review kiến trúc — đọc §0 trước
 │   ├── 2026-10-07-du-lieu-that-va-admin.md  dữ liệu thật từ Drive, mâu thuẫn cần KS xác nhận, GET Gohost nào dùng
+│   ├── 2026-10-12-booking-engine-db-phase0.md  hướng web tự chủ: schema, chia tồn web/OTA, kế hoạch phase
 │   ├── api-docs/
 │   │   ├── gohost-api.md                     Gohost Public API: endpoint, giới hạn, câu hỏi mở
 │   │   └── 2026-10-07-tinh-nang-gohost-api.md từng tính năng ↔ endpoint Gohost (✅/🟡/❌)
@@ -34,16 +35,23 @@ Pre-production, vi/en, giao diện theo rootytrip.com: `/` · `/hotel/[slug]` (P
 
 **Việc tiếp theo:** (1) KS xác nhận ánh xạ hạng phòng + sửa 3 cấu hình Gohost ở trên, (2) KS xác nhận 7 mâu thuẫn ở `docs/2026-10-07-du-lieu-that-va-admin.md`.
 
-## Ranh giới hệ thống — không đổi được
+## Hướng mới (12/10/2026) — web fullstack tự chủ
 
-| Dữ liệu | Nơi gốc | Web/admin Rooty |
+Anh Hoang Minh xác nhận 12/10/2026, thay hướng "web chỉ đọc Gohost" (review §0.3): **web Rooty tự quản giá theo ngày, tồn phòng bán trên web, sản phẩm (CRUD), booking và thanh toán**. Mục tiêu: Gohost dừng thì web vẫn bán được. Chi tiết + kế hoạch: `docs/2026-10-12-booking-engine-db-phase0.md`.
+
+| Dữ liệu | Nơi gốc | Ghi chú |
 |---|---|---|
-| Phòng, giá, tồn phòng, OTA, booking | **Gohost** | Chỉ đọc. Sửa giá/tồn → làm trong Gohost |
-| Nội dung KS: ảnh, mô tả, tiện ích, nhà hàng, chính sách, FAQ, bản dịch | **Rooty** (Gohost API không có) | Tạo/sửa — phần chính của admin |
-| Ánh xạ `slug` ↔ `tenant_id`, `room_type_id` ↔ nội dung phòng | **Rooty** | Tạo/sửa |
-| Khách, giao dịch, đại lý, báo cáo gộp | **TourWell** (bộ não chung) | Không tự làm CRM |
+| Bán OTA (Agoda, Booking.com…), channel manager | **Gohost** | Không tự xây channel manager |
+| Giá theo ngày, tồn phòng **bán trên web**, rate plan, khuyến mãi, booking web, thanh toán | **Postgres của Rooty** | Admin sửa (lịch giá) |
+| Nội dung KS, ảnh, chính sách, bản dịch | **Postgres của Rooty** (seed từ `src/content/`) | Admin CRUD |
+| Gohost API | **Tuỳ chọn** | Dùng chỗ có lợi (nhập giá ban đầu, đẩy booking web sang để OTA trừ tồn); thiếu Gohost web vẫn chạy |
+| Khách, giao dịch, đại lý, báo cáo gộp | **TourWell** (bộ não chung) | Không tự làm CRM; `User` chỉ là tài khoản đăng nhập |
 
-Không tự xây Rates / Inventory / Channel Manager / Agent Portal / Loyalty / AI (review §0, §6).
+Đổi nguyên tắc 3 của PDF chiến lược ("Tồn phòng chỉ nằm ở Gohost") cho mảng Hospitality — **cần CEO biết**. Rủi ro chính: web và OTA cùng bán một phòng → overbooking; cách chặn ở doc trên §3.
+
+Vẫn không tự xây: Channel Manager / Agent Portal / Loyalty / AI.
+
+Tiến độ: Phase 1 (schema, migration, seed) + Phase 2 (`DATA_SOURCE=db|gohost`, lịch giá 90 ngày, `yarn db:import-gohost`) + Phase 4a (admin: tab Lịch giá & tồn, Gói giá & chính sách — ghi qua `POST /api/admin/db`) + Phase 3 (đăng nhập Google, giữ phòng 15', cọc qua cổng giả lập, webhook, email — `src/lib/booking-engine.ts`, kiểm `yarn check:quote`, `yarn check:booking`) xong 12/10/2026, chạy trên Postgres **local** của anh Minh. Prod: chỉ làm sau khi anh test full luồng ở local.
 
 ## Nối Gohost API
 
@@ -57,11 +65,14 @@ Spec + giới hạn: `docs/api-docs/gohost-api.md`. Đợt pre-production **ch�
 
 ## Admin
 
-Đã chốt (07/10/2026): admin **chỉ xem**, nội dung + ánh xạ ID nằm trong `src/content/*.ts` (sửa bằng commit), **không database**. Màn: Tổng quan (dữ liệu thiếu/lệch) · Khách sạn (ánh xạ phòng, giá & phòng trống, nội dung, ảnh) · Booking (đọc từ Gohost, bỏ CCCD/ảnh giấy tờ). Đăng nhập ở `/admin/login` (`ADMIN_USER` / `ADMIN_PASSWORD`, phiên cookie httpOnly ký HMAC, `src/lib/admin-auth.ts`). Muốn sửa nội dung trong admin hay thêm CMS/DB → hỏi trước.
+~~Đã chốt (07/10/2026)~~ — thay bởi hướng 12/10/2026: admin có DB, CRUD sản phẩm + lịch giá/tồn. Cho tới khi Postgres chạy, admin cũ dưới đây vẫn là bản đang dùng.
+
+Bản cũ (07/10/2026): admin **chỉ xem**, nội dung + ánh xạ ID nằm trong `src/content/*.ts` (sửa bằng commit), **không database**. Màn: Tổng quan (dữ liệu thiếu/lệch) · Khách sạn (ánh xạ phòng, giá & phòng trống, nội dung, ảnh) · Booking (đọc từ Gohost, bỏ CCCD/ảnh giấy tờ). Đăng nhập ở `/admin/login` (`ADMIN_USER` / `ADMIN_PASSWORD`, phiên cookie httpOnly ký HMAC, `src/lib/admin-auth.ts`). Muốn sửa nội dung trong admin hay thêm CMS/DB → hỏi trước.
 
 ## Câu hỏi mở — hỏi, đừng đoán
 
-- Review §0.3 chọn nút "Đặt phòng" → web đặt phòng sẵn của Gohost. Tự gọi API cần Gohost **nâng rate limit** và **cấp property test**.
+- Chia tồn phòng giữa web và OTA (doc 12/10 §3) — chờ anh Minh chốt.
+- Đẩy booking web sang Gohost cần scope `bookings:write` + **property test**.
 - Booking tạo không kèm payment ở trạng thái gì, có giữ tồn trong 16 phút `auto_cancel` không: UNKNOWN.
 - `/hotel/{slug}` khác `/{slug}` trong chiến lược (D1) — chờ lãnh đạo duyệt.
 
