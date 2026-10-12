@@ -50,7 +50,7 @@ yarn check:booking      # trên DB thật: tranh phòng cuối, hết hạn, web
 
 ## Biến môi trường
 
-Danh sách đầy đủ + giải thích: `.env.example`. Tối thiểu cho `DATA_SOURCE=db`: `DATABASE_URL`, `AUTH_SECRET`, `ADMIN_USER`, `ADMIN_PASSWORD`; production thêm `AUTH_URL`, `RESEND_API_KEY`, `EMAIL_FROM`, `CRON_SECRET`, `PAYMENT_PROVIDER=mock` (tới khi có cổng thật), `UPLOAD_DIR` (nếu tải ảnh).
+Danh sách đầy đủ + giải thích: `.env.example`. Tối thiểu cho `DATA_SOURCE=db`: `DATABASE_URL`, `AUTH_SECRET`, `ADMIN_USER`, `ADMIN_PASSWORD`; production thêm `AUTH_URL`, `SMTP_USER`, `SMTP_PASS`, `CRON_SECRET`, `PAYMENT_PROVIDER=mock` (tới khi có cổng thật), `UPLOAD_DIR` (nếu tải ảnh).
 
 ## Deploy Render
 
@@ -62,7 +62,7 @@ Danh sách đầy đủ + giải thích: `.env.example`. Tối thiểu cho `DATA
 | Persistent Disk | Gắn vào vd `/var/data`, đặt `UPLOAD_DIR=/var/data/uploads` (ảnh admin tải lên; filesystem thường mất khi deploy) |
 | Cron Job | Mỗi 5 phút: `curl -fsS -X POST -H "Authorization: Bearer $CRON_SECRET" https://rootyhospitality.com/api/cron/expire-holds` |
 | Google OAuth | Redirect URI `https://rootyhospitality.com/api/auth/callback/google` |
-| Resend | Verify domain gửi (SPF/DKIM) cho `EMAIL_FROM` |
+| Email | `SMTP_USER` + `SMTP_PASS` (Gmail: mật khẩu ứng dụng, giới hạn ~500 email/ngày) |
 
 Lần đầu trên production: `yarn db:check` (đúng host/database?) → pre-deploy migrate → `yarn db:seed` (Render Shell) → nhập giá → set role ADMIN.
 
@@ -74,7 +74,7 @@ src/lib/pg.ts, db.ts                          kết nối (TimeZone=UTC, pool 5)
 src/lib/quote.ts, inventory.ts, pricing.ts    logic THUẦN: báo giá, tồn theo ngày, sinh giá từ quy tắc, phạt huỷ (kiểm bằng yarn test / check:quote)
 src/lib/booking-engine.ts                     lõi DB: giữ phòng (chống bán quá), thanh toán, webhook idempotent, hết hạn, huỷ, thu tiền, hoàn tiền
 src/lib/booking-rules.ts                      giả định nghiệp vụ chưa chốt (gom một chỗ)
-src/lib/payment.ts, email.ts, emails/         cổng thanh toán (interface + giả lập ký HMAC), email Resend + react-email
+src/lib/payment.ts, email.ts, emails/         cổng thanh toán (interface + giả lập ký HMAC), email Nodemailer (SMTP) + react-email
 src/auth.ts, src/lib/admin-actor.ts           đăng nhập Auth.js (Google + email/mã, phiên DB), quyền admin
 src/lib/*-commands.ts                         lệnh ghi admin (zod) dùng chung server / trình duyệt
 src/api/                                      cửa dữ liệu phía server, mỗi file một object: hotelApi, catalogApi (nội dung, cache 'catalog'),

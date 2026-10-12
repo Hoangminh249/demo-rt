@@ -13,7 +13,7 @@ import { newPaymentRef } from '../src/lib/payment'
 import { newPrisma } from '../src/lib/pg'
 
 try { process.loadEnvFile() } catch {}
-delete process.env.RESEND_API_KEY // email in ra console (EmailLog CONSOLE), không gửi thật
+delete process.env.SMTP_PASS // email in ra console (EmailLog CONSOLE), không gửi thật
 if (!process.env.DATABASE_URL) throw new Error('Thiếu DATABASE_URL')
 // Script tạo khách sạn / booking thử rồi xoá: không chạy lên DB chính (khác localhost) trừ khi cố ý đặt CHECK_BOOKING_REMOTE=1.
 if (!['localhost', '127.0.0.1', '[::1]'].includes(new URL(process.env.DATABASE_URL).hostname) && process.env.CHECK_BOOKING_REMOTE !== '1') {

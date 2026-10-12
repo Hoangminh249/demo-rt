@@ -1,10 +1,10 @@
-// Email đặt phòng (Resend + react-email). Gọi SAU KHI transaction đã commit; gửi lỗi không đụng tới booking,
-// chỉ ghi EmailLog (FAILED) để admin bấm "Gửi lại". Không có RESEND_API_KEY → in nội dung ra console (EmailLog CONSOLE).
+// Email đặt phòng (Nodemailer qua SMTP — mặc định Gmail + mật khẩu ứng dụng — + react-email). Gọi SAU KHI transaction đã commit;
+// gửi lỗi không đụng tới booking, chỉ ghi EmailLog (FAILED) để admin bấm "Gửi lại". Thiếu SMTP_USER/SMTP_PASS → in ra console (EmailLog CONSOLE).
 // Mỗi (booking, template) chỉ gửi một lần trừ khi force (nút "Gửi lại").
 // Email cho team khách sạn đi tới Hotel.notifyEmail (một hoặc nhiều địa chỉ, cách nhau dấu phẩy), Reply-To = email khách.
 import { createElement } from 'react'
 import { render } from '@react-email/components'
-import { Resend } from 'resend'
+import { createTransport } from 'nodemailer'
 import type { Prisma, PrismaClient } from '@/generated/prisma/client'
 import { BookingConfirmed } from '@/emails/booking-confirmed'
 import { BookingCancelled } from '@/emails/booking-cancelled'
@@ -38,7 +38,16 @@ const iso = (d: Date) => d.toISOString().slice(0, 10)
 const dm = (s: string) => `${s.slice(8, 10)}/${s.slice(5, 7)}`
 /** Gốc URL trong email (link tuyệt đối). Production: AUTH_URL. */
 const siteUrl = () => (process.env.AUTH_URL || 'http://localhost:3000').replace(/\/$/, '')
-const from = () => process.env.EMAIL_FROM || 'Rooty Hospitality <booking@rootyhospitality.com>'
+/** Gmail luôn ghi người gửi là tài khoản đăng nhập SMTP — chỉ đổi được tên hiển thị. */
+const from = () => process.env.EMAIL_FROM || `Rooty Hospitality <${process.env.SMTP_USER}>`
+export const emailConfigured = () => Boolean(process.env.SMTP_USER && process.env.SMTP_PASS)
+let transport: ReturnType<typeof createTransport> | undefined
+const smtp = () => transport ??= createTransport({
+  host: process.env.SMTP_HOST || 'smtp.gmail.com',
+  port: Number(process.env.SMTP_PORT || 465),
+  secure: Number(process.env.SMTP_PORT || 465) === 465,
+  auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+})
 const split = (list: string) => list.split(',').map(s => s.trim()).filter(Boolean)
 
 interface Snapshot {
@@ -79,14 +88,14 @@ async function load(db: PrismaClient, bookingId: string) {
 
 async function send(to: string[], subject: string, element: React.ReactElement, replyTo?: string) {
   const [html, text] = await Promise.all([render(element), render(element, { plainText: true })])
-  const key = process.env.RESEND_API_KEY
-  if (!key) {
+  if (!emailConfigured()) {
     console.info(`[email:console] → ${to.join(', ')}\nSubject: ${subject}\n${text}`)
     return { console: true as const }
   }
-  const { data, error } = await new Resend(key).emails.send({ from: from(), to, subject, html, text, ...(replyTo ? { replyTo } : {}) })
-  if (error) throw new Error(`${error.name}: ${error.message}`)
-  return { console: false as const, id: data?.id ?? null }
+  const info = await smtp().sendMail({ from: from(), to, subject, html, text, ...(replyTo ? { replyTo } : {}) })
+  const failed = [...info.rejected, ...(info.pending ?? [])].map(a => (typeof a === 'string' ? a : a.address))
+  if (failed.length) throw new Error(`Không gửi được tới: ${failed.join(', ')}`)
+  return { console: false as const, id: info.messageId ?? null }
 }
 
 async function deliver(db: Prisma.TransactionClient, bookingId: string, template: EmailTemplate, to: string[], subject: string, element: React.ReactElement, replyTo?: string) {
@@ -100,9 +109,9 @@ async function deliver(db: Prisma.TransactionClient, bookingId: string, template
   }
 }
 
-/** Mã đăng nhập (Auth.js gọi). Không có RESEND_API_KEY → in console (máy dev). Gửi lỗi → ném lỗi để màn đăng nhập báo. */
+/** Mã đăng nhập (Auth.js gọi). Chưa cấu hình SMTP → in console (máy dev). Gửi lỗi → ném lỗi để màn đăng nhập báo. */
 export async function sendLoginCode(to: string, code: string, minutes: number) {
-  if (!process.env.RESEND_API_KEY) {
+  if (!emailConfigured()) {
     console.info(`[email:console] Mã đăng nhập → ${to}: ${code} (hiệu lực ${minutes} phút)`)
     return
   }

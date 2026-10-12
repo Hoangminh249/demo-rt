@@ -166,7 +166,7 @@ async function run(cmd: ParsedCatalogCommand): Promise<{ message: string; remove
           if (!h.notifyEmail) throw new AdminError(409, 'Chưa lưu email team — nhập rồi bấm Lưu trước.')
           const r = await sendTestNotice(h.notifyEmail, h.name)
           if (!r.ok) throw new AdminError(502, `Gửi không được: ${r.error}`)
-          return { message: r.console ? `Chưa có RESEND_API_KEY: nội dung in ra console của server (tới ${h.notifyEmail}).` : `Đã gửi email thử tới ${h.notifyEmail}.` }
+          return { message: r.console ? `Chưa cấu hình SMTP_USER/SMTP_PASS: nội dung in ra console của server (tới ${h.notifyEmail}).` : `Đã gửi email thử tới ${h.notifyEmail}.` }
         }
 
         case 'roomType.save': {

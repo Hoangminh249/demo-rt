@@ -6,10 +6,9 @@
 import { randomInt } from 'node:crypto'
 import NextAuth, { type DefaultSession } from 'next-auth'
 import Google from 'next-auth/providers/google'
-import Resend from 'next-auth/providers/resend'
 import { PrismaAdapter } from '@auth/prisma-adapter'
 import { db } from '@/lib/db'
-import { sendLoginCode } from '@/lib/email'
+import { emailConfigured, sendLoginCode } from '@/lib/email'
 
 export type Role = 'CUSTOMER' | 'STAFF' | 'ADMIN'
 
@@ -32,15 +31,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth(() => ({
   adapter: PrismaAdapter(db() as unknown as Parameters<typeof PrismaAdapter>[0]),
   providers: [
     ...(googleConfigured() ? [Google] : []),
-    Resend({
+    // Provider email tự khai (không dùng factory của Auth.js): gửi mã qua src/lib/email.ts, chưa cấu hình SMTP thì in console.
+    {
       id: EMAIL_PROVIDER,
+      type: 'email',
       name: 'Email',
-      apiKey: process.env.RESEND_API_KEY || 'console', // không dùng: tự gửi ở sendVerificationRequest (không key thì in console)
-      from: process.env.EMAIL_FROM,
       maxAge: LOGIN_CODE_MINUTES * 60,
       generateVerificationToken: () => String(randomInt(0, 1_000_000)).padStart(6, '0'),
       sendVerificationRequest: ({ identifier, token }) => sendLoginCode(identifier, token, LOGIN_CODE_MINUTES),
-    }),
+      options: {},
+    },
   ],
   session: { strategy: 'database' },
   trustHost: true,
@@ -64,10 +64,10 @@ export async function currentUser() {
 }
 
 /**
- * Đăng nhập dùng được chưa: cần AUTH_SECRET + DB; production cần thêm cách nhận mã (RESEND_API_KEY) hoặc Google.
- * Máy dev không có RESEND_API_KEY thì mã in ra console của `yarn dev`.
+ * Đăng nhập dùng được chưa: cần AUTH_SECRET + DB; production cần thêm cách nhận mã (SMTP_USER/SMTP_PASS) hoặc Google.
+ * Máy dev chưa cấu hình SMTP thì mã in ra console của `yarn dev`.
  */
 export const authConfigured = () => Boolean(
   process.env.AUTH_SECRET && process.env.DATABASE_URL &&
-  (googleConfigured() || process.env.RESEND_API_KEY || process.env.NODE_ENV !== 'production'),
+  (googleConfigured() || emailConfigured() || process.env.NODE_ENV !== 'production'),
 )

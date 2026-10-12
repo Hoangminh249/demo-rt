@@ -17,7 +17,7 @@ Chỉ khảo sát + kế hoạch. **Chưa cài gói, chưa viết code, chưa k�
 | Node / Next | 24.21.0 / 16.3.8 (middleware = `src/proxy.ts`) |
 | Prisma | chưa cài. dist-tag `latest` của `prisma` = `8.0.0-rc.22` (RC!) → ghim `prisma@7.10.0`, `@prisma/client@7.10.0`, `@prisma/adapter-pg@7.10.0` + `pg`. Engines Node ✅ |
 | Auth.js | `next-auth@5.0.0-beta.32` (peer `next ^16` ✅), `@auth/prisma-adapter@2.11.3` (peer `@prisma/client >=6` ✅) |
-| Khác | `zod@4.6.6`, `resend@6.32.1`, `@react-email/components@1.0.12`, `tsx` đã có |
+| Khác | `zod@4.6.6`, `nodemailer@8.0.11` (thay resend 12/10/2026), `@react-email/components@1.0.12`, `tsx` đã có |
 | Prisma 7 | `prisma.config.ts`, generator `prisma-client` bắt buộc `output`, driver adapter, seed khai trong `prisma.config.ts`, `migrate diff --from-empty --to-schema … --script` — **INFERRED, kiểm `--help` sau khi cài** |
 
 ## 3. Rủi ro số 1: web và OTA bán trùng một phòng
@@ -182,7 +182,7 @@ Luồng (DATA_SOURCE=db): trang KS → chọn phòng → `/dat-phong` (bắt đ�
 | Giả định chưa chốt (trẻ miễn phụ thu < 6 tuổi, ≤ 5 phòng, ≤ 3 booking chờ/khách, tiền về muộn, báo KS) | `src/lib/booking-rules.ts` |
 | Lõi DB: giữ phòng, thanh toán, webhook, hết hạn, huỷ | `src/lib/booking-engine.ts` · kiểm `yarn check:booking` (DB thật, tự dọn) |
 | Cổng thanh toán (interface + giả lập ký HMAC) | `src/lib/payment.ts` |
-| Email (Resend + react-email, EmailLog, không gửi trùng) | `src/lib/email.ts`, `src/emails/*` |
+| Email (Nodemailer SMTP + react-email, EmailLog, không gửi trùng) | `src/lib/email.ts`, `src/emails/*` |
 | Đăng nhập Google (Auth.js v5, phiên DB, khởi tạo lười) | `src/auth.ts`, `/api/auth/*` |
 | Server + route | `src/api/booking.ts`, `/api/bookings/*`, `/api/payments/*`, `/api/cron/expire-holds` |
 | UI | `components/booking/live*.tsx`, `guest-form.tsx` (prop `live`), 3 trang `/dat-phong/*`, `/thanh-toan-gia-lap` |

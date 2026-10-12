@@ -110,7 +110,7 @@ enum RefundStatus {
 enum EmailStatus {
   SENT
   FAILED
-  CONSOLE // không có RESEND_API_KEY → chỉ log ra console
+  CONSOLE // chưa cấu hình SMTP → chỉ log ra console
 }
 
 enum ReviewStatus {
