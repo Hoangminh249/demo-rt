@@ -14,6 +14,14 @@ GRANT CONNECT ON DATABASE hospitality TO hospitality_app;
 - Postgres 15+: user là chủ database nên tạo bảng trong `public` được. Kiểm bằng `yarn db:check` (dòng "Tạo bảng public: CÓ").
 - Mật khẩu có ký tự `@ : / # ?` thì phải mã hoá URL trong `DATABASE_URL` — dễ nhất là chỉ dùng chữ + số.
 
+## 1b. Dùng chung database với dự án khác (prod: `crm_pl30` trên Render)
+
+Bảng của web nằm trong schema riêng `hospitality`, không đụng schema của dự án khác (`crm`, `b2b_dev`, `public`). Chỉ cần thêm `schema=hospitality` vào `DATABASE_URL`:
+
+- `prisma migrate deploy` đọc tham số này → tạo schema (nếu chưa có) + bảng + `_prisma_migrations` trong đó.
+- App, seed, script: `src/lib/pg.ts` đặt schema cho Prisma và `search_path` cho SQL tay.
+- `yarn db:check` in schema đích, các schema khác trong database, schema đích rỗng không.
+
 ## 2. `DATABASE_URL`
 
 ```
@@ -21,6 +29,7 @@ postgresql://hospitality_app:<mật khẩu>@<host>:5432/hospitality?sslmode=requ
 ```
 
 - Máy dev (Postgres cài trên máy): bỏ `?sslmode=require`, host `localhost`.
+- Prod (crm_pl30): `…/crm_pl30?sslmode=require&schema=hospitality`.
 - Render Postgres: dùng **Internal Database URL** cho web service cùng region (nhanh, không ra internet); thêm `?sslmode=require` khi dùng External URL.
 - Số kết nối mỗi tiến trình đặt trong code (`src/lib/pg.ts`, pool `max: 5`) — tham số `connection_limit` trên URL không có tác dụng với driver `pg`.
 - Mọi kết nối đặt `TimeZone=UTC` (code tự làm) vì Prisma lưu giờ UTC không kèm múi giờ.

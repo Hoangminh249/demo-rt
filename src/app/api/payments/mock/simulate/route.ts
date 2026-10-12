@@ -3,10 +3,10 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { bookingApi } from '@/api/booking'
 import { currentUser } from '@/auth'
-import { paymentProvider } from '@/lib/payment'
+import { mockPayments } from '@/lib/payment'
 
 export async function POST(req: NextRequest) {
-  if (paymentProvider().name !== 'mock') return NextResponse.json({ error: 'NOT_FOUND' }, { status: 404 })
+  if (!mockPayments()) return NextResponse.json({ error: 'NOT_FOUND' }, { status: 404 })
   const user = await currentUser()
   if (!user) return NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 })
   const f = await req.formData()

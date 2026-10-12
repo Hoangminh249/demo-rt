@@ -71,4 +71,27 @@ export interface LiveBooking {
   holdExpiresAt: string | null
   needsRefund: boolean
   lastPaymentFailed: boolean
+  createdAt: string
+  /** Giá từng đêm đã chốt lúc đặt (cả booking: giá × số phòng + phụ thu). */
+  nights: { date: string; total: number }[]
+  checkInTime: string; checkOutTime: string
+  hotelContact: { phone: string | null; zalo: string | null }
+  contact: { name: string; phone: string; email: string; guestName: string | null; specialRequests: string | null }
+  /** Chính sách huỷ lúc đặt + tiền phạt nếu huỷ ngay bây giờ (null = không huỷ được nữa). */
+  cancel: { text: string; tiers: { daysBefore: number; penaltyPercent: number }[]; noShowPercent: number; refundable: boolean; now: { penalty: number; refund: number } | null }
+  /** Lần thanh toán thành công gần nhất. */
+  payment: { method: 'bank' | 'onepay' | null; ref: string; paidAt: string } | null
+  cancelledAt: string | null
+}
+
+/** Một dòng ở trang "Đơn của tôi". */
+export interface MyBooking {
+  code: string
+  status: LiveBooking['status']
+  hotel: { slug: string; name: string }
+  room: string; planName: string; rooms: number
+  checkIn: string; checkOut: string; adults: number; children: number
+  total: number; paidAmount: number
+  holdExpiresAt: string | null
+  needsRefund: boolean
 }

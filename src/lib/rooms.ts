@@ -38,5 +38,13 @@ export function mergeRooms(rooms: Room[], avail: RoomAvailability[], stay: Pick<
   })
 }
 
-/** Giá trung bình/đêm của một gói, làm tròn nghìn đồng. */
-export const nightly = (p: PlanOffer) => (p.days_breakdown.length ? Math.round(p.total / p.days_breakdown.length / 1000) * 1000 : p.total)
+
+/** Gộp các đêm liền nhau cùng giá (days_breakdown đã liên tục theo ngày): 30 đêm thường chỉ còn vài dòng. */
+export function priceRuns(days: { day: string; price: number }[]) {
+  const runs: { from: string; to: string; price: number; nights: number }[] = []
+  for (const d of days) {
+    const last = runs.at(-1)
+    if (last?.price === d.price) { last.to = d.day; last.nights++ } else runs.push({ from: d.day, to: d.day, price: d.price, nights: 1 })
+  }
+  return runs
+}

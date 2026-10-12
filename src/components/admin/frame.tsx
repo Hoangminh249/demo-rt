@@ -19,10 +19,10 @@ import { SIDEBAR_COOKIE } from './ui'
 export interface FrameHotel { slug: string; name: string }
 export interface FrameActor { name: string; role: 'ADMIN' | 'STAFF' }
 
-/** Trang + tiêu đề header. `db`: chỉ có khi DATA_SOURCE=db. `admin`: chỉ ADMIN (STAFF chỉ xem booking, check-in/out). */
+/** Trang + tiêu đề header. `db`: true = chỉ khi DATA_SOURCE=db, false = chỉ bản cũ (Gohost). `admin`: chỉ ADMIN (STAFF chỉ xem booking, check-in/out). */
 const PAGES = [
   { href: '/admin/orders', label: 'Đặt phòng web', icon: ReceiptText, db: true, admin: false },
-  { href: '/admin/bookings', label: 'Booking Gohost', icon: CalendarCheck, db: false, admin: false },
+  { href: '/admin/bookings', label: 'Booking', icon: CalendarCheck, db: false, admin: false },
   { href: '/admin/promotions', label: 'Khuyến mãi', icon: TicketPercent, db: true, admin: true },
   { href: '/admin/amenities', label: 'Tiện ích', icon: Sparkles, db: true, admin: true },
   { href: '/admin/users', label: 'Người dùng', icon: Users, db: true, admin: true },
@@ -148,8 +148,8 @@ function SidebarBody({ hotels, pathname, collapsed, actor, db }: { hotels: Frame
       <nav aria-label="Admin" className={cn('flex flex-1 flex-col gap-1 overflow-x-hidden overflow-y-auto px-3 py-3', collapsed && '[scrollbar-width:none]')}>
         {admin && <NavItem href="/admin" icon={LayoutDashboard} label="Tổng quan" active={pathname === '/admin'} collapsed={collapsed} count={data?.issues.length} />}
         {admin && <HotelsGroup hotels={hotels} pathname={pathname} collapsed={collapsed} db={db} />}
-        {PAGES.filter(p => (!p.db || db) && (!p.admin || admin)).map(p => (
-          <NavItem key={p.href} href={p.href} icon={p.icon} label={!db && p.href === '/admin/bookings' ? 'Booking' : p.label} active={pathname.startsWith(p.href)} collapsed={collapsed} />
+        {PAGES.filter(p => p.db === db && (!p.admin || admin)).map(p => (
+          <NavItem key={p.href} href={p.href} icon={p.icon} label={p.label} active={pathname.startsWith(p.href)} collapsed={collapsed} />
         ))}
       </nav>
       <div className="shrink-0 px-3 pb-3">

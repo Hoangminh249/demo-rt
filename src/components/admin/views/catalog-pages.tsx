@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { ChevronDown, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge, CARD, Empty, Skel, vnd } from '@/components/admin/ui'
-import { Field, INPUT, LInput, Notice } from '@/components/admin/form'
+import { Field, INPUT, LInput, Notice, slugify } from '@/components/admin/form'
 import { adminErrorText, useAdminAmenities, useAdminPromotions, useAdminUsers, useAdminWrite } from '@/hooks/use-admin'
 import { ICON_KEYS } from '@/lib/catalog-commands'
 import type { AdminAmenity, AdminPromotion, AdminPromotions } from '@/types/admin'
@@ -35,7 +35,6 @@ export function NewHotelView() {
   const router = useRouter()
   const write = useAdminWrite()
   const [v, setV] = useState({ name: '', slug: '', code: '' })
-  const slugify = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/gi, 'd').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
   function submit(e: FormEvent) {
     e.preventDefault()
     write.mutate({ op: 'hotel.create', ...v }, { onSuccess: () => router.push(`/admin/hotels/${v.slug}?tab=thong-tin`) })

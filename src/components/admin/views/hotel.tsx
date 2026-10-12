@@ -1,7 +1,8 @@
 'use client'
-// Khách sạn (wireframe A · "Đầu trang + 4 tab"): tab đầu là ánh xạ hạng phòng Gohost ↔ nội dung (có nút chép ID),
-// sau đó Giá & phòng trống (cùng lời gọi web đang dùng), Nội dung (VI/EN), Ảnh — 4 tab này chỉ xem (sửa ở src/content hoặc trong Gohost).
-// Hai tab cuối ghi Postgres của Rooty: Lịch giá & tồn (views/rates.tsx), Gói giá & chính sách (views/plans.tsx).
+// Trang một khách sạn trong admin.
+// · DATA_SOURCE=db (DbHotelView): 4 tab theo mức dùng — Giá & phòng trống (views/rates.tsx) · Hạng phòng · Thông tin khách sạn
+//   (views/catalog.tsx) · Cài đặt (chính sách huỷ/cọc, thông số kỹ thuật, kết nối Gohost chỉ xem, xoá). Link ?tab= cũ được đổi sang tab mới.
+// · Nguồn gohost (FileHotelView, bản cũ — wireframe A): Phòng & ánh xạ · Giá & phòng trống (GET Gohost) · Nội dung · Ảnh, chỉ xem.
 import type { FormEvent } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -12,19 +13,18 @@ import { ConnectBadge } from '@/components/admin/status'
 import { CopyId } from '@/components/admin/copy-id'
 import { DateRangeInput } from '@/components/admin/date-range'
 import { Badge, CARD, Empty, GohostError, LoadFailed, Photo, Skel, shortVnd, vndPlain } from '@/components/admin/ui'
-import { fmtDayMonth, today } from '@/lib/format'
+import { fmtDate, fmtDayMonth, today } from '@/lib/format'
 import { defaultStay, firstCheckin, validRange } from '@/lib/stay'
-import { useAdminAvailability, useAdminHotel } from '@/hooks/use-admin'
-import { RatesPanel } from './rates'
-import { InfoPanel, PhotosEditPanel, RoomTypesPanel } from './catalog'
-import { PlansPanel } from './plans'
+import { useAdminAvailability, useAdminHotel, useAdminHotelEdit } from '@/hooks/use-admin'
+import { DbFailed, RatesPanel } from './rates'
+import { DangerPanel, InfoPanel, RoomTypesPanel, SectionLayout, STATUS_TEXT, statusTone, TechPanel } from './catalog'
+import { PoliciesPanel } from './plans'
 import type { AdminHotel } from '@/types/admin'
 import type { HotelCheck } from '@/types/admin'
 
-// [id, nhãn, nhãn dưới sm]. Nguồn gohost: 4 tab chỉ xem (nội dung đọc file). Nguồn db: sản phẩm + giá/tồn sửa được, Gohost để đối chiếu.
+// [id, nhãn, nhãn dưới sm].
 const TABS_FILE = [['phong', 'Phòng & ánh xạ', 'Phòng'], ['gia', 'Giá & phòng trống', 'Giá'], ['noi-dung', 'Nội dung', 'Nội dung'], ['anh', 'Ảnh', 'Ảnh']] as const
-const TABS_DB = [['thong-tin', 'Thông tin', 'Thông tin'], ['hang-phong', 'Hạng phòng', 'Phòng'], ['anh-ks', 'Ảnh', 'Ảnh'], ['lich', 'Lịch giá & tồn', 'Lịch'], ['goi', 'Gói giá & chính sách', 'Gói'], ['phong', 'Ánh xạ Gohost', 'Gohost'], ['gia', 'Giá Gohost', 'Giá GH']] as const
-type Tab = (typeof TABS_FILE)[number][0] | (typeof TABS_DB)[number][0]
+type Tab = (typeof TABS_FILE)[number][0]
 
 // ---------- Tab Phòng & ánh xạ ----------
 type GhRoom = HotelCheck['ghRooms'][number]
@@ -231,11 +231,98 @@ function Loading() {
   )
 }
 
-export function HotelView({ slug, db }: { slug: string; db: boolean }) {
+function TabBar<T extends string>({ tabs, tab, counts }: { tabs: readonly (readonly [T, string, string])[]; tab: T; counts?: Partial<Record<T, number>> }) {
+  return (
+    <div role="tablist" aria-label="Phần của khách sạn" className="flex min-w-full gap-2 overflow-x-auto shadow-[inset_0_-1px_0_var(--tab-rail)]">
+      {tabs.map(([id, label, short]) => {
+        const sel = tab === id
+        return (
+          <Link key={id} href={`?tab=${id}`} scroll={false} role="tab" aria-selected={sel}
+            className={cn('relative box-content inline-flex h-11 shrink-0 items-center gap-1.5 rounded-xl px-2 pb-px text-[15px] font-medium whitespace-nowrap after:absolute after:inset-x-2 after:bottom-0 after:h-0.5 after:rounded-full',
+              sel ? 'text-foreground after:bg-foreground' : 'text-foreground/70 after:bg-transparent hover:text-foreground')}>
+            <span className="sm:hidden">{short}</span><span className="hidden sm:inline">{label}</span>
+            {counts?.[id] != null && <span className="text-xs font-normal text-foreground/70 tabular-nums">{counts[id]}</span>}
+          </Link>
+        )
+      })}
+    </div>
+  )
+}
+
+// ---------- DATA_SOURCE=db ----------
+
+const TABS_DB = [['lich', 'Giá & phòng trống', 'Giá'], ['hang-phong', 'Hạng phòng', 'Phòng'], ['thong-tin', 'Thông tin khách sạn', 'Thông tin'], ['cai-dat', 'Cài đặt', 'Cài đặt']] as const
+type DbTab = (typeof TABS_DB)[number][0]
+/** Tab cũ (link trong Tổng quan, bookmark) → tab mới. */
+const OLD_TAB: Record<string, DbTab> = { gia: 'lich', goi: 'hang-phong', anh: 'thong-tin', 'anh-ks': 'thong-tin', 'noi-dung': 'thong-tin', phong: 'cai-dat' }
+const SETTING_SECS = [['chinh-sach', 'Chính sách huỷ & cọc'], ['ky-thuat', 'Thông số kỹ thuật'], ['gohost', 'Kết nối Gohost'], ['xoa', 'Xoá khách sạn']] as const
+
+/** Ánh xạ Gohost chỉ xem (đối chiếu ID khi cần nhập giá từ Gohost). Chỉ gọi Gohost khi mở mục này. */
+function GohostSection({ slug }: { slug: string }) {
+  const { data, isPending, isError, refetch } = useAdminHotel(slug)
+  if (isPending) return <div className={`${CARD} grid gap-3 p-5`}>{[0, 1, 2].map(i => <Skel key={i} className="h-10" />)}</div>
+  if (isError || !data) return <LoadFailed onRetry={() => refetch()} />
+  return (
+    <>
+      <p className="text-[13px] text-pretty text-muted-foreground">Web bán độc lập bằng giá và tồn trong Postgres. Bảng này chỉ để đối chiếu hạng phòng trên Gohost (bán OTA) khi cần nhập giá bằng <code>yarn db:import-gohost</code>.</p>
+      {data.error && <GohostError code={data.error} />}
+      <div className="flex items-center gap-2"><ConnectBadge state={data.check.state} /></div>
+      <section className={`${CARD} overflow-hidden`}><MapPanel c={data.check} file="mục Thông số kỹ thuật (khách sạn) / Nâng cao (hạng phòng)" properties={data.properties} /></section>
+    </>
+  )
+}
+
+function SettingsPanel({ slug }: { slug: string }) {
+  const sp = useSearchParams()
+  const s = sp.get('sec') ?? (sp.get('tab') === 'phong' ? 'gohost' : null)
+  const sec = SETTING_SECS.find(([id]) => id === s)?.[0] ?? SETTING_SECS[0][0]
+  return (
+    <SectionLayout items={SETTING_SECS} value={sec} title={SETTING_SECS.find(([id]) => id === sec)![1]}>
+      {sec === 'chinh-sach' && <PoliciesPanel slug={slug} />}
+      {sec === 'ky-thuat' && <TechPanel slug={slug} />}
+      {sec === 'gohost' && <GohostSection slug={slug} />}
+      {sec === 'xoa' && <DangerPanel slug={slug} />}
+    </SectionLayout>
+  )
+}
+
+function DbHotelView({ slug }: { slug: string }) {
+  const tabParam = useSearchParams().get('tab') ?? ''
+  const tab: DbTab = TABS_DB.find(([id]) => id === tabParam)?.[0] ?? OLD_TAB[tabParam] ?? 'lich'
+  const { data, isPending, isError, error, refetch } = useAdminHotelEdit(slug)
+  if (isPending) return <div className="max-w-site"><Loading /></div>
+  if (isError || !data) return <div className="max-w-site"><DbFailed error={error} onRetry={() => refetch()} /></div>
+  const h = data.hotel
+  const opening = h.openingDate && h.openingDate > today() ? `Khai trương ${fmtDate(h.openingDate)}` : null
+  return (
+    <div className="max-w-site">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-xl font-semibold text-balance">{h.name}</h1>
+          <div className="mt-1.5 flex flex-wrap items-center gap-2">
+            <Badge tone={statusTone(h.status)}>{STATUS_TEXT[h.status]}</Badge>
+            <span className="text-sm text-muted-foreground">{[h.area.vi, `${data.roomTypes.length} hạng phòng`, opening].filter(Boolean).join(' · ')}</span>
+          </div>
+        </div>
+        {h.status === 'PUBLISHED' && <a href={`/hotel/${slug}`} target="_blank" rel="noopener" className={buttonVariants({ variant: 'outline' })}><ExternalLink aria-hidden />Xem trên web</a>}
+      </div>
+      <div className="mt-5"><TabBar tabs={TABS_DB} tab={tab} counts={{ 'hang-phong': data.roomTypes.length }} /></div>
+      <div className="mt-5">
+        {tab === 'lich' && <RatesPanel slug={slug} />}
+        {tab === 'hang-phong' && <RoomTypesPanel slug={slug} />}
+        {tab === 'thong-tin' && <InfoPanel slug={slug} />}
+        {tab === 'cai-dat' && <SettingsPanel slug={slug} />}
+      </div>
+    </div>
+  )
+}
+
+// ---------- Nguồn gohost (bản cũ, chỉ xem) ----------
+
+function FileHotelView({ slug }: { slug: string }) {
   const sp = useSearchParams()
   const tabParam = sp.get('tab')
-  const TABS: readonly (readonly [Tab, string, string])[] = db ? TABS_DB : TABS_FILE
-  const tab: Tab = TABS.some(([id]) => id === tabParam) ? (tabParam as Tab) : TABS[0][0]
+  const tab: Tab = TABS_FILE.find(([id]) => id === tabParam)?.[0] ?? TABS_FILE[0][0]
   const { data, isPending, isError, refetch } = useAdminHotel(slug)
   if (isPending) return <div className="max-w-site"><Loading /></div>
   if (isError || !data) return <div className="max-w-site"><LoadFailed onRetry={() => refetch()} /></div>
@@ -256,32 +343,17 @@ export function HotelView({ slug, db }: { slug: string; db: boolean }) {
         <div className="flex shrink-0 gap-2"><a href={`/hotel/${slug}`} target="_blank" rel="noopener" className={buttonVariants()}><ExternalLink aria-hidden />Xem trên web</a></div>
       </div>
       {error && <div className="mt-4"><GohostError code={error} /></div>}
-      <div className="mt-5">
-        <div role="tablist" aria-label="Phần của khách sạn" className="flex min-w-full gap-2 overflow-x-auto shadow-[inset_0_-1px_0_var(--tab-rail)]">
-          {TABS.map(([id, label, short]) => {
-            const sel = tab === id
-            return (
-              <Link key={id} href={`?tab=${id}`} scroll={false} role="tab" aria-selected={sel}
-                className={cn('relative box-content inline-flex h-10 shrink-0 items-center gap-1.5 rounded-xl px-2 pb-px text-sm font-medium whitespace-nowrap after:absolute after:inset-x-2 after:bottom-0 after:h-0.5 after:rounded-full',
-                  sel ? 'text-foreground after:bg-foreground' : 'text-foreground/70 after:bg-transparent hover:text-foreground')}>
-                <span className="sm:hidden">{short}</span><span className="hidden sm:inline">{label}</span>
-                {counts[id] != null && <span className="text-xs font-normal text-foreground/70 tabular-nums">{counts[id]}</span>}
-              </Link>
-            )
-          })}
-        </div>
-      </div>
+      <div className="mt-5"><TabBar tabs={TABS_FILE} tab={tab} counts={counts} /></div>
       <div className="mt-4">
         {tab === 'phong' && <section className={`${CARD} overflow-hidden`}><MapPanel c={c} file={file} properties={properties} /></section>}
         {tab === 'gia' && <PricePanel c={c} opening={data.content.opening} />}
         {tab === 'noi-dung' && <ContentPanel data={data} file={file} />}
         {tab === 'anh' && <PhotoPanel c={c} />}
-        {tab === 'thong-tin' && <InfoPanel slug={slug} />}
-        {tab === 'hang-phong' && <RoomTypesPanel slug={slug} />}
-        {tab === 'anh-ks' && <PhotosEditPanel slug={slug} />}
-        {tab === 'lich' && <RatesPanel slug={slug} />}
-        {tab === 'goi' && <PlansPanel slug={slug} />}
       </div>
     </div>
   )
+}
+
+export function HotelView({ slug, db }: { slug: string; db: boolean }) {
+  return db ? <DbHotelView slug={slug} /> : <FileHotelView slug={slug} />
 }

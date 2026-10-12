@@ -10,8 +10,9 @@ import { useSearchParams } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 import { CalendarDays, CalendarX, Check, ChevronLeft, ChevronRight, Coffee, Eye, Info, Mail, Maximize2, MessageCircle, Phone, RotateCw, Sparkles, Users, WifiOff, X, type LucideIcon } from 'lucide-react'
 import { cn } from 'cn'
-import { diffDays, fmtPrice, fmtRange, today } from '@/lib/format'
-import { mergeRooms, nightly, type RoomOffer } from '@/lib/rooms'
+import { diffDays, fmtDayMonth, fmtPrice, fmtRange, fmtWeekday, today } from '@/lib/format'
+import { mergeRooms, priceRuns, type RoomOffer } from '@/lib/rooms'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import type { IconKey } from '@/types/global'
 import type { Contact, PlanOffer, Room, RoomAvailability, Stay } from '@/types/hotel'
 import { useRoomAvailability } from '@/hooks/use-rooms'
@@ -25,7 +26,7 @@ import { Link } from '@/i18n/navigation'
 import { useStay } from './use-stay'
 
 export interface RoomsHotel {
-  slug: string; name: string; online: boolean; calendar: boolean; opening: string | null; cancel_summary: string
+  slug: string; name: string; online: boolean; opening: string | null; cancel_summary: string
   included: { icon: IconKey; label: string; desc?: string }[]; not_available: string[]
   checkin: string; checkout: string // 2 dòng đầu chính sách khách sạn (src/content luôn mở đầu bằng Nhận phòng, Trả phòng)
 }
@@ -128,7 +129,7 @@ export function Rooms({ hotel, rooms, contact }: { hotel: RoomsHotel; rooms: Roo
 
       <Dialog open={editing} onClose={() => setEditing(false)} title={t('Rooms.change')}>
         <div className="grid gap-4">
-          <DateRangeField id="rooms-dates" stay={stay} min={firstCheckin(today(), hotel.opening)} onChange={setStay} prices={hotel.calendar ? hotel.slug : undefined} />
+          <DateRangeField id="rooms-dates" stay={stay} min={firstCheckin(today(), hotel.opening)} onChange={setStay} />
           <GuestsField id="rooms-guests" stay={stay} onChange={setStay} />
         </div>
         <button type="button" onClick={() => setEditing(false)} className={`${BTN} mt-5 w-full`}>{t('Common.seeRooms')}</button>
@@ -161,6 +162,57 @@ function Slides({ room, i, setI, onOpen, sizes, className, children }: { room: R
   )
 }
 
+/** Giá từng đêm của gói, đêm liền nhau cùng giá gộp một dòng ("12/10 – 13/10 · 2 đêm · đ 3,500,000/đêm").
+ *  Giá mỗi đêm có thể khác nhau nên tổng là cộng từng đêm, không phải giá × số đêm. Cao tối đa ~7 dòng, dài hơn thì cuộn. */
+function NightPrices({ p, className }: { p: PlanOffer; className?: string }) {
+  const t = useTranslations('Common')
+  const locale = useLocale()
+  return (
+    <dl className={cn('grid max-h-64 gap-2.5 overflow-y-auto text-[14px] tabular-nums', className)}>
+      {priceRuns(p.days_breakdown).map(r => (
+        <div key={r.from} className="flex items-baseline justify-between gap-3">
+          <dt className="min-w-0">
+            {r.nights > 1 ? `${fmtDayMonth(r.from, locale)} – ${fmtDayMonth(r.to, locale)}` : `${fmtWeekday(r.from, locale)}, ${fmtDayMonth(r.from, locale)}`}
+            <span className="text-muted-foreground"> · {t('nights', { n: r.nights })}</span>
+          </dt>
+          <dd className="whitespace-nowrap">{fmtPrice(r.price)}<span className="text-[12px] text-muted-foreground">{t('perNight')}</span></dd>
+        </div>
+      ))}
+    </dl>
+  )
+}
+
+/** Một gói giá trên thẻ phòng: tổng tiền cả kỳ ở; "Chi tiết giá" bật ô nổi giá từng đêm (không đẩy dài thẻ). */
+function PlanRow({ p, nights, href }: { p: PlanOffer; nights: string; href: string }) {
+  const t = useTranslations()
+  return (
+    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-5 gap-y-3 border-b border-border/70 px-5 py-4 last:border-b-0 @lg:grid-cols-[minmax(0,1fr)_auto_auto] sm:px-6">
+      <p className="min-w-0 text-[15px] font-semibold">
+        {p.title}
+        {/* Chỉ ghi ăn sáng khi Gohost bật has_breakfast (PITO: Gohost tắt, PDF ghi có) — "Đã gồm" trong dialog theo tài liệu khách sạn. */}
+        {p.has_breakfast && <span className="mt-0.5 flex items-center gap-1 text-[12px] font-normal text-muted-foreground"><Coffee className="size-3" aria-hidden />{t('Rooms.breakfast')}</span>}
+      </p>
+      <div className="text-right tabular-nums">
+        <span className="block text-[12px] text-muted-foreground">{t('Rooms.totalFor', { nights })}</span>
+        <b className="text-[18px] font-bold whitespace-nowrap">{fmtPrice(p.total)}</b>
+        {p.days_breakdown.length > 1 && (
+          <Popover>
+            <PopoverTrigger className="block min-h-7 w-full cursor-pointer text-right text-[13px] text-primary underline-offset-4 hover:underline">{t('Rooms.priceDetail')}</PopoverTrigger>
+            <PopoverContent align="end" collisionPadding={16} className="w-80 max-w-[calc(100vw-2rem)] gap-0 p-0">
+              <p className="border-b border-border px-4 py-3 text-[13px] font-semibold">{p.title}</p>
+              <NightPrices p={p} className="px-4 py-3" />
+              <p className="flex items-baseline justify-between gap-3 border-t border-border px-4 py-3 tabular-nums">
+                <span className="text-[13px] text-muted-foreground">{t('Rooms.totalFor', { nights })}</span><b className="text-[15px]">{fmtPrice(p.total)}</b>
+              </p>
+            </PopoverContent>
+          </Popover>
+        )}
+      </div>
+      <Link href={href} className={`${BOOK} col-span-2 @lg:col-span-1`}>{t('Rooms.bookNow')}</Link>
+    </div>
+  )
+}
+
 /** Thẻ phòng ngang: ảnh trái · tên + một câu + "Thông tin phòng" · mỗi gói giá một hàng kèm "Book now". */
 function RoomCard({ offer, hotel, stay, onOpen, onPick, onOtherDates }: { offer: RoomOffer; hotel: RoomsHotel; stay: Stay; onOpen: () => void; onPick: (p?: PlanOffer) => void; onOtherDates: () => void }) {
   const t = useTranslations()
@@ -175,7 +227,8 @@ function RoomCard({ offer, hotel, stay, onOpen, onPick, onOtherDates }: { offer:
         {state === 'available' && left <= 3 && <span className="pointer-events-none absolute top-3.5 left-3.5 rounded-md bg-white px-2.5 py-1 text-[12px] font-semibold">{t('Rooms.lowStock', { n: left })}</span>}
       </Slides>
 
-      <div className="flex min-w-0 flex-col">
+      {/* @container: hàng gói giá chia cột theo bề rộng thẻ (cột phải trang có thẻ giá nên thẻ phòng hẹp hơn màn hình). */}
+      <div className="@container flex min-w-0 flex-col">
         <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-4 sm:px-6">
           <div className="min-w-0">
             <h3 className="text-[20px] leading-snug font-semibold text-brand">{room.name}</h3>
@@ -185,20 +238,7 @@ function RoomCard({ offer, hotel, stay, onOpen, onPick, onOtherDates }: { offer:
         </div>
 
         {state === 'available' ? (
-          offer.plans.map(p => (
-            <div key={p.rate_plan_id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-5 gap-y-3 border-b border-border/70 px-5 py-4 last:border-b-0 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:px-6">
-              <p className="min-w-0 text-[15px] font-semibold">
-                {p.title}
-                {/* Chỉ ghi ăn sáng khi Gohost bật has_breakfast (PITO: Gohost tắt, PDF ghi có) — "Đã gồm" trong dialog theo tài liệu khách sạn. */}
-                {p.has_breakfast && <span className="mt-0.5 flex items-center gap-1 text-[12px] font-normal text-muted-foreground"><Coffee className="size-3" aria-hidden />{t('Rooms.breakfast')}</span>}
-              </p>
-              <p className="text-right tabular-nums">
-                <b className="text-[18px] font-bold">{fmtPrice(nightly(p))}</b><span className="text-[13px] text-muted-foreground"> {t('Common.perNight')}</span>
-                <span className="block text-[12px] text-muted-foreground">{t('Rooms.totalNights', { total: fmtPrice(p.total), nights })}</span>
-              </p>
-              <Link href={`/dat-phong?${selectionQuery({ hotel: hotel.slug, room: room.slug, plan: p.rate_plan_id }, stay)}`} className={`${BOOK} max-sm:col-span-2`}>{t('Rooms.bookNow')}</Link>
-            </div>
-          ))
+          offer.plans.map(p => <PlanRow key={p.rate_plan_id} p={p} nights={nights} href={`/dat-phong?${selectionQuery({ hotel: hotel.slug, room: room.slug, plan: p.rate_plan_id }, stay)}`} />)
         ) : (
           <div className="flex flex-1 flex-wrap items-center justify-between gap-3 px-5 py-4 sm:px-6">
             <p className="text-[14px] text-muted-foreground">
@@ -327,15 +367,15 @@ function RoomDialog({ offer, hotel, stay, party, initialPlan, onClose, onEdit, o
                             on ? 'border-primary bg-white ring-1 ring-primary' : 'border-border-strong bg-white/60 hover:bg-white')}>
                           <span className={cn('grid size-[18px] shrink-0 place-items-center rounded-full border-2', on ? 'border-primary' : 'border-border-strong')} aria-hidden>{on && <span className="size-2 rounded-full bg-primary" />}</span>
                           <b className="min-w-0 flex-1 text-[14px] font-semibold">{p.title}</b>
-                          <span className="text-right text-[14px] font-bold whitespace-nowrap text-brand">{fmtPrice(nightly(p))}<span className="block text-[11px] font-normal text-muted-foreground">{t('Common.perNight')}</span></span>
+                          <span className="text-right text-[14px] font-bold whitespace-nowrap text-brand">{fmtPrice(p.total)}<span className="block text-[11px] font-normal text-muted-foreground">{t('Rooms.totalFor', { nights: t('Common.nights', { n: nights }) })}</span></span>
                         </button>
                       )
                     })}
                   </div>
-                  <dl className="grid gap-2 border-t border-dashed border-border-strong pt-3.5 text-[14px]">
-                    <div className="flex justify-between gap-3"><dt className="text-muted-foreground">{t('Rooms.priceTimes', { price: fmtPrice(nightly(plan)), nights: t('Common.nights', { n: nights }) })}</dt><dd className="tabular-nums">{fmtPrice(plan.total)}</dd></div>
-                    {vat && <div className="flex justify-between gap-3"><dt className="text-muted-foreground">{t('Rooms.serviceVat')}</dt><dd className="text-primary">{t('Rooms.includedShort')}</dd></div>}
-                  </dl>
+                  <div className="grid gap-2 border-t border-dashed border-border-strong pt-3.5 text-[14px]">
+                    <NightPrices p={plan} />
+                    {vat && <div className="flex justify-between gap-3"><span className="text-muted-foreground">{t('Rooms.serviceVat')}</span><span className="text-primary">{t('Rooms.includedShort')}</span></div>}
+                  </div>
                 </>
               ) : (
                 <p className="text-[14px] text-muted-foreground">

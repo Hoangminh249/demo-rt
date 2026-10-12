@@ -7,6 +7,7 @@ import path from 'node:path'
 import { Prisma } from '@/generated/prisma/client'
 import { audit } from '@/lib/audit'
 import { db } from '@/lib/db'
+import { sendTestNotice } from '@/lib/email'
 import { today } from '@/lib/format'
 import type { ParsedCatalogCommand } from '@/lib/catalog-commands'
 import type { L } from '@/types/global'
@@ -159,18 +160,26 @@ async function run(cmd: ParsedCatalogCommand): Promise<{ message: string; remove
           await audit(tx, 'delete', 'Hotel', h.id, null, { slug: h.slug, name: h.name })
           return { message: 'Đã xoá khách sạn.' }
         }
+        case 'hotel.testNotify': {
+          const h = await tx.hotel.findUnique({ where: { id: cmd.id }, select: { name: true, notifyEmail: true } })
+          if (!h) throw new AdminError(404, 'Không thấy khách sạn.')
+          if (!h.notifyEmail) throw new AdminError(409, 'Chưa lưu email team — nhập rồi bấm Lưu trước.')
+          const r = await sendTestNotice(h.notifyEmail, h.name)
+          if (!r.ok) throw new AdminError(502, `Gửi không được: ${r.error}`)
+          return { message: r.console ? `Chưa có RESEND_API_KEY: nội dung in ra console của server (tới ${h.notifyEmail}).` : `Đã gửi email thử tới ${h.notifyEmail}.` }
+        }
 
         case 'roomType.save': {
           const { op: _op, id, content, name, description, size, beds, ...rest } = cmd
           void _op
           if (id) {
             const [mx] = await tx.$queryRaw<{ m: number | null }[]>`SELECT max(allotment)::int AS m FROM "DailyInventory" WHERE "roomTypeId" = ${id} AND date >= ${today()}::date`
-            if (mx?.m != null && mx.m > rest.totalRooms) throw new AdminError(409, `Lịch đang mở ${mx.m} phòng bán web cho một số ngày — giảm ở tab Lịch giá & tồn trước khi giảm tổng số phòng xuống ${rest.totalRooms}.`)
+            if (mx?.m != null && mx.m > rest.totalRooms) throw new AdminError(409, `Lịch đang mở ${mx.m} phòng bán web cho một số ngày — giảm ở tab Giá & phòng trống trước khi giảm tổng số phòng xuống ${rest.totalRooms}.`)
           }
           const data = { ...rest, name: json(name), description: json(description), size: json(size), beds: beds ? json(beds) : Prisma.DbNull, content: json(content) }
           const row = id ? await tx.roomType.update({ where: { id }, data }) : await tx.roomType.create({ data })
           await audit(tx, id ? 'update' : 'create', 'RoomType', row.id, { ...rest, name })
-          return { message: id ? 'Đã lưu hạng phòng.' : 'Đã tạo hạng phòng. Tiếp theo: tạo gói giá (tab Gói giá) và mở lịch bán (tab Lịch giá & tồn).' }
+          return { message: id ? 'Đã lưu hạng phòng.' : 'Đã tạo hạng phòng. Tiếp theo: mở hạng phòng → Gói giá để tạo gói, rồi nhập giá ở tab Giá & phòng trống.' }
         }
         case 'roomType.delete': {
           const rt = await tx.roomType.findUnique({ where: { id: cmd.id }, include: { _count: { select: { bookingRooms: true } } } })

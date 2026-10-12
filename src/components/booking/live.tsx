@@ -3,20 +3,20 @@
 import type { ReactNode } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import { Lock, LogIn, MessageCircle } from 'lucide-react'
-import { diffDays, fmtDate, fmtPrice, fmtWeekday } from '@/lib/format'
+import { diffDays, fmtDate, fmtDayMonth, fmtPrice, fmtWeekday } from '@/lib/format'
 import type { Contact } from '@/types/hotel'
 import type { LiveBooking } from '@/types/booking'
 import { BTN, BTN_OUT, Photo } from '@/components/site/kit'
 import { OpenLoginButton } from '@/components/auth/account'
 
 /** Chưa đăng nhập: nút mở modal đăng nhập (Google / email + mã); xong quay lại đúng trang này (lựa chọn trên URL). */
-export function LoginCard() {
+export function LoginCard({ title, body }: { title?: string; body?: string } = {}) {
   const t = useTranslations('Live')
   return (
     <section className="rounded-2xl border border-border bg-white p-6 sm:p-8">
       <span className="grid size-11 place-items-center rounded-xl bg-mint"><Lock className="size-5 text-brand" aria-hidden /></span>
-      <h2 className="mt-4 text-xl font-bold text-brand">{t('loginTitle')}</h2>
-      <p className="mt-2 max-w-prose text-[15px] text-muted-foreground">{t('loginBody')}</p>
+      <h2 className="mt-4 text-xl font-bold text-brand">{title ?? t('loginTitle')}</h2>
+      <p className="mt-2 max-w-prose text-[15px] text-muted-foreground">{body ?? t('loginBody')}</p>
       <OpenLoginButton className={`${BTN} mt-6 h-12 px-6`}><LogIn className="size-4" aria-hidden />{t('loginCta')}</OpenLoginButton>
     </section>
   )
@@ -61,6 +61,9 @@ export function LiveSummary({ b, image, extra }: { b: LiveBooking; image?: strin
       <dl className="mt-4 grid gap-2.5 border-y border-border py-4 text-[14px]">
         {rows.map(([k, v]) => <div key={k} className="flex justify-between gap-4"><dt className="text-muted-foreground">{k}</dt><dd className="text-right font-medium tabular-nums">{v}</dd></div>)}
       </dl>
+      <dl className="mt-4 grid gap-2 border-b border-border pb-4 text-[14px] tabular-nums">
+        {b.nights.map(n => <div key={n.date} className="flex justify-between gap-4"><dt className="text-muted-foreground">{fmtWeekday(n.date, locale)}, {fmtDayMonth(n.date, locale)}</dt><dd>{fmtPrice(n.total)}</dd></div>)}
+      </dl>
       <dl className="mt-4 grid gap-2 text-[15px]">
         <div className="flex justify-between gap-4 text-lg font-bold text-brand"><dt>{t('Live.total')}</dt><dd className="tabular-nums">{fmtPrice(b.total)}</dd></div>
         {b.paidAmount > 0 && <div className="flex justify-between gap-4"><dt className="text-muted-foreground">{t('Live.paid')}</dt><dd className="tabular-nums">{fmtPrice(b.paidAmount)}</dd></div>}
@@ -71,6 +74,7 @@ export function LiveSummary({ b, image, extra }: { b: LiveBooking; image?: strin
           </div>
         )}
       </dl>
+      <p className="mt-4 text-[13px] leading-relaxed text-muted-foreground">{t('Orders.cancelTitle')}: {b.cancel.text}</p>
       {extra}
     </div>
   )

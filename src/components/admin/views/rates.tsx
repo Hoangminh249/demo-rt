@@ -3,7 +3,7 @@
 // Sửa hàng loạt theo khoảng ngày + thứ (giá, số phòng bán web, đóng/mở, ở tối thiểu/tối đa, chặn đến/đi), quy tắc giá + "Sinh giá".
 // Website đọc đúng các bảng này khi DATA_SOURCE=db.
 import { useState, type FormEvent } from 'react'
-import { ChevronLeft, ChevronRight, Trash2 } from 'lucide-react'
+import { ChevronDown, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react'
 import { cn } from 'cn'
 import { Button } from '@/components/ui/button'
 import { CARD, Empty, LoadFailed, Skel, shortVnd, vnd } from '@/components/admin/ui'
@@ -110,6 +110,13 @@ function BulkForm({ rt, planId, range, setRange }: {
         <Field label="Trạng thái">
           <select name="closed" className={INPUT} defaultValue=""><option value="">Giữ nguyên</option><option value="0">Mở bán</option><option value="1">Đóng</option></select>
         </Field>
+      </div>
+      {/* Ít dùng nên gập lại; ô bên trong vẫn gửi theo form khi đang gập (details chỉ ẩn). */}
+      <details className="group">
+        <summary className="flex h-9 cursor-pointer list-none items-center gap-2 text-sm font-medium text-foreground/80 hover:text-foreground [&::-webkit-details-marker]:hidden">
+          <ChevronDown className="size-4 transition-transform group-open:rotate-180" aria-hidden />Điều kiện lưu trú <span className="font-normal text-muted-foreground">· tối thiểu / tối đa, chặn ngày</span>
+        </summary>
+        <div className="mt-2 grid grid-cols-2 gap-3">
         <Field label="Ở tối thiểu (đêm)" hint="Tính theo ngày đến"><input name="minStay" type="number" min={1} max={60} placeholder="Giữ nguyên" className={INPUT} /></Field>
         <Field label="Ở tối đa (đêm)">
           <select name="maxStay" className={INPUT} defaultValue="">
@@ -123,7 +130,8 @@ function BulkForm({ rt, planId, range, setRange }: {
         <Field label="Chặn ngày đi">
           <select name="ctd" className={INPUT} defaultValue=""><option value="">Giữ nguyên</option><option value="1">Chặn</option><option value="0">Bỏ chặn</option></select>
         </Field>
-      </div>
+        </div>
+      </details>
       {write.isSuccess && <Notice ok>{write.data.message}</Notice>}
       {write.isError && <Notice ok={false}>{adminErrorText(write.error)}</Notice>}
       <Button type="submit" disabled={write.isPending || !n} className="h-10">{write.isPending ? 'Đang lưu…' : `Áp dụng cho ${n} ngày`}</Button>
@@ -150,12 +158,18 @@ function RulesPanel({ plan }: { plan: DbPlan }) {
   }
 
   return (
-    <section className={`${CARD} overflow-hidden`}>
-      <div className="flex flex-wrap items-start justify-between gap-3 px-5 pt-5">
+    <details className={`group ${CARD} overflow-hidden`}>
+      <summary className="flex min-h-14 cursor-pointer list-none items-center gap-3 px-5 py-3 hover:bg-item-hover [&::-webkit-details-marker]:hidden">
+        <div className="min-w-0 flex-1">
+          <p className="text-[15px] font-semibold">Quy tắc giá tự động <span className="font-normal text-muted-foreground">· {plan.name.vi} · {plan.rules.length} quy tắc</span></p>
+          <p className="mt-0.5 text-[13px] text-pretty text-muted-foreground">Không bắt buộc. Dùng khi muốn sinh giá nhiều tháng theo giá gốc (+% cuối tuần, giá lễ…) thay vì sửa tay trên lịch.</p>
+        </div>
+        <ChevronDown className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" aria-hidden />
+      </summary>
+      <div className="flex flex-wrap items-start justify-between gap-3 border-t border-border px-5 pt-4">
         <div>
-          <h3 className="text-sm font-semibold">Quy tắc giá · {plan.name.vi}</h3>
           <p className="mt-0.5 text-xs text-pretty text-muted-foreground">
-            Giá gốc {plan.basePrice != null ? vnd(plan.basePrice) : 'chưa đặt (quy tắc % cần giá gốc — sửa ở tab Gói giá)'}. Đêm khớp nhiều quy tắc: ưu tiên cao nhất thắng; không khớp quy tắc nào: giá gốc.
+            Giá gốc {plan.basePrice != null ? vnd(plan.basePrice) : 'chưa đặt (quy tắc % cần giá gốc — sửa ở Hạng phòng → Gói giá)'}. Đêm khớp nhiều quy tắc: ưu tiên cao nhất thắng; không khớp quy tắc nào: giá gốc.
           </p>
         </div>
       </div>
@@ -195,7 +209,7 @@ function RulesPanel({ plan }: { plan: DbPlan }) {
         <p className="w-full text-xs text-muted-foreground">Ghi đè các đêm tính được; đêm không tính được (thiếu giá gốc) giữ nguyên.</p>
       </div>
       {(write.isSuccess || write.isError) && <div className="px-5 pb-4">{write.isSuccess ? <Notice ok>{write.data.message}</Notice> : <Notice ok={false}>{adminErrorText(write.error)}</Notice>}</div>}
-    </section>
+    </details>
   )
 }
 

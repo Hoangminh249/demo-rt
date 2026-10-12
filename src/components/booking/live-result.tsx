@@ -42,6 +42,7 @@ export function LiveResult({ initial, image }: { initial: LiveBooking; image?: s
         <p className="mt-6 text-[14px] text-muted-foreground">{t('bookingCode')}</p>
         <p className="text-2xl font-bold tracking-wide text-brand tabular-nums">{b.code}</p>
         <div className="mt-8 flex flex-wrap gap-3">
+          {(b.status === 'CONFIRMED' || b.status === 'CHECKED_IN' || b.status === 'CHECKED_OUT') && <Link href={`/don-cua-toi/${encodeURIComponent(b.code)}`} className={`${BTN} h-12`}>{t('viewOrder')}</Link>}
           {b.status === 'PENDING_PAYMENT' && !waiting && <Link href={`/dat-phong/thanh-toan?code=${encodeURIComponent(b.code)}`} className={`${BTN} h-12`}>{t('continuePay')}</Link>}
           {b.status === 'EXPIRED' && !b.needsRefund && <Link href={`/hotel/${b.hotel.slug}?room=${b.room.slug}#phong`} className={`${BTN} h-12`}>{t('rebook')}</Link>}
           <Link href="/" className={`${BTN_OUT} h-12`}>{t('home')}</Link>

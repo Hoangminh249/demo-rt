@@ -3,6 +3,10 @@ import { z } from 'zod'
 import { MAX_ROOMS_PER_BOOKING } from './booking-rules'
 import { isPhone, NOTES_MAX } from './booking'
 
+/** Hai hình thức thanh toán khách chọn (chốt 12/10/2026). Cổng tương ứng ở src/lib/payment.ts. */
+export const PAY_METHODS = ['bank', 'onepay'] as const
+export type PayMethod = (typeof PAY_METHODS)[number]
+
 const slug = z.string().trim().regex(/^[a-z0-9-]{1,80}$/)
 const date = z.iso.date()
 
@@ -30,7 +34,7 @@ export const HoldIn = z.object({
   expectedTotal: z.int().min(0),
 })
 
-export const PayIn = z.object({ mode: z.enum(['deposit', 'full']), locale: z.enum(['vi', 'en']).default('vi') })
+export const PayIn = z.object({ method: z.enum(PAY_METHODS), locale: z.enum(['vi', 'en']).default('vi') })
 
 export type SelectionInput = z.input<typeof SelectionIn>
 export type HoldInput = z.input<typeof HoldIn>

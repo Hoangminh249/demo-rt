@@ -31,7 +31,7 @@ export default async function MockGatewayPage({ params, searchParams }: PageProp
         <p className="mt-2 text-[14px] text-muted-foreground">{t('gatewayBody')}</p>
         <dl className="mt-6 grid gap-2 border-y border-border py-4 text-[15px]">
           <div className="flex justify-between gap-4"><dt className="text-muted-foreground">{t('bookingCode')}</dt><dd className="font-semibold tabular-nums">{p.code}</dd></div>
-          <div className="flex justify-between gap-4"><dt className="text-muted-foreground">{p.hotelName}</dt><dd>{p.kind === 'DEPOSIT' ? t('payDepositTitle') : t('payFullTitle')}</dd></div>
+          <div className="flex justify-between gap-4"><dt className="text-muted-foreground">{p.hotelName}</dt><dd>{t('payFullTitle')}</dd></div>
           <div className="flex justify-between gap-4 text-lg font-bold text-brand"><dt>{t('gatewayAmount')}</dt><dd className="tabular-nums">{fmtPrice(p.amount)}</dd></div>
         </dl>
         {p.status === 'PENDING' ? (

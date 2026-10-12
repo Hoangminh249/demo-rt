@@ -15,6 +15,10 @@ import { newPrisma } from '../src/lib/pg'
 try { process.loadEnvFile() } catch {}
 delete process.env.RESEND_API_KEY // email in ra console (EmailLog CONSOLE), không gửi thật
 if (!process.env.DATABASE_URL) throw new Error('Thiếu DATABASE_URL')
+// Script tạo khách sạn / booking thử rồi xoá: không chạy lên DB chính (khác localhost) trừ khi cố ý đặt CHECK_BOOKING_REMOTE=1.
+if (!['localhost', '127.0.0.1', '[::1]'].includes(new URL(process.env.DATABASE_URL).hostname) && process.env.CHECK_BOOKING_REMOTE !== '1') {
+  throw new Error('DATABASE_URL không phải localhost — check:booking ghi dữ liệu thử nên không chạy lên DB chính. Cố ý thì đặt CHECK_BOOKING_REMOTE=1.')
+}
 const db = newPrisma(process.env.DATABASE_URL, 10)
 
 const SLUG = 'zz-check-booking'
@@ -97,11 +101,11 @@ async function main() {
   assert.deepEqual(await inv(rt.id), [{ booked: 0, held: 0 }, { booked: 0, held: 0 }], 'held trả về 0')
   console.log('✓ (2) hết hạn giữ phòng → EXPIRED, trả phòng')
 
-  // (3) Giữ lại → thanh toán cọc → webhook gửi 2 lần → một Payment SUCCEEDED, CONFIRMED một lần, một email
+  // (3) Giữ lại → thanh toán (trả đủ) → webhook gửi 2 lần → một Payment SUCCEEDED, CONFIRMED một lần, một email
   const h3 = await createHold(db, ua.id, sel, contact, q.total)
   assert.ok(h3.ok)
-  const p3 = await startPayment(db, ua.id, h3.code, 'deposit', 'mock', newPaymentRef)
-  assert.ok(p3.ok && p3.amount === 1_200_000 && p3.kind === 'DEPOSIT')
+  const p3 = await startPayment(db, ua.id, h3.code, 'mock', newPaymentRef)
+  assert.ok(p3.ok && p3.amount === 4_000_000, 'trả đủ, không còn đặt cọc')
   const ev = { eventId: `EVT-${randomUUID()}`, providerRef: p3.providerRef, status: 'succeeded' as const, amount: p3.amount, raw: { providerRef: p3.providerRef } }
   const [w1, w2] = await Promise.all([handleWebhook(db, 'mock', ev), handleWebhook(db, 'mock', ev)])
   const firsts = [w1, w2].filter(w => !w.duplicate)
@@ -109,9 +113,9 @@ async function main() {
   assert.equal([w1, w2].filter(w => !w.duplicate && w.confirmedNow).length, 1, 'CONFIRMED đúng một lần')
   const b3 = await db.booking.findUniqueOrThrow({ where: { code: h3.code }, include: { payments: true, history: true } })
   assert.equal(b3.status, 'CONFIRMED')
-  assert.equal(b3.paymentStatus, 'DEPOSIT_PAID')
-  assert.equal(b3.paidAmount, 1_200_000)
-  assert.equal(b3.balanceDue, 2_800_000)
+  assert.equal(b3.paymentStatus, 'PAID')
+  assert.equal(b3.paidAmount, 4_000_000)
+  assert.equal(b3.balanceDue, 0)
   assert.equal(b3.payments.filter(p => p.status === 'SUCCEEDED').length, 1)
   assert.equal(b3.history.filter(h => h.to === 'CONFIRMED').length, 1)
   assert.deepEqual(await inv(rt.id), [{ booked: 1, held: 0 }, { booked: 1, held: 0 }], 'held → booked')
@@ -123,19 +127,19 @@ async function main() {
   // webhook thứ 3 khác eventId nhưng cùng payment → bỏ qua, không cộng tiền
   const w3 = await handleWebhook(db, 'mock', { ...ev, eventId: `EVT-${randomUUID()}` })
   assert.ok(!w3.duplicate && !w3.confirmedNow)
-  assert.equal((await db.booking.findUniqueOrThrow({ where: { code: h3.code } })).paidAmount, 1_200_000)
+  assert.equal((await db.booking.findUniqueOrThrow({ where: { code: h3.code } })).paidAmount, 4_000_000)
   console.log('✓ (3) webhook 2 lần → 1 Payment, CONFIRMED 1 lần, 1 email mỗi loại')
 
-  // (6) Huỷ booking đã xác nhận (còn ~40 ngày ≥ 7 ngày) → phạt 50% tổng = 2.000.000 > đã trả 1.200.000 → không hoàn
+  // (6) Huỷ booking đã xác nhận (còn ~40 ngày ≥ 7 ngày) → phạt 50% tổng = 2.000.000, đã trả 4.000.000 → hoàn 2.000.000
   const c6 = await cancelBooking(db, b3.id, { userId: null, reason: 'Kiểm thử' })
-  assert.deepEqual(c6, { ok: true, penalty: 2_000_000, refund: 0 })
+  assert.deepEqual(c6, { ok: true, penalty: 2_000_000, refund: 2_000_000 })
   assert.deepEqual(await inv(rt.id), [{ booked: 0, held: 0 }, { booked: 0, held: 0 }], 'huỷ → trả booked')
   console.log('✓ (6) huỷ → phạt theo chính sách lúc đặt, trả phòng')
 
   // (4a) Tiền về sau khi hết hạn, vẫn còn phòng → tự xác nhận
   const h4 = await createHold(db, ub.id, sel, contact, q.total)
   assert.ok(h4.ok)
-  const p4 = await startPayment(db, ub.id, h4.code, 'full', 'mock', newPaymentRef)
+  const p4 = await startPayment(db, ub.id, h4.code, 'mock', newPaymentRef)
   assert.ok(p4.ok && p4.amount === 4_000_000)
   await expireDue(db, future)
   const w4 = await handleWebhook(db, 'mock', { eventId: `EVT-${randomUUID()}`, providerRef: p4.providerRef, status: 'succeeded', amount: p4.amount, raw: { providerRef: p4.providerRef } })
@@ -149,7 +153,7 @@ async function main() {
   await cancelBooking(db, b4.id, { userId: null, reason: 'dọn cho ca 4b' })
   const h5 = await createHold(db, uc.id, sel, contact, q.total)
   assert.ok(h5.ok)
-  const p5 = await startPayment(db, uc.id, h5.code, 'deposit', 'mock', newPaymentRef)
+  const p5 = await startPayment(db, uc.id, h5.code, 'mock', newPaymentRef)
   assert.ok(p5.ok)
   await expireDue(db, future)
   const h6 = await createHold(db, ua.id, sel, contact, q.total) // người khác lấy phòng
@@ -166,26 +170,24 @@ async function main() {
   console.log('✓ (4b) tiền về sau hết hạn, hết phòng → needsRefund + Refund PENDING')
 
   // Webhook sai số tiền → không xác nhận
-  const p6 = await startPayment(db, ua.id, h6.code, 'deposit', 'mock', newPaymentRef)
+  const p6 = await startPayment(db, ua.id, h6.code, 'mock', newPaymentRef)
   assert.ok(p6.ok)
   const w6 = await handleWebhook(db, 'mock', { eventId: `EVT-${randomUUID()}`, providerRef: p6.providerRef, status: 'succeeded', amount: 1, raw: { providerRef: p6.providerRef } })
   assert.ok(!w6.duplicate && !w6.confirmedNow)
   assert.equal((await db.booking.findUniqueOrThrow({ where: { code: h6.code } })).status, 'PENDING_PAYMENT')
 
-  // (7) Vận hành tại khách sạn: tiền về đúng → CONFIRMED; thu nốt tại quầy → PAID; nhận / trả phòng đúng thứ tự; đã trả phòng thì không huỷ được
+  // (7) Vận hành tại khách sạn: tiền về đúng → CONFIRMED + PAID; thu thêm quá số còn lại bị chặn; nhận / trả phòng đúng thứ tự; đã trả phòng thì không huỷ được
   const w7 = await handleWebhook(db, 'mock', { eventId: `EVT-${randomUUID()}`, providerRef: p6.providerRef, status: 'succeeded', amount: p6.amount, raw: { providerRef: p6.providerRef } })
   assert.ok(!w7.duplicate && w7.confirmedNow)
   const b7 = await db.booking.findUniqueOrThrow({ where: { code: h6.code } })
   assert.deepEqual(await recordPayment(db, b7.id, { amount: b7.balanceDue + 1, method: 'cash', byUserId: null }), { ok: false, error: `Số tiền vượt phần còn lại (${b7.balanceDue}).` })
-  assert.ok((await recordPayment(db, b7.id, { amount: b7.balanceDue, method: 'cash', byUserId: null })).ok)
-  const paid7 = await db.booking.findUniqueOrThrow({ where: { id: b7.id } })
-  assert.equal(paid7.paymentStatus, 'PAID')
-  assert.equal(paid7.balanceDue, 0)
+  assert.equal(b7.paymentStatus, 'PAID', 'trả đủ online')
+  assert.equal(b7.balanceDue, 0)
   assert.equal((await setStayStatus(db, b7.id, 'CHECKED_OUT', null)).ok, false, 'chưa nhận phòng thì chưa trả phòng')
   assert.ok((await setStayStatus(db, b7.id, 'CHECKED_IN', null)).ok)
   assert.ok((await setStayStatus(db, b7.id, 'CHECKED_OUT', null)).ok)
   assert.deepEqual(await cancelBooking(db, b7.id, { userId: null, reason: 'x' }), { ok: false, error: 'NOT_CANCELLABLE' })
-  console.log('✓ (7) thu tiền tại quầy → PAID, nhận / trả phòng đúng thứ tự, đã trả phòng thì không huỷ')
+  console.log('✓ (7) trả đủ online → PAID, chặn thu quá, nhận / trả phòng đúng thứ tự, đã trả phòng thì không huỷ')
 
   // (8) Xử lý hoàn tiền: DONE → bỏ cờ needsRefund, trừ đã trả, trạng thái REFUNDED
   const ref = await db.refund.findFirstOrThrow({ where: { bookingId: b5.id } })

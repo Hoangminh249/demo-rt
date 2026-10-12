@@ -51,7 +51,9 @@ Anh Hoang Minh xác nhận 12/10/2026, thay hướng "web chỉ đọc Gohost" (
 
 Vẫn không tự xây: Channel Manager / Agent Portal / Loyalty / AI.
 
-Đã xong toàn luồng (12/10/2026, Postgres **local** của anh Minh): web đọc nội dung + giá/tồn từ DB (`DATA_SOURCE=db`), lịch giá 90 ngày, đặt phòng thật (đăng nhập → giữ phòng 15' → cọc qua cổng giả lập → webhook → email), modal đăng nhập toàn dự án (Google + email/mã 6 số), admin sửa sản phẩm / lịch giá / gói / khuyến mãi / booking web, role ADMIN-STAFF. Chi tiết: `docs/2026-10-12-booking-engine-db-phase0.md`, cách dựng DB: `docs/db-setup.md`. Prod: chỉ làm sau khi anh test full luồng ở local.
+Đã xong toàn luồng (12/10/2026, Postgres **local** của anh Minh): web đọc nội dung + giá/tồn từ DB (`DATA_SOURCE=db`), lịch giá 90 ngày, đặt phòng thật (đăng nhập → giữ phòng 15' → **trả đủ**, chọn chuyển khoản ngân hàng / OnePay qua cổng giả lập → webhook → email), trang **Đơn của tôi** (`/don-cua-toi`, khách tự huỷ), email team khách sạn (`Hotel.notifyEmail`, nhiều địa chỉ, báo booking mới / khách huỷ), modal đăng nhập toàn dự án (Google + email/mã 6 số), admin sửa sản phẩm / lịch giá / gói / khuyến mãi / booking web, role ADMIN-STAFF. Anh Minh chốt 12/10/2026: **bỏ đặt cọc**; chỉ 2 hình thức thanh toán ngân hàng + OnePay (cổng thật chưa tích hợp). Chi tiết: `docs/2026-10-12-booking-engine-db-phase0.md`, cách dựng DB: `docs/db-setup.md`.
+
+**DB chính (12/10/2026):** Render Postgres `crm_pl30` (Singapore, dùng chung với dự án CRM/B2B) — web ở schema riêng **`hospitality`** (`DATABASE_URL` có `&schema=hospitality`), không đụng schema `crm`, `b2b_dev`, `public`. Đã `migrate deploy` + chép sản phẩm, giá/tồn từ local (không chép tài khoản, booking thử). Máy dev giờ trỏ thẳng DB chính — Postgres local bỏ. `check:booking` chặn chạy lên DB không phải localhost.
 
 ## Nối Gohost API
 

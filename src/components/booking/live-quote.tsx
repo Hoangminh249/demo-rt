@@ -29,7 +29,6 @@ export function LiveQuoteCard({ quote, loading, failed, promo, onPromo }: {
   quote: LiveQuote | undefined; loading: boolean; failed: boolean; promo: string | null; onPromo: (code: string | null) => void
 }) {
   const t = useTranslations('Live')
-  const locale = useLocale()
   const [draft, setDraft] = useState(promo ?? '')
   const promoError = quote?.errors.find(e => e.code.startsWith('PROMO_'))
   const extra = quote ? quote.nights.reduce((s, n) => s + n.extraFee, 0) : 0
@@ -69,10 +68,6 @@ export function LiveQuoteCard({ quote, loading, failed, promo, onPromo }: {
                 </div>
               ))}
               {quote.taxLines.filter(x => x.included).map(x => <p key={x.name} className="text-[13px] text-muted-foreground">{t('taxIncluded', { name: x.name })}</p>)}
-            </dl>
-            <dl className="mt-3 grid gap-1.5 rounded-xl bg-mint px-4 py-3 text-[14px]">
-              <div className="flex justify-between gap-4 font-semibold text-brand"><dt>{t('depositNow')}</dt><dd className="tabular-nums">{fmtPrice(quote.deposit)}</dd></div>
-              <div className="flex justify-between gap-4"><dt>{quote.balanceDueAt ? t('payLaterBy', { date: fmtDate(quote.balanceDueAt, locale) }) : t('payLater')}</dt><dd className="tabular-nums">{fmtPrice(quote.balanceDue)}</dd></div>
             </dl>
             <p className="mt-3 flex gap-2 text-[13px] text-muted-foreground"><Timer className="mt-0.5 size-3.5 shrink-0" aria-hidden />{t('holdNote', { minutes: quote.holdMinutes })}</p>
             <div className="mt-3"><QuoteErrors quote={quote} /></div>

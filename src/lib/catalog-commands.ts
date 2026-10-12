@@ -14,6 +14,8 @@ const text = (max = 200) => z.string().trim().max(max)
 /** Chữ hai ngôn ngữ; vi bắt buộc khi `required`. */
 const L = (max = 300, required = true) => z.object({ vi: required ? text(max).min(1, 'Chưa nhập tiếng Việt') : text(max), en: text(max).optional() })
 const Lopt = (max = 300) => L(max, false).optional()
+/** Một hoặc nhiều email cách nhau bằng dấu phẩy (hộp thư team nhận booking). */
+const emails = text(500).refine(v => v.split(',').every(e => z.email().safeParse(e.trim()).success), 'Email không hợp lệ (nhiều địa chỉ: cách nhau bằng dấu phẩy)')
 
 export const ICON_KEYS = ['map-pin', 'clock', 'cable-car', 'door-open', 'plane', 'bus', 'ferris-wheel', 'coffee', 'wifi', 'shirt', 'receipt', 'washing-machine'] as const satisfies readonly IconKey[]
 export const STATUSES = ['DRAFT', 'PUBLISHED', 'ARCHIVED'] as const
@@ -33,6 +35,8 @@ export const HotelContentIn = z.object({
   faq: z.array(z.tuple([L(300), L(2000)])).max(40),
   pending: z.array(text(500)).max(30),
   en_review: z.boolean(),
+  /** Email team (Hotel.notifyEmail) nhận báo khi nào. Thiếu = báo cả hai. */
+  notify: z.object({ booking: z.boolean(), cancel: z.boolean() }).optional(),
 })
 
 const orNull = <T extends z.ZodType>(s: T) => s.nullable()
@@ -44,11 +48,13 @@ export const CatalogCommand = z.discriminatedUnion('op', [
     slug: hotelSlug, code: z.string().trim().regex(/^[A-Z0-9]{2,12}$/), name: text(120).min(1), status: z.enum(STATUSES),
     area: L(120), address: L(300), mapQuery: text(200), lat: orNull(z.number().min(-90).max(90)), lng: orNull(z.number().min(-180).max(180)),
     stars: orNull(z.int().min(1).max(5)), checkInTime: z.string().regex(/^\d{2}:\d{2}$/), checkOutTime: z.string().regex(/^\d{2}:\d{2}$/),
-    phone: orNull(text(40)), email: orNull(z.email().max(200)), zalo: orNull(z.url().max(300)), notifyEmail: orNull(z.email().max(200)),
+    phone: orNull(text(40)), email: orNull(z.email().max(200)), zalo: orNull(z.url().max(300)), notifyEmail: orNull(emails),
     operator: text(200), openingDate: orNull(date), gohostTenantId: orNull(text(60)), sortOrder: z.int().min(0).max(999),
     content: HotelContentIn,
   }),
   z.object({ op: z.literal('hotel.delete'), id }),
+  /** Gửi email thử tới hộp thư team đã lưu của khách sạn. */
+  z.object({ op: z.literal('hotel.testNotify'), id }),
 
   z.object({
     op: z.literal('roomType.save'), id: id.optional(), hotelId: id, slug, status: z.enum(STATUSES),

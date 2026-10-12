@@ -9,21 +9,22 @@ Gohost vẫn bán OTA (Agoda, Booking.com…); web tự quản giá theo ngày, 
 |---|---|---|
 | Nội dung khách sạn | Postgres — admin sửa | File `src/content/*.ts` |
 | Giá, phòng trống | Lịch giá + tồn web trong Postgres (admin sửa) | GET Gohost |
-| Đặt phòng | **Thật**: đăng nhập → giữ phòng 15' → cọc (cổng giả lập) → webhook → email | Bản minh hoạ chạy ở trình duyệt |
+| Đặt phòng | **Thật**: đăng nhập → giữ phòng 15' → trả đủ (chuyển khoản ngân hàng / OnePay — hiện qua cổng giả lập) → webhook → email | Bản minh hoạ chạy ở trình duyệt |
 | Admin | Sửa sản phẩm, lịch giá, booking web | Chỉ xem (Gohost) |
 
 ## Trang
 
 | Trang | Nội dung |
 |---|---|
-| `/`, `/hotel/[slug]` | Trang chủ, trang khách sạn (lịch chọn ngày có giá từng đêm khi `db`) · tiếng Anh: `/en/…` |
-| `/dat-phong` → `/thanh-toan?code=` → `/xac-nhan?code=` | Đặt phòng: đăng nhập (modal), mã KM + báo giá server, giữ phòng, chọn cọc / trả đủ, cổng, kết quả (hỏi lại mỗi 2 giây) |
+| `/`, `/hotel/[slug]` | Trang chủ, trang khách sạn (lịch chọn ngày có giá từng đêm; thẻ phòng hiện tổng cả kỳ ở + "Chi tiết giá" từng đêm) · tiếng Anh: `/en/…` |
+| `/dat-phong` → `/thanh-toan?code=` → `/xac-nhan?code=` | Đặt phòng: đăng nhập (modal), mã KM + báo giá server, giữ phòng, trả đủ qua ngân hàng / OnePay (không đặt cọc), cổng, kết quả (hỏi lại mỗi 2 giây) |
+| `/don-cua-toi`, `/don-cua-toi/[mã]` | Đơn của tôi (Sắp tới · Đã ở · Đã huỷ) và chi tiết đơn: tiến trình, giá từng đêm đã chốt, thanh toán, khách tự huỷ (phí theo chính sách lúc đặt, tiền hoàn chờ admin chuyển) |
 | `/thanh-toan-gia-lap` | Cổng thanh toán giả lập (`PAYMENT_PROVIDER=mock`) |
 | Modal đăng nhập (header) | Google (khi có OAuth) hoặc **email + mã 6 số** gửi qua email |
 | `/admin/login` | Cùng cách đăng nhập (role ADMIN / STAFF) + tài khoản env dự phòng |
-| `/admin` | Tổng quan · Khách sạn (Thông tin · Hạng phòng · Ảnh · Lịch giá & tồn · Gói giá & chính sách · Ánh xạ / Giá Gohost) · Thêm khách sạn · **Đặt phòng web** · Booking Gohost · Khuyến mãi · Tiện ích · Người dùng |
+| `/admin` | Tổng quan · Khách sạn (Giá & phòng trống · Hạng phòng → Thông tin / Ảnh / Số phòng / Gói giá · Thông tin khách sạn · Cài đặt: chính sách huỷ & cọc, thông số kỹ thuật, kết nối Gohost, xoá) · Thêm khách sạn · **Đặt phòng web** · Khuyến mãi · Tiện ích · Người dùng. Menu Booking Gohost chỉ còn ở bản cũ (`DATA_SOURCE=gohost`) |
 
-Quyền: **ADMIN** mọi thứ; **STAFF** chỉ Đặt phòng web (xem, nhận / trả phòng) và Booking Gohost. Đổi role bằng SQL (`docs/db-setup.md` §4).
+Quyền: **ADMIN** mọi thứ; **STAFF** chỉ Đặt phòng web (xem, nhận / trả phòng). Đổi role bằng SQL (`docs/db-setup.md` §4).
 
 ## Chạy trên máy
 

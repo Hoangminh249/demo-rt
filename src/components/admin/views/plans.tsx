@@ -1,5 +1,5 @@
 'use client'
-// Tab "Gói giá & chính sách" (Postgres của Rooty): gói giá từng hạng phòng (thêm / sửa / xoá) và chính sách huỷ, cọc dùng chung.
+// Gói giá (Postgres của Rooty): RoomPlans = gói của một hạng phòng (trang hạng phòng), PoliciesPanel = chính sách huỷ, cọc dùng chung (tab Cài đặt).
 // Sửa chính sách không đổi booking cũ (booking giữ ảnh chụp chính sách lúc đặt). Form mở tại chỗ bằng <details>.
 import { useState, type FormEvent, type ReactNode } from 'react'
 import { ChevronDown, Plus, Trash2 } from 'lucide-react'
@@ -74,27 +74,28 @@ function PlanForm({ roomTypeId, plan, policies }: { roomTypeId: string; plan?: D
   return (
     <CommandForm build={build} submit={plan ? 'Lưu gói' : 'Tạo gói'}
       danger={plan && { label: 'Xoá gói', confirm: `Xoá gói "${plan.name.vi}" và toàn bộ lịch giá của gói? Gói đã có booking thì chỉ ngừng bán.`, cmd: { op: 'plan.delete', id: plan.id } }}>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Field label="Mã" hint="Chữ in hoa, số, - _"><input name="code" required defaultValue={plan?.code} maxLength={20} className={INPUT} /></Field>
-        <Field label="Tên (VI)"><input name="vi" required defaultValue={plan?.name.vi} maxLength={200} className={INPUT} /></Field>
-        <Field label="Tên (EN)"><input name="en" defaultValue={plan?.name.en} maxLength={200} className={INPUT} /></Field>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Field label="Tên gói (tiếng Việt)"><input name="vi" required defaultValue={plan?.name.vi} maxLength={200} placeholder="Gồm ăn sáng" className={INPUT} /></Field>
+        <Field label="Tên gói (English)"><input name="en" defaultValue={plan?.name.en} maxLength={200} placeholder="Breakfast included" className={INPUT} /></Field>
         <Field label="Bữa ăn">
           <select name="meal" defaultValue={plan?.mealPlan ?? 'BB'} className={INPUT}>{MEAL_PLANS.map(m => <option key={m} value={m}>{MEAL[m]}</option>)}</select>
         </Field>
-        <Field label="Giá gốc / đêm (VND)" hint="Gốc cho quy tắc %; bỏ trống được"><input name="base" inputMode="numeric" defaultValue={plan?.basePrice ?? ''} className={INPUT} /></Field>
+        <Field label="Giá gốc / đêm (VND)" hint="Dùng cho quy tắc giá %; bỏ trống được"><input name="base" inputMode="numeric" defaultValue={plan?.basePrice ?? ''} className={INPUT} /></Field>
         <Field label="Phụ thu người lớn / đêm"><input name="xa" inputMode="numeric" defaultValue={plan?.extraAdultFee ?? 0} className={INPUT} /></Field>
         <Field label="Phụ thu trẻ em / đêm"><input name="xc" inputMode="numeric" defaultValue={plan?.extraChildFee ?? 0} className={INPUT} /></Field>
-        <div />
-        <Field label="Chính sách huỷ" className="sm:col-span-2">
+      </div>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Field label="Chính sách huỷ">
           <select name="cancel" required defaultValue={plan?.cancellationPolicyId ?? policies.cancellation[0]?.id} className={INPUT}>
             {policies.cancellation.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         </Field>
-        <Field label="Chính sách cọc" className="sm:col-span-2">
+        <Field label="Chính sách cọc">
           <select name="deposit" required defaultValue={plan?.depositPolicyId ?? policies.deposit[0]?.id} className={INPUT}>
             {policies.deposit.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
           </select>
         </Field>
+        <Field label="Mã gói (nội bộ)" hint="Chữ in hoa, số, - _"><input name="code" required defaultValue={plan?.code} maxLength={20} placeholder="BB" className={INPUT} /></Field>
       </div>
       <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
         <label className="flex items-center gap-2"><input type="checkbox" name="refundable" defaultChecked={plan?.refundable ?? true} className="size-4" />Cho hoàn huỷ</label>
@@ -173,62 +174,71 @@ function DepositForm({ d }: { d?: DbDepositPolicy }) {
 function Section({ title, desc, children }: { title: string; desc?: string; children: ReactNode }) {
   return (
     <section className={`${CARD} overflow-hidden`}>
-      <div className="px-5 pt-5 pb-3"><h3 className="text-sm font-semibold">{title}</h3>{desc && <p className="mt-0.5 text-xs text-pretty text-muted-foreground">{desc}</p>}</div>
+      <div className="px-5 pt-5 pb-3"><h3 className="text-[15px] font-semibold">{title}</h3>{desc && <p className="mt-0.5 text-[13px] text-pretty text-muted-foreground">{desc}</p>}</div>
       <div className="divide-y divide-border border-t border-border">{children}</div>
     </section>
   )
 }
 
-export function PlansPanel({ slug }: { slug: string }) {
+const add = (label: string) => <span className="inline-flex items-center gap-1.5 text-sm font-medium text-primary"><Plus className="size-4" aria-hidden />{label}</span>
+
+/** Gói giá của một hạng phòng (trang chi tiết hạng phòng). */
+export function RoomPlans({ slug, roomTypeId }: { slug: string; roomTypeId: string }) {
+  const { data, isPending, isError, error, refetch } = useAdminPlans(slug)
+  if (isPending) return <div className={`${CARD} grid gap-3 p-5`}>{[0, 1].map(i => <Skel key={i} className="h-12" />)}</div>
+  if (isError || !data) return <DbFailed error={error} onRetry={() => refetch()} />
+  const rt = data.roomTypes.find(r => r.id === roomTypeId)
+  if (!rt) return <section className={CARD}><Empty>Không thấy hạng phòng.</Empty></section>
+  const cancelName = (id: string) => data.cancellation.find(c => c.id === id)?.name ?? '—'
+  const depositOf = (id: string) => data.deposit.find(d => d.id === id)
+  return (
+    <Section title="Gói giá" desc="Mỗi gói là một dòng giá khách chọn (vd có / không ăn sáng). Giá từng đêm nhập ở tab Giá & phòng trống.">
+      {rt.plans.map(p => (
+        <Row key={p.id} summary={
+          <div className="grid gap-1 text-sm sm:flex sm:flex-wrap sm:items-center sm:gap-x-3">
+            <span className="font-medium">{p.name.vi}</span>
+            <span className="flex flex-wrap gap-1.5">
+              <Badge tone="neutral">{MEAL[p.mealPlan]}</Badge>
+              {p.isDefault && <Badge tone="ok">Mặc định</Badge>}
+              {!p.active && <Badge tone="warn">Ngừng bán</Badge>}
+            </span>
+            <span className="text-[13px] text-muted-foreground tabular-nums sm:ml-auto">
+              {cancelName(p.cancellationPolicyId)} · {depositOf(p.depositPolicyId) ? depositText(depositOf(p.depositPolicyId)!) : '—'}
+            </span>
+          </div>
+        }>
+          <PlanForm roomTypeId={rt.id} plan={p} policies={data} />
+        </Row>
+      ))}
+      {!rt.plans.length && <Empty>Chưa có gói — hạng phòng này chưa bán được trên web.</Empty>}
+      <Row summary={add('Thêm gói giá')}><PlanForm roomTypeId={rt.id} policies={data} /></Row>
+    </Section>
+  )
+}
+
+/** Chính sách huỷ + cọc dùng chung mọi khách sạn (tab Cài đặt). */
+export function PoliciesPanel({ slug }: { slug: string }) {
   const { data, isPending, isError, error, refetch } = useAdminPlans(slug)
   if (isPending) return <div className={`${CARD} grid gap-3 p-5`}>{[0, 1, 2].map(i => <Skel key={i} className="h-12" />)}</div>
   if (isError || !data) return <DbFailed error={error} onRetry={() => refetch()} />
-  const cancelName = (id: string) => data.cancellation.find(c => c.id === id)?.name ?? '—'
-  const depositOf = (id: string) => data.deposit.find(d => d.id === id)
-  const add = <span className="inline-flex items-center gap-1.5 text-sm font-medium text-primary"><Plus className="size-4" aria-hidden />Thêm</span>
-
   return (
     <div className="grid gap-4">
-      {data.roomTypes.map(rt => (
-        <Section key={rt.id} title={`${rt.name.vi} · ${rt.totalRooms} phòng`} desc={rt.status === 'PUBLISHED' ? undefined : `Trạng thái: ${rt.status}`}>
-          {rt.plans.map(p => (
-            <Row key={p.id} summary={
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-                <span className="font-medium">{p.name.vi}</span>
-                <span className="text-xs text-muted-foreground">{p.code} · {MEAL[p.mealPlan]} · {p.refundable ? 'hoàn huỷ' : 'không hoàn'}</span>
-                {p.isDefault && <Badge tone="neutral">Mặc định</Badge>}
-                {!p.active && <Badge tone="warn">Ngừng bán</Badge>}
-                <span className="ml-auto text-xs text-muted-foreground tabular-nums">
-                  {p.basePrice != null ? `gốc ${vnd(p.basePrice)}` : 'chưa có giá gốc'} · {cancelName(p.cancellationPolicyId)} · {depositOf(p.depositPolicyId) ? depositText(depositOf(p.depositPolicyId)!) : '—'}
-                </span>
-              </div>
-            }>
-              <PlanForm roomTypeId={rt.id} plan={p} policies={data} />
-            </Row>
-          ))}
-          {!rt.plans.length && <Empty>Chưa có gói — hạng phòng này chưa bán được trên web.</Empty>}
-          <Row summary={add}><PlanForm roomTypeId={rt.id} policies={data} /></Row>
-        </Section>
-      ))}
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Section title="Chính sách huỷ" desc="Dùng chung mọi khách sạn. Booking cũ giữ chính sách lúc đặt.">
-          {data.cancellation.map(c => (
-            <Row key={c.id} summary={<div className="text-sm"><p className="font-medium">{c.name} <span className="font-normal text-muted-foreground">· {c.used} gói</span></p><p className="text-xs text-muted-foreground tabular-nums">{tiersText(c)}</p></div>}>
-              <CancelForm c={c} />
-            </Row>
-          ))}
-          <Row summary={add}><CancelForm /></Row>
-        </Section>
-        <Section title="Chính sách cọc" desc="Phần còn lại trả tại quầy (admin ghi nhận).">
-          {data.deposit.map(d => (
-            <Row key={d.id} summary={<div className="text-sm"><p className="font-medium">{d.name} <span className="font-normal text-muted-foreground">· {d.used} gói</span></p><p className="text-xs text-muted-foreground">{depositText(d)} · giữ phòng {d.holdMinutes} phút · {d.balanceDueDaysBefore ? `trả nốt trước ${d.balanceDueDaysBefore} ngày` : 'trả nốt tại quầy'}</p></div>}>
-              <DepositForm d={d} />
-            </Row>
-          ))}
-          <Row summary={add}><DepositForm /></Row>
-        </Section>
-      </div>
+      <Section title="Chính sách huỷ" desc="Dùng chung mọi khách sạn; gắn vào từng gói giá. Booking cũ giữ chính sách lúc đặt.">
+        {data.cancellation.map(c => (
+          <Row key={c.id} summary={<div className="text-sm"><p className="font-medium">{c.name} <span className="font-normal text-muted-foreground">· {c.used} gói</span></p><p className="text-[13px] text-muted-foreground tabular-nums">{tiersText(c)}</p></div>}>
+            <CancelForm c={c} />
+          </Row>
+        ))}
+        <Row summary={add('Thêm chính sách huỷ')}><CancelForm /></Row>
+      </Section>
+      <Section title="Chính sách cọc" desc="Phần còn lại trả tại quầy (admin ghi nhận ở Đặt phòng web).">
+        {data.deposit.map(d => (
+          <Row key={d.id} summary={<div className="text-sm"><p className="font-medium">{d.name} <span className="font-normal text-muted-foreground">· {d.used} gói</span></p><p className="text-[13px] text-muted-foreground">{depositText(d)} · giữ phòng {d.holdMinutes} phút · {d.balanceDueDaysBefore ? `trả nốt trước ${d.balanceDueDaysBefore} ngày` : 'trả nốt tại quầy'}</p></div>}>
+            <DepositForm d={d} />
+          </Row>
+        ))}
+        <Row summary={add('Thêm chính sách cọc')}><DepositForm /></Row>
+      </Section>
     </div>
   )
 }

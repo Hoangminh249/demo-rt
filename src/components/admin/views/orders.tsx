@@ -215,7 +215,7 @@ export function OrderView({ code, staff }: { code: string; staff: boolean }) {
               ...nights.map(n => [fmtDate(n.date), vnd(n.price * o.rooms.length + n.extraFee)] as [string, string]),
               ...(o.discount ? [[`Khuyến mãi${o.promoCode ? ` ${o.promoCode}` : ''}`, `−${vnd(o.discount)}`] as [string, string]] : []),
               ...(o.taxFees ? [['Thuế, phí', vnd(o.taxFees)] as [string, string]] : []),
-              ['Tổng', vnd(o.total)], ['Cọc yêu cầu', vnd(o.depositAmount)], ['Đã trả', vnd(o.paidAmount)],
+              ['Tổng', vnd(o.total)], ['Đã trả', vnd(o.paidAmount)],
               ['Còn lại', `${vnd(o.balanceDue)}${o.balanceDueAt ? ` · hạn ${fmtDate(o.balanceDueAt)}` : ''}`],
             ]} />
           </Box>

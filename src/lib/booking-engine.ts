@@ -182,7 +182,7 @@ export async function createHold(db: Db, userId: string, s: Selection, contact: 
             guestName: contact.guestName || null, specialRequests: contact.specialRequests || null,
             adults: s.adults, children: s.childAges.length, childAges: s.childAges,
             subtotal: q.subtotal, discount: q.discount, taxFees: q.taxFees, total: q.total,
-            depositAmount: q.deposit, paidAmount: 0, balanceDue: q.total, balanceDueAt: q.balanceDueAt ? day(q.balanceDueAt) : null,
+            depositAmount: q.total, paidAmount: 0, balanceDue: q.total, balanceDueAt: null, // bỏ đặt cọc: trả đủ khi đặt
             holdExpiresAt: new Date(now.getTime() + q.holdMinutes * 60_000),
             selectionKey: key, source: 'web',
             policySnapshot: json({
@@ -225,24 +225,23 @@ export async function createHold(db: Db, userId: string, s: Selection, contact: 
 // ---------- Thanh toán ----------
 
 export type StartPaymentResult =
-  | { ok: true; providerRef: string; amount: number; kind: 'DEPOSIT' | 'FULL' }
+  | { ok: true; providerRef: string; amount: number }
   | { ok: false; error: 'NOT_FOUND' | 'NOT_PENDING' | 'EXPIRED' }
 
-/** Tạo một lần thanh toán (PENDING) cho booking đang giữ. mode 'deposit' = cọc theo chính sách, 'full' = trả đủ. */
-export async function startPayment(db: Db, userId: string, code: string, mode: 'deposit' | 'full', provider: string, newRef: () => string, now = new Date()): Promise<StartPaymentResult> {
+/** Tạo một lần thanh toán (PENDING) cho booking đang giữ: luôn trả đủ phần còn lại (bỏ đặt cọc từ 12/10/2026). */
+export async function startPayment(db: Db, userId: string, code: string, provider: string, newRef: () => string, now = new Date()): Promise<StartPaymentResult> {
   const b0 = await db.booking.findFirst({ where: { code, userId }, select: { id: true } })
   if (!b0) return { ok: false, error: 'NOT_FOUND' }
   await expireDue(db, now, b0.id)
   return db.$transaction(async tx => {
-    const [b] = await tx.$queryRaw<{ status: string; holdExpiresAt: Date | null; total: number; depositAmount: number; paidAmount: number }[]>`
-      SELECT status, "holdExpiresAt", total, "depositAmount", "paidAmount" FROM "Booking" WHERE id = ${b0.id} FOR UPDATE`
+    const [b] = await tx.$queryRaw<{ status: string; total: number; paidAmount: number }[]>`
+      SELECT status, total, "paidAmount" FROM "Booking" WHERE id = ${b0.id} FOR UPDATE`
     if (b.status === 'EXPIRED') return { ok: false, error: 'EXPIRED' } as const
     if (b.status !== 'PENDING_PAYMENT') return { ok: false, error: 'NOT_PENDING' } as const
-    const kind = mode === 'deposit' && b.depositAmount < b.total ? 'DEPOSIT' : 'FULL'
-    const amount = (kind === 'DEPOSIT' ? b.depositAmount : b.total) - b.paidAmount
+    const amount = b.total - b.paidAmount
     const providerRef = newRef()
-    await tx.payment.create({ data: { bookingId: b0.id, kind, provider, providerRef, amount, status: 'PENDING' } })
-    return { ok: true, providerRef, amount, kind } as const
+    await tx.payment.create({ data: { bookingId: b0.id, kind: 'FULL', provider, providerRef, amount, status: 'PENDING' } })
+    return { ok: true, providerRef, amount } as const
   })
 }
 

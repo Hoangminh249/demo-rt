@@ -35,3 +35,8 @@ export const useLiveBooking = (code: string, poll: (b: LiveBooking | undefined) 
 export const usePay = (code: string) => useMutation({
   mutationFn: (b: PayInput) => api.post<{ ok: true; url: string } | { ok: false; error: string }>(`/bookings/${encodeURIComponent(code)}/pay`, b, business).then(r => r.data),
 })
+
+/** Khách tự huỷ. Xong thì làm mới trang (trang chi tiết đơn là server component). */
+export const useCancelBooking = (code: string) => useMutation({
+  mutationFn: () => api.post<{ ok: true; penalty: number; refund: number } | { ok: false; error: string }>(`/bookings/${encodeURIComponent(code)}/cancel`, {}, business).then(r => r.data),
+})

@@ -1,8 +1,10 @@
-// Cổng thanh toán: interface chung + bản giả lập (PAYMENT_PROVIDER=mock, mặc định). Chưa tích hợp cổng thật.
+// Cổng thanh toán: interface chung + bản giả lập. Hai hình thức khách chọn (chốt 12/10/2026): chuyển khoản ngân hàng, OnePay.
+// PAYMENT_PROVIDER=mock (mặc định): cả hai đi qua cổng giả lập, ghi Payment.provider = 'mock-bank' / 'mock-onepay'.
+// Chưa tích hợp cổng thật: thêm object PaymentProvider tên 'bank' / 'onepay' (tạo link thanh toán + kiểm chữ ký webhook).
 // Booking CHỈ được xác nhận qua webhook (booking-engine.handleWebhook); trang trở về của trình duyệt chỉ để hiển thị.
-// Thêm cổng thật (OnePay, VNPay…) = thêm một object PaymentProvider: tạo link thanh toán + kiểm chữ ký webhook.
 import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto'
 import type { WebhookEvent } from './booking-engine'
+import { PAY_METHODS, type PayMethod } from './booking-requests'
 
 export interface PaymentProvider {
   name: string
@@ -13,6 +15,12 @@ export interface PaymentProvider {
 }
 
 export const newPaymentRef = () => `PAY-${randomUUID()}`
+
+/** Payment.provider → hình thức hiển thị cho khách / email ('mock-bank' → 'bank'). Không rõ → null. */
+export const methodOf = (provider: string): PayMethod | null => {
+  const m = provider.replace(/^mock-/, '')
+  return (PAY_METHODS as readonly string[]).includes(m) ? (m as PayMethod) : null
+}
 
 // ---------- Giả lập ----------
 // Trang /thanh-toan-gia-lap đóng vai cổng: khách bấm "thành công"/"thất bại" → server ký body bằng HMAC rồi đưa vào
@@ -33,8 +41,8 @@ export function mockWebhook(providerRef: string, status: 'succeeded' | 'failed',
   return { body, signature: sign(body) }
 }
 
-export const mockProvider: PaymentProvider = {
-  name: 'mock',
+const mock = (name: string): PaymentProvider => ({
+  name,
   checkoutUrl: ({ providerRef, locale }) => `${locale === 'en' ? '/en' : ''}/thanh-toan-gia-lap?ref=${encodeURIComponent(providerRef)}`,
   parseWebhook(body, headers) {
     const got = headers.get(MOCK_SIGNATURE_HEADER) ?? ''
@@ -48,14 +56,21 @@ export const mockProvider: PaymentProvider = {
       return null
     }
   },
-}
+})
 
-const PROVIDERS: Record<string, PaymentProvider> = { mock: mockProvider }
+// 'mock' giữ lại cho payment tạo trước khi tách hai hình thức.
+const MOCKS: Record<string, PaymentProvider> = { 'mock-bank': mock('mock-bank'), 'mock-onepay': mock('mock-onepay'), mock: mock('mock') }
+const REAL: Record<string, PaymentProvider> = {}
 
-/** Cổng đang dùng (env PAYMENT_PROVIDER, mặc định mock). */
-export const paymentProvider = (): PaymentProvider => {
-  const p = PROVIDERS[process.env.PAYMENT_PROVIDER || 'mock']
-  if (!p) throw new Error(`PAYMENT_PROVIDER không hỗ trợ: ${process.env.PAYMENT_PROVIDER}`)
+export const mockPayments = () => (process.env.PAYMENT_PROVIDER || 'mock') === 'mock'
+
+/** Cổng cho hình thức khách chọn. */
+export const paymentProvider = (method: PayMethod): PaymentProvider => {
+  const p = mockPayments() ? MOCKS[`mock-${method}`] : REAL[method]
+  if (!p) throw new Error(`Chưa tích hợp cổng thanh toán: ${method}`)
   return p
 }
-export const providerByName = (name: string): PaymentProvider | undefined => PROVIDERS[name]
+/** Cổng theo tên trong URL webhook (/api/payments/{name}/webhook). Cổng giả chỉ nhận khi đang ở chế độ mock. */
+export const providerByName = (name: string): PaymentProvider | undefined => (mockPayments() ? MOCKS[name] : undefined) ?? REAL[name]
+/** Payment của cổng giả lập (trang /thanh-toan-gia-lap chỉ phục vụ những payment này). */
+export const isMockProvider = (name: string) => name in MOCKS

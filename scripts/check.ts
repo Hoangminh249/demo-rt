@@ -1,7 +1,7 @@
 // Kiểm logic thuần của phần tích hợp Gohost (không gọi API, không cần Next). Chạy: yarn test
 import assert from 'node:assert/strict'
 import { defaultStay, parseStay, validRange } from '../src/lib/stay'
-import { mergeRooms, minDefaultRate, nightly } from '../src/lib/rooms'
+import { mergeRooms, minDefaultRate, priceRuns } from '../src/lib/rooms'
 import { bookingCode, deposit, isEmail, isPhone, roomHref, selectionQuery } from '../src/lib/booking'
 import { nightsOf, planOffers, roomsLeft, type InventoryDay } from '../src/lib/inventory'
 import { datesIn, priceFromRules, weekdayOf, type Rule } from '../src/lib/pricing'
@@ -42,7 +42,6 @@ assert.equal(state(3, 0).a, 'too_small', 'quá số người lớn')
 assert.equal(state(2, 2).a, 'too_small', 'quá số trẻ em')
 assert.equal(state(5, 3).f, 'available', 'Gohost không khai sức chứa (0) thì không chặn')
 assert.equal(state(3, 0).b, 'sold_out', 'hết phòng ưu tiên hơn không đủ chỗ')
-assert.equal(nightly(plan), 2_600_000)
 
 // --- minDefaultRate: "Giá từ" chỉ tính hạng phòng thật, đã ánh xạ, tiền VND, giá > 0 ---
 const rt = (id: string, is_virtual: boolean, currency: string, default_rates: number[]) => ({ id, is_virtual, rate_plans: [{ currency, default_rates }] })
@@ -104,5 +103,13 @@ assert.equal(priceFromRules(rules, null, '2027-01-05'), null, 'không rule, khô
 assert.equal(priceFromRules(rules, null, '2026-10-13'), null, 'PERCENT thiếu basePrice → không ghi')
 assert.equal(priceFromRules(rules, null, '2026-12-26'), 3_500_000, 'FIXED không cần basePrice')
 assert.equal(priceFromRules([{ ...rules[0], type: 'PERCENT', value: -150, weekdays: [] }], 1_000_000, '2026-10-13'), 0, 'không ra giá âm')
+
+// --- priceRuns: gộp đêm liền nhau cùng giá ---
+assert.deepEqual(priceRuns([{ day: '2026-10-12', price: 3_500_000 }, { day: '2026-10-13', price: 3_500_000 }, { day: '2026-10-14', price: 4_000_000 }, { day: '2026-10-15', price: 3_500_000 }]), [
+  { from: '2026-10-12', to: '2026-10-13', price: 3_500_000, nights: 2 },
+  { from: '2026-10-14', to: '2026-10-14', price: 4_000_000, nights: 1 },
+  { from: '2026-10-15', to: '2026-10-15', price: 3_500_000, nights: 1 },
+], 'cùng giá nhưng không liền nhau → dòng riêng')
+assert.deepEqual(priceRuns([]), [])
 
 console.log('check: ok')

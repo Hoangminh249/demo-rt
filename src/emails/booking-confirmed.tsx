@@ -1,6 +1,7 @@
 // Email xác nhận đặt phòng gửi khách (tiếng Việt). Dữ liệu: EmailBooking (src/lib/email.ts) — lấy từ ảnh chụp lúc đặt.
-import { Body, Container, Head, Heading, Hr, Html, Preview, Section, Text } from '@react-email/components'
+import { Body, Container, Head, Heading, Hr, Html, Link, Preview, Section, Text } from '@react-email/components'
 import type { EmailBooking } from '@/lib/email'
+import { METHOD } from './new-booking-notice'
 
 const vnd = (n: number) => `${new Intl.NumberFormat('vi-VN').format(n)} đ`
 const dmy = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}`
@@ -48,8 +49,8 @@ export function BookingConfirmed({ b }: { b: EmailBooking }) {
             {b.discount > 0 && <Line k={`Khuyến mãi${b.promoCode ? ` (${b.promoCode})` : ''}`} v={`−${vnd(b.discount)}`} />}
             {b.taxFees > 0 && <Line k="Thuế, phí" v={vnd(b.taxFees)} />}
             <Line k="Tổng cộng" v={vnd(b.total)} strong />
-            <Line k="Đã thanh toán" v={vnd(b.paid)} />
-            <Line k={b.balanceDueAt ? `Còn lại · hạn ${dmy(b.balanceDueAt)}` : 'Còn lại · trả tại quầy khi nhận phòng'} v={vnd(b.balanceDue)} strong />
+            <Line k={b.method ? `Đã thanh toán · ${METHOD[b.method]}` : 'Đã thanh toán'} v={vnd(b.paid)} />
+            {b.balanceDue > 0 && <Line k={b.balanceDueAt ? `Còn lại · hạn ${dmy(b.balanceDueAt)}` : 'Còn lại · trả tại quầy khi nhận phòng'} v={vnd(b.balanceDue)} strong />}
           </Section>
 
           <Hr />
@@ -59,6 +60,7 @@ export function BookingConfirmed({ b }: { b: EmailBooking }) {
           <Hr />
           <Text style={S.label}>Liên hệ khách sạn</Text>
           <Text style={{ fontSize: 14, margin: 0 }}>{[b.hotelPhone, b.hotelEmail].filter(Boolean).join(' · ') || 'Xem trên rootyhospitality.com'}</Text>
+          <Text style={{ fontSize: 14, margin: '16px 0 0' }}><Link href={b.orderUrl} style={{ color: '#23806f', fontWeight: 700 }}>Xem đơn đặt phòng</Link></Text>
           <Text style={{ ...S.muted, marginTop: 16, fontSize: 12 }}>Email gửi tự động từ rootyhospitality.com. Vui lòng mang mã đặt phòng khi nhận phòng.</Text>
         </Container>
       </Body>

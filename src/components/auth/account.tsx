@@ -1,12 +1,13 @@
 'use client'
-// Nút tài khoản trên header: chưa đăng nhập → "Đăng nhập" (mở modal); đã đăng nhập → menu email + Đăng xuất.
+// Nút tài khoản trên header: chưa đăng nhập → "Đăng nhập" (mở modal); đã đăng nhập → menu email + Đơn của tôi + Đăng xuất.
 // OpenLoginButton: nút mở modal đăng nhập đặt ở bất cứ đâu (vd thẻ "Đăng nhập để đặt phòng").
 import type { ReactNode } from 'react'
 import { useTranslations } from 'next-intl'
 import { signOut } from 'next-auth/react'
 import { DropdownMenu } from 'radix-ui'
-import { LogIn, LogOut, UserRound } from 'lucide-react'
+import { LogIn, LogOut, ReceiptText, UserRound } from 'lucide-react'
 import { cn } from 'cn'
+import { Link } from '@/i18n/navigation'
 import { useAuthSession } from '@/hooks/use-auth'
 import { useLoginModal } from './login'
 
@@ -36,6 +37,9 @@ export function AccountButton({ className, full }: { className?: string; full?: 
       <DropdownMenu.Portal>
         <DropdownMenu.Content align="end" sideOffset={6} className="z-50 w-64 rounded-xl border border-border bg-white p-1.5 shadow-popover">
           {user.email && <p className="truncate px-3 py-2 text-[13px] text-muted-foreground">{user.email}</p>}
+          <DropdownMenu.Item asChild className="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg px-3 text-[15px] outline-none data-highlighted:bg-mint data-highlighted:text-brand">
+            <Link href="/don-cua-toi"><ReceiptText className="size-4 text-brand" aria-hidden />{t('myOrders')}</Link>
+          </DropdownMenu.Item>
           <DropdownMenu.Item onSelect={() => signOut({ redirectTo: `${window.location.pathname}${window.location.search}` })}
             className="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg px-3 text-[15px] outline-none data-highlighted:bg-mint data-highlighted:text-brand">
             <LogOut className="size-4 text-brand" aria-hidden />{t('logout')}
