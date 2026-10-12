@@ -83,7 +83,8 @@ function Form({ target, initial }: { target: BookingTarget; initial?: GuestDraft
 
   // Sửa ô nào thì tắt lỗi của ô đó (kiểm lại khi bấm Tiếp tục).
   const set = <K extends keyof GuestDraft>(k: K, v: GuestDraft[K]) => { setF(x => ({ ...x, [k]: v })); setErrors(e => (k in e ? { ...e, [k]: undefined } : e)) }
-  const kids: ChildAge[] = Array.from({ length: o.stay.children }, (_, i) => f.children[i] ?? 'under6')
+  // Mặc định theo tuổi khách đã chọn ở ô "Số khách" (?ag=), khách vẫn sửa được.
+  const kids: ChildAge[] = Array.from({ length: o.stay.children }, (_, i) => f.children[i] ?? ((o.stay.ages[i] ?? 0) >= 6 ? '6to11' : 'under6'))
   const countries = new Intl.DisplayNames([locale], { type: 'region' })
   const kidRow = (age: ChildAge) => target.children?.rows[CHILD_AGES.indexOf(age)] // bảng trẻ em: dưới 6 · 6–11 · từ 12
   const ready = o.status === 'available' && !!o.plan

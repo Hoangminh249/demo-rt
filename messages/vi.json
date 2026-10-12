@@ -189,7 +189,13 @@
     "less": "Bớt {label}",
     "more": "Thêm {label}",
     "submit": "Xem phòng",
-    "search": "Tìm phòng"
+    "search": "Tìm phòng",
+    "agesTitle": "Tuổi của trẻ khi nhận phòng",
+    "agesHint": "Để tính đúng giá và chính sách trẻ em của khách sạn.",
+    "child": "Trẻ {n}",
+    "agePick": "Chọn tuổi",
+    "ageMax1": "≤ 1 tuổi",
+    "age": "{n} tuổi"
   },
   "Hotel": {
     "breadcrumb": "Đường dẫn",
@@ -267,7 +273,22 @@
     "included": "Đã gồm",
     "bookThis": "Đặt ngay",
     "viewPhotos": "Xem ảnh phòng {name}",
-    "totalLabel": "Tổng"
+    "totalLabel": "Tổng",
+    "roomInfo": "Thông tin phòng",
+    "bookNow": "Book now",
+    "totalNights": "{total} · tổng {nights}",
+    "close": "Đóng",
+    "prevPhoto": "Ảnh trước",
+    "nextPhoto": "Ảnh sau",
+    "photoN": "Xem ảnh {n}",
+    "yourStay": "Kỳ nghỉ của bạn",
+    "choosePlan": "Chọn gói giá",
+    "priceTimes": "{price} × {nights}",
+    "serviceVat": "Phí phục vụ & VAT",
+    "includedShort": "Đã gồm",
+    "includedAt": "Đã gồm khi lưu trú tại {hotel}",
+    "notAvailable": "Khách sạn không có: {list}",
+    "features": "Đặc điểm"
   },
   "NotFound": {
     "title": "Không tìm thấy trang",

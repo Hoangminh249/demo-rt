@@ -46,6 +46,7 @@ function localize(h: HotelContent, locale: Locale): Hotel {
       view: r.view && t(r.view),
       features: r.features.map(t),
       description: t(r.description),
+      tagline: r.tagline && t(r.tagline),
       note: r.note && t(r.note),
       images: r.images,
     })),
@@ -62,7 +63,6 @@ export const hotelApi = {
     return h ? localize(h, locale) : null
   },
   slugs: () => HOTELS.map(h => h.slug),
-  roomParams: () => HOTELS.flatMap(h => h.rooms.map(r => ({ slug: h.slug, room: r.slug }))),
   /** Khách sạn + phòng cho các bước đặt phòng (?hotel=&room=). null khi URL sai. */
   bookingTarget: (hotel: string | undefined, room: string | undefined, locale: Locale): BookingTarget | null => {
     const h = hotel ? content(hotel) : undefined

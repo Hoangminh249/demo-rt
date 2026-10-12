@@ -167,6 +167,7 @@ export const PITO: HotelContent = {
       size: { vi: '19 – 22 m²', en: '19 – 22 m²' },
       view: { vi: 'Hướng phố, vài phòng nhìn xéo ra biển', en: 'Promenade view, some with a partial sea view' },
       features: [{ vi: 'Cửa sổ', en: 'Window' }],
+      tagline: { vi: 'Cửa sổ nhìn ra phố Santo Port', en: 'A window over the Santo Port promenade' },
       description: { vi: '4 phòng có cửa sổ nhìn ra khu phố Santo Port, một số phòng nhìn xéo ra biển. Phòng tắm không có bồn tắm.', en: '4 rooms with a window over the Santo Port promenade; some have a partial sea view. No bathtub.' },
       images: ['superior-1', 'superior-2', 'superior-3', 'superior-4'].map(f => img(`rooms/${f}`)),
     },
@@ -177,6 +178,7 @@ export const PITO: HotelContent = {
       size: { vi: '27 m²', en: '27 m²' },
       view: { vi: 'Hướng núi', en: 'Mountain view' },
       features: [{ vi: 'Bồn tắm', en: 'Bathtub' }, { vi: 'Ban công', en: 'Balcony' }],
+      tagline: { vi: 'Hạng rộng nhất — bồn tắm và ban công nhìn núi', en: 'Our largest — bathtub and a mountain-view balcony' },
       description: { vi: '4 phòng — hạng rộng nhất của khách sạn, có bồn tắm và ban công nhìn về phía núi.', en: '4 rooms — the largest at the hotel, with a bathtub and a balcony facing the mountains.' },
       note: {
         vi: 'Phòng 101 thuộc hạng này nhưng rộng 20 m² và không có cửa sổ. Cần tránh phòng 101 thì báo khách sạn khi đặt.',
@@ -191,6 +193,7 @@ export const PITO: HotelContent = {
       size: { vi: '26 m²', en: '26 m²' },
       view: { vi: 'Hướng phố, vài phòng nhìn xéo ra biển', en: 'Promenade view, some with a partial sea view' },
       features: [{ vi: 'Bồn tắm', en: 'Bathtub' }, { vi: 'Ban công', en: 'Balcony' }],
+      tagline: { vi: 'Ban công nhìn phố, vài phòng ngắm xéo ra biển', en: 'Promenade balcony, some with a partial sea view' },
       description: { vi: '4 phòng có bồn tắm và ban công nhìn ra khu phố Santo Port, một số phòng nhìn xéo ra biển.', en: '4 rooms with a bathtub and a balcony over the Santo Port promenade; some have a partial sea view.' },
       images: ['premier-bathtub-1', 'premier-bathtub-2', 'premier-bathtub-3'].map(f => img(`rooms/${f}`)),
     },
@@ -201,6 +204,7 @@ export const PITO: HotelContent = {
       size: { vi: '20 m²', en: '20 m²' },
       view: { vi: 'Hướng núi', en: 'Mountain view' },
       features: [{ vi: 'Ban công riêng', en: 'Private balcony' }],
+      tagline: { vi: 'Phòng duy nhất trên tầng 6, ban công riêng', en: 'The only room on floor 6, with a private balcony' },
       description: { vi: 'Phòng 601 — phòng duy nhất ở tầng 6, có ban công riêng nhìn về phía núi.', en: 'Room 601 — the only room on floor 6, with a private balcony facing the mountains.' },
       note: { vi: 'Thang máy chỉ lên tới tầng 5: đi bộ thêm một tầng cầu thang.', en: 'The lift only reaches floor 5: one flight of stairs to the room.' },
       images: [], // ảnh phòng 601 có trên Drive, chưa tải

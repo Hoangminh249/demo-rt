@@ -87,7 +87,7 @@ export default async function HotelPage({ params }: PageProps<'/[locale]/hotel/[
           </section>
 
           <Suspense fallback={<section id="phong" className="scroll-mt-36 border-t border-border pt-10"><h2 className="text-[26px] font-bold text-brand">{t('Rooms.title')}</h2><div className="mt-6 h-64 animate-pulse rounded-2xl bg-muted" /></section>}>
-            <Rooms hotel={{ slug: h.slug, name: h.name, online: h.online, opening: h.opening, cancel_summary: h.cancel_summary, included: h.included }} rooms={h.rooms} contact={contact} />
+            <Rooms hotel={{ slug: h.slug, name: h.name, online: h.online, opening: h.opening, cancel_summary: h.cancel_summary, included: h.included, not_available: h.not_available, checkin: h.policies[0][1], checkout: h.policies[1][1] }} rooms={h.rooms} contact={contact} />
           </Suspense>
 
           <Section id="di-lai" title={t('Hotel.gettingHere')}>

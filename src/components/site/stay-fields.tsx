@@ -1,6 +1,7 @@
 'use client'
 // Ô chọn khách sạn, khoảng ngày, số khách — dáng ô nhập của wireframe (cao 48px, viền, icon xanh, nhãn cam in hoa).
 import { useState, type ReactNode } from 'react'
+import { cn } from 'cn'
 import { CalendarDays, ChevronDown, Hotel as HotelIcon, Minus, Plus, Users } from 'lucide-react'
 import { enUS, vi } from 'react-day-picker/locale'
 import { useLocale, useTranslations } from 'next-intl'
@@ -9,7 +10,7 @@ import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { addDays, diffDays, fmtDayMonth, fmtRange, fmtWeekday, today } from '@/lib/format'
-import { MAX_NIGHTS } from '@/lib/stay'
+import { fitAges, MAX_NIGHTS } from '@/lib/stay'
 import type { Stay } from '@/types/hotel'
 import { EYEBROW } from './kit'
 
@@ -114,6 +115,34 @@ export function DateRangeField({ id, label, stay, min, onChange, boxed }: { id: 
   return boxed ? field : <Field id={id} label={label ?? t('Fields.dates')}>{field}</Field>
 }
 
+/** Tuổi từng trẻ lúc nhận phòng (1 = "≤ 1 tuổi" … 11). Chưa chọn thì ô viền nét đứt, ghi "Chọn tuổi". */
+function ChildAges({ stay, onChange }: { stay: Stay; onChange: (s: Stay) => void }) {
+  const t = useTranslations('Fields')
+  const ages = fitAges(stay.ages, stay.children)
+  return (
+    <div className="mt-1 grid gap-3 rounded-xl bg-muted p-3.5">
+      <div>
+        <p className="text-[14px] font-semibold text-brand">{t('agesTitle')}</p>
+        <p className="text-[12px] text-muted-foreground">{t('agesHint')}</p>
+      </div>
+      <div className="grid grid-cols-2 gap-2.5">
+        {ages.map((age, i) => (
+          <div key={i} className="grid min-w-0 gap-1">
+            <label htmlFor={`child-age-${i}`} className="text-[12px] text-muted-foreground">{t('child', { n: i + 1 })}</label>
+            <Select value={age ? String(age) : ''} onValueChange={v => onChange({ ...stay, ages: ages.map((a, j) => (j === i ? Number(v) : a)) })}>
+              <SelectTrigger id={`child-age-${i}`} className={cn('!h-11 w-full rounded-lg bg-white text-[15px]', age ? 'border-border-strong' : 'border-dashed border-primary')}>
+                <SelectValue placeholder={t('agePick')} />
+              </SelectTrigger>
+              <SelectContent>{CHILD_AGE_OPTIONS.map(n => <SelectItem key={n} value={String(n)}>{n === 1 ? t('ageMax1') : t('age', { n })}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+const CHILD_AGE_OPTIONS = Array.from({ length: 11 }, (_, i) => i + 1)
+
 function Counter({ label, sub, value, min, max, onChange }: { label: string; sub?: string; value: number; min: number; max: number; onChange: (n: number) => void }) {
   const t = useTranslations('Fields')
   const btn = 'm-1 grid size-8 place-items-center rounded-md text-brand hover:bg-mint disabled:cursor-not-allowed disabled:text-muted-foreground disabled:opacity-40'
@@ -146,9 +175,12 @@ export function GuestsField({ id, stay, onChange, boxed }: { id: string; stay: S
             <ChevronDown className="size-4 shrink-0 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" aria-hidden />
           </PopoverTrigger>
         )}
-        <PopoverContent align="start" collisionPadding={16} className="w-72 max-w-[calc(100vw-2rem)] divide-y divide-border px-4 py-1">
-          <Counter label={t('Fields.adults')} value={stay.adults} min={1} max={6} onChange={adults => onChange({ ...stay, adults })} />
-          <Counter label={t('Fields.children')} sub={t('Fields.under12')} value={stay.children} min={0} max={4} onChange={children => onChange({ ...stay, children })} />
+        <PopoverContent align="start" collisionPadding={16} className="w-80 max-w-[calc(100vw-2rem)] px-4 pt-1 pb-4">
+          <div className="divide-y divide-border">
+            <Counter label={t('Fields.adults')} value={stay.adults} min={1} max={6} onChange={adults => onChange({ ...stay, adults })} />
+            <Counter label={t('Fields.children')} sub={t('Fields.under12')} value={stay.children} min={0} max={4} onChange={children => onChange({ ...stay, children, ages: fitAges(stay.ages, children) })} />
+          </div>
+          {stay.children > 0 && <ChildAges stay={stay} onChange={onChange} />}
         </PopoverContent>
       </Popover>
   )

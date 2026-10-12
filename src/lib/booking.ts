@@ -19,8 +19,9 @@ export interface Selection { hotel: string; room: string; plan?: string | null }
 export const selectionQuery = (sel: Selection, stay: Stay) =>
   `${new URLSearchParams({ hotel: sel.hotel, room: sel.room, ...(sel.plan ? { plan: sel.plan } : {}) })}&${stayQuery(stay)}`
 
+/** Chi tiết phòng là dialog trên trang khách sạn: `?room=` mở sẵn dialog đó (từ luồng đặt phòng quay lại). */
 export const roomHref = (hotel: string, room: string, stay?: Stay, plan?: string | null) =>
-  `/hotel/${hotel}/${room}${stay ? `?${stayQuery(stay)}${plan ? `&plan=${encodeURIComponent(plan)}` : ''}` : ''}`
+  `/hotel/${hotel}?${new URLSearchParams({ room, ...(plan ? { plan } : {}) })}${stay ? `&${stayQuery(stay)}` : ''}#phong`
 
 // Thứ tự hiển thị trên form; kiểu ở src/types/booking.ts.
 export const CHILD_AGES: ChildAge[] = ['under6', '6to11', '12plus']

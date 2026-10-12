@@ -6,7 +6,7 @@ Hành trình mục tiêu: xem KS → danh sách phòng → **chi tiết phòng**
 
 | Route | Việc | Dữ liệu |
 |---|---|---|
-| `/hotel/[slug]/[room]` | Ảnh, thông số, gói giá, thẻ đặt phòng (ngày, khách, giá từng đêm, tổng), trước khi đặt, phòng khác | GET Gohost thật qua `/api/hotels/{slug}/rooms` |
+| `/hotel/[slug]` → dialog phòng (`?room=`, 12/10/2026 thay trang `/hotel/[slug]/[room]`) | Ảnh, thông số, đã gồm, gói giá, khung đặt phòng (ngày, khách + tuổi trẻ, tổng) | GET Gohost thật qua `/api/hotels/{slug}/rooms` |
 | `/dat-phong` | Thông tin khách & yêu cầu lưu trú | sessionStorage (`src/components/booking/draft.ts`) |
 | `/dat-phong/thanh-toan` | Cọc 30% / trả đủ · QR Vietcombank / thẻ OnePay | **Mock**: QR vẽ giả, số TK minh hoạ |
 | `/dat-phong/xac-nhan` | Thành công: mã đặt phòng, thanh toán, việc tiếp theo | sessionStorage |

@@ -25,7 +25,7 @@ export function QuickBar({ hotels, now, initial }: { hotels: QuickHotel[]; now: 
   function pickHotel(next: string) {
     setSlug(next)
     const nextOpening = hotels.find(h => h.slug === next)?.opening ?? null
-    if (stay.checkin < firstCheckin(now, nextOpening)) setStay({ ...defaultStay(now, nextOpening), adults: stay.adults, children: stay.children })
+    if (stay.checkin < firstCheckin(now, nextOpening)) setStay({ ...defaultStay(now, nextOpening), adults: stay.adults, children: stay.children, ages: stay.ages })
   }
 
   if (!hotels.length) return null

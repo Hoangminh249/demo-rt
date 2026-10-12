@@ -189,7 +189,13 @@
     "less": "Fewer {label}",
     "more": "More {label}",
     "submit": "See rooms",
-    "search": "Find a room"
+    "search": "Find a room",
+    "agesTitle": "Children’s ages at check-in",
+    "agesHint": "So we can apply the right price and the hotel’s children policy.",
+    "child": "Child {n}",
+    "agePick": "Select age",
+    "ageMax1": "1 or under",
+    "age": "{n, plural, one {# year} other {# years}}"
   },
   "Hotel": {
     "breadcrumb": "Breadcrumb",
@@ -267,7 +273,22 @@
     "included": "Included",
     "bookThis": "Book now",
     "viewPhotos": "View photos of {name}",
-    "totalLabel": "Total"
+    "totalLabel": "Total",
+    "roomInfo": "Room details",
+    "bookNow": "Book now",
+    "totalNights": "{total} · {nights} total",
+    "close": "Close",
+    "prevPhoto": "Previous photo",
+    "nextPhoto": "Next photo",
+    "photoN": "Show photo {n}",
+    "yourStay": "Your stay",
+    "choosePlan": "Choose a rate",
+    "priceTimes": "{price} × {nights}",
+    "serviceVat": "Service charge & VAT",
+    "includedShort": "Included",
+    "includedAt": "Included with your stay at {hotel}",
+    "notAvailable": "Not available at the hotel: {list}",
+    "features": "Features"
   },
   "NotFound": {
     "title": "Page not found",

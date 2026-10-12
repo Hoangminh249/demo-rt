@@ -13,6 +13,7 @@ export interface RoomContent {
   view?: L
   features: L[]
   description: L
+  tagline?: L // một câu gợi tò mò trên thẻ phòng; không có thì dùng description
   note?: L // lưu ý bắt buộc phải báo khách trước khi đặt
   images: string[] // ảnh đầu là ảnh thẻ; [] = khung "Chưa có ảnh"
 }
@@ -71,6 +72,7 @@ export interface Room {
   view?: string
   features: string[]
   description: string
+  tagline?: string
   note?: string
   images: string[]
 }
@@ -124,4 +126,5 @@ export interface RoomAvailability {
   plans: PlanOffer[]
 }
 
-export interface Stay { checkin: string; checkout: string; adults: number; children: number }
+/** `ages`: tuổi từng trẻ (1 = dưới hoặc bằng 1 tuổi … 11), 0 = chưa chọn; luôn dài bằng `children`. */
+export interface Stay { checkin: string; checkout: string; adults: number; children: number; ages: number[] }

@@ -23,7 +23,7 @@ rooty-hospitality-web/
 
 ## Hiện trạng (07/10/2026)
 
-Pre-production, vi/en, giao diện theo rootytrip.com: `/` · `/hotel/[slug]` (PITO Hòn Thơm, Calista) · `/hotel/[slug]/[room]` chi tiết phòng · luồng đặt phòng **minh hoạ** `/dat-phong` → `/thanh-toan` → `/xac-nhan` · 4 trang tĩnh trong menu "Hỗ trợ" (`/lien-he`, `/chinh-sach-huy`, `/dieu-khoan-dat-phong`, `/chinh-sach-bao-mat` — 2 trang sau là bản nháp chờ pháp chế). Figma chỉ để biết section nằm đâu, UI theo hệ có sẵn.
+Pre-production, vi/en, giao diện theo rootytrip.com: `/` · `/hotel/[slug]` (PITO Hòn Thơm, Calista) · chi tiết phòng là dialog trên trang khách sạn (`?room=` mở sẵn, chỉ đóng bằng nút X), ô Số khách hỏi tuổi từng trẻ (`?ag=`) · luồng đặt phòng **minh hoạ** `/dat-phong` → `/thanh-toan` → `/xac-nhan` · 4 trang tĩnh trong menu "Hỗ trợ" (`/lien-he`, `/chinh-sach-huy`, `/dieu-khoan-dat-phong`, `/chinh-sach-bao-mat` — 2 trang sau là bản nháp chờ pháp chế). Figma chỉ để biết section nằm đâu, UI theo hệ có sẵn.
 - Nội dung + ảnh thật từ Drive "4. ROOTY HOSPITALITY" (`src/content/`). Calista chưa có ảnh chụp, khai trương 20/12/2026.
 - Phòng trống, giá: Gohost **chỉ GET** (`src/api/gohost.ts` qua client `src/lib/gohost.ts`).
 - Đặt phòng trực tuyến là **bản minh hoạ chạy ở trình duyệt** (`docs/2026-10-08-luong-dat-phong-minh-hoa.md`): giá GET Gohost thật, thông tin khách ở sessionStorage, QR Vietcombank / OnePay giả, không POST, không email. Phòng chưa có giá trực tuyến (Calista) vẫn là "Liên hệ đặt phòng" → Zalo/hotline/email.

@@ -1,6 +1,6 @@
 // Kiểm logic thuần của phần tích hợp Gohost (không gọi API, không cần Next). Chạy: yarn test
 import assert from 'node:assert/strict'
-import { defaultStay, validRange } from '../src/lib/stay'
+import { defaultStay, parseStay, validRange } from '../src/lib/stay'
 import { mergeRooms, minDefaultRate, nightly } from '../src/lib/rooms'
 import { bookingCode, deposit, isEmail, isPhone, roomHref, selectionQuery } from '../src/lib/booking'
 import type { Room, RoomAvailability } from '../src/types/hotel'
@@ -18,8 +18,14 @@ assert.equal(validRange('2026-02-30', '2026-03-02', now), false, 'ngày không c
 assert.equal(validRange(null, '2026-10-10', now), false)
 assert.equal(validRange('2026-12-19', '2026-12-21', now, '2026-12-20'), false, 'trước ngày khai trương')
 assert.equal(validRange('2026-12-20', '2026-12-22', now, '2026-12-20'), true)
-assert.deepEqual(defaultStay(now), { checkin: '2026-10-08', checkout: '2026-10-10', adults: 2, children: 0 })
-assert.deepEqual(defaultStay(now, '2026-12-20'), { checkin: '2026-12-20', checkout: '2026-12-22', adults: 2, children: 0 })
+assert.deepEqual(defaultStay(now), { checkin: '2026-10-08', checkout: '2026-10-10', adults: 2, children: 0, ages: [] })
+assert.deepEqual(defaultStay(now, '2026-12-20'), { checkin: '2026-12-20', checkout: '2026-12-22', adults: 2, children: 0, ages: [] })
+
+// --- tuổi trẻ em trên URL (?ag=): 1–11, sai hoặc thiếu = 0 (chưa chọn), luôn đủ số trẻ ---
+const sp = (q: string) => new URLSearchParams(q)
+assert.deepEqual(parseStay(sp('c=3&ag=4,x,12')).ages, [4, 0, 0])
+assert.deepEqual(parseStay(sp('c=1')).ages, [0])
+assert.deepEqual(parseStay(sp('c=0&ag=5')).ages, [])
 
 // --- mergeRooms: ghép nội dung Rooty với kết quả Gohost theo room_type_id ---
 const room = (slug: string, id: string | null): Room => ({ room_type_id: id, slug, name: slug, size: '', features: [], description: '', images: [] })
@@ -48,7 +54,8 @@ assert.equal(deposit(1_234_567), 370_000, 'làm tròn nghìn đồng')
 assert.equal(bookingCode('PITO', '2026-10-08', 42), 'RH-PITO-261008-0042')
 assert.equal(bookingCode('CALISTA', '2027-01-02', 123456), 'RH-CALISTA-270102-3456', 'seq tối đa 4 số')
 assert.equal(selectionQuery({ hotel: 'pito-hon-thom', room: 'superior', plan: 'p 1' }, defaultStay(now)), 'hotel=pito-hon-thom&room=superior&plan=p+1&in=2026-10-08&out=2026-10-10&a=2&c=0')
-assert.equal(roomHref('pito-hon-thom', 'superior'), '/hotel/pito-hon-thom/superior')
+assert.equal(roomHref('pito-hon-thom', 'superior'), '/hotel/pito-hon-thom?room=superior#phong')
+assert.equal(roomHref('pito-hon-thom', 'superior', { ...defaultStay(now), children: 2, ages: [4] }, 'p1'), '/hotel/pito-hon-thom?room=superior&plan=p1&in=2026-10-08&out=2026-10-10&a=2&c=2&ag=4%2C#phong', 'tuổi chưa chọn để trống')
 assert.equal(isEmail('minh.anh@example.com'), true)
 assert.equal(isEmail('minh.anh@example'), false)
 assert.equal(isPhone('+84 912 345 678'), true)
