@@ -1,14 +1,15 @@
 'use client'
-// Khối "Chọn phòng": nội dung từng hạng phòng (Rooty) + phòng trống, giá từng đêm (Gohost, qua /api/hotels/{slug}/rooms).
-// Trạng thái: đang tải · có giá · hết phòng · không đủ chỗ · chưa có giá trực tuyến (chưa nối Gohost, lỗi, hết lượt gọi).
-// Thẻ phòng ngang (ảnh lật được · tên · từng gói giá kèm "Book now"); bấm ảnh / "Thông tin phòng" mở dialog chi tiết —
+// Khối "Chọn phòng": nội dung từng hạng phòng + phòng trống, giá từng đêm (Postgres, qua /api/hotels/{slug}/rooms).
+// Trạng thái: đang tải · có giá · hết phòng · không đủ chỗ · chưa có giá (hạng phòng chưa có tồn/giá, lỗi mạng) → liên hệ.
+// Đổi ngày / số khách: hộp "Đổi ngày, số khách" sửa trên bản nháp, bấm "Áp dụng" mới tải lại.
+// Thẻ phòng ngang (ảnh lật được · tên · từng gói giá kèm "Đặt ngay"); bấm ảnh / "Xem chi tiết" mở dialog chi tiết —
 // không còn trang chi tiết phòng riêng. `?room=&plan=` trên URL mở sẵn dialog (luồng đặt phòng quay lại).
 // Dialog chỉ đóng bằng nút X (không đóng khi bấm nền hay Esc) — chốt với lãnh đạo 12/10/2026.
 // Chưa có giá trực tuyến: nút "Liên hệ đặt phòng" mở hộp tóm tắt + Zalo / gọi / email — không ghi dữ liệu nào.
 import { useState, type ReactNode } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
-import { CalendarDays, CalendarX, Check, ChevronLeft, ChevronRight, Coffee, Eye, Info, Mail, Maximize2, MessageCircle, Phone, RotateCw, Sparkles, Users, WifiOff, X, type LucideIcon } from 'lucide-react'
+import { ArrowRight, CalendarDays, CalendarX, Check, ChevronLeft, ChevronRight, Eye, Info, Mail, Maximize2, MessageCircle, Phone, RotateCw, Sparkles, Users, WifiOff, X, type LucideIcon } from 'lucide-react'
 import { cn } from 'cn'
 import { diffDays, fmtDayMonth, fmtPrice, fmtRange, fmtWeekday, today } from '@/lib/format'
 import { mergeRooms, priceRuns, type RoomOffer } from '@/lib/rooms'
@@ -19,22 +20,22 @@ import { useRoomAvailability } from '@/hooks/use-rooms'
 import { Dialog } from '@/components/ui/overlay'
 import { Dialog as UIDialog, DialogClose, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { BTN, BTN_OUT, Photo } from '@/components/site/kit'
-import { DateRangeField, GuestsField } from '@/components/site/stay-fields'
-import { firstCheckin } from '@/lib/stay'
+import { StayForm } from '@/components/site/stay-fields'
+import { LinkSpin } from '@/components/site/spin'
+import { firstCheckin, stayQuery } from '@/lib/stay'
 import { selectionQuery } from '@/lib/booking'
 import { Link } from '@/i18n/navigation'
 import { useStay } from './use-stay'
 
 export interface RoomsHotel {
-  slug: string; name: string; online: boolean; opening: string | null; cancel_summary: string
+  slug: string; name: string; opening: string | null; cancel_summary: string
   included: { icon: IconKey; label: string; desc?: string }[]; not_available: string[]
   checkin: string; checkout: string // 2 dòng đầu chính sách khách sạn (src/content luôn mở đầu bằng Nhận phòng, Trả phòng)
 }
 type Result = { avail?: RoomAvailability[]; error?: boolean }
 export type Pick = { room: Room; plan?: PlanOffer }
 
-const BOOK = 'inline-flex h-10 shrink-0 items-center justify-center rounded-full bg-primary px-5 text-[14px] font-semibold whitespace-nowrap text-primary-foreground transition-colors hover:bg-primary-hover'
-const UNDERLINE = 'cursor-pointer text-[13px] text-foreground underline decoration-border-strong underline-offset-4 transition-colors hover:text-primary hover:decoration-primary'
+const BOOK = 'inline-flex h-9 shrink-0 items-center justify-center rounded-full bg-primary px-4 text-[13px] font-semibold whitespace-nowrap text-primary-foreground transition-colors hover:bg-primary-hover'
 const NAV = 'absolute top-1/2 grid size-10 -translate-y-1/2 cursor-pointer place-items-center rounded-full bg-black/45 text-white transition-colors hover:bg-black/65'
 
 export function Rooms({ hotel, rooms, contact }: { hotel: RoomsHotel; rooms: Room[]; contact: Contact }) {
@@ -50,14 +51,14 @@ export function Rooms({ hotel, rooms, contact }: { hotel: RoomsHotel; rooms: Roo
   const party = t('Common.guests', { adults: stay.adults, children: stay.children }) + (ages.length ? ` (${ages.join(', ')})` : '')
   const range = fmtRange(stay.checkin, stay.checkout, locale)
 
-  // Chỉ gọi lại khi đổi ngày (số khách tính "đủ chỗ" ngay trên trình duyệt, không tốn lượt gọi Gohost).
-  const query = useRoomAvailability(hotel.slug, stay.checkin, stay.checkout, hotel.online)
-  const ready: Result | undefined = !hotel.online ? { avail: [] } : query.isPending ? undefined : { avail: query.data, error: query.isError }
+  // Chỉ gọi lại khi đổi ngày (số khách tính "đủ chỗ" ngay trên trình duyệt).
+  const query = useRoomAvailability(hotel.slug, stay.checkin, stay.checkout)
+  const ready: Result | undefined = query.isPending ? undefined : { avail: query.data, error: query.isError }
   const offers = ready?.avail ? mergeRooms(rooms, ready.avail, stay) : []
   const priced = offers.filter(o => o.state !== 'unmapped')
   const soldOut = priced.length > 0 && priced.every(o => o.state === 'sold_out')
   const noneFits = priced.length > 0 && priced.every(o => o.state === 'too_small')
-  const offline = !hotel.online || ready?.error || (ready?.avail && priced.length === 0)
+  const offline = ready?.error || (ready?.avail && priced.length === 0)
   const list = offers.length ? offers : rooms.map(room => ({ room, state: 'unmapped', left: 0, occ: null, plans: [] }) as RoomOffer)
   const current = list.find(o => o.room.slug === open)
 
@@ -81,8 +82,8 @@ export function Rooms({ hotel, rooms, contact }: { hotel: RoomsHotel; rooms: Roo
         {!ready ? (
           <div className="grid gap-5" role="status" aria-label={t('Rooms.loading')}>
             {[0, 1].map(i => (
-              <div key={i} className="grid overflow-hidden rounded-[20px] border border-border md:grid-cols-[300px_minmax(0,1fr)]">
-                <div className="h-56 animate-pulse bg-muted md:h-auto md:min-h-[260px]" />
+              <div key={i} className="grid overflow-hidden rounded-2xl border border-border md:grid-cols-[minmax(0,9fr)_minmax(0,11fr)]">
+                <div className="h-60 animate-pulse bg-muted md:h-auto md:min-h-[280px]" />
                 <div className="space-y-3 p-5"><div className="h-6 w-1/2 animate-pulse rounded-md bg-muted" /><div className="h-3 w-2/3 animate-pulse rounded bg-muted" /><div className="mt-8 h-10 animate-pulse rounded-full bg-muted" /><div className="h-10 animate-pulse rounded-full bg-muted" /></div>
               </div>
             ))}
@@ -123,16 +124,12 @@ export function Rooms({ hotel, rooms, contact }: { hotel: RoomsHotel; rooms: Roo
       </div>
 
       {current && (
-        <RoomDialog key={current.room.slug} offer={current} hotel={hotel} stay={stay} party={party} initialPlan={sp.get('plan')}
+        <RoomDialog key={current.room.slug} offer={current} loading={!ready} hotel={hotel} stay={stay} party={party} initialPlan={sp.get('plan')}
           onClose={() => setOpen(null)} onEdit={() => setEditing(true)} onPick={plan => setPicked({ room: current.room, plan })} />
       )}
 
       <Dialog open={editing} onClose={() => setEditing(false)} title={t('Rooms.change')}>
-        <div className="grid gap-4">
-          <DateRangeField id="rooms-dates" stay={stay} min={firstCheckin(today(), hotel.opening)} onChange={setStay} />
-          <GuestsField id="rooms-guests" stay={stay} onChange={setStay} />
-        </div>
-        <button type="button" onClick={() => setEditing(false)} className={`${BTN} mt-5 w-full`}>{t('Common.seeRooms')}</button>
+        <StayForm key={`${stayQuery(stay)}-${editing}`} id="rooms" stay={stay} min={firstCheckin(today(), hotel.opening)} onApply={s => { setStay(s); setEditing(false) }} />
       </Dialog>
 
       <ContactDialog hotel={hotel} stay={stay} picked={picked} contact={contact} onClose={() => setPicked(undefined)} />
@@ -182,23 +179,18 @@ function NightPrices({ p, className }: { p: PlanOffer; className?: string }) {
   )
 }
 
-/** Một gói giá trên thẻ phòng: tổng tiền cả kỳ ở; "Chi tiết giá" bật ô nổi giá từng đêm (không đẩy dài thẻ). */
-function PlanRow({ p, nights, href }: { p: PlanOffer; nights: string; href: string }) {
+/** Hàng giá ở đáy thẻ phòng: trái tổng tiền / N đêm + "Chi tiết giá" (tên gói khi phòng có từ 2 gói) · phải "Đặt ngay". Một hàng, không xuống dòng. */
+function PlanRow({ p, nights, href, named }: { p: PlanOffer; nights: string; href: string; named: boolean }) {
   const t = useTranslations()
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-5 gap-y-3 border-b border-border/70 px-5 py-4 last:border-b-0 @lg:grid-cols-[minmax(0,1fr)_auto_auto] sm:px-6">
-      <p className="min-w-0 text-[15px] font-semibold">
-        {p.title}
-        {/* Chỉ ghi ăn sáng khi Gohost bật has_breakfast (PITO: Gohost tắt, PDF ghi có) — "Đã gồm" trong dialog theo tài liệu khách sạn. */}
-        {p.has_breakfast && <span className="mt-0.5 flex items-center gap-1 text-[12px] font-normal text-muted-foreground"><Coffee className="size-3" aria-hidden />{t('Rooms.breakfast')}</span>}
-      </p>
-      <div className="text-right tabular-nums">
-        <span className="block text-[12px] text-muted-foreground">{t('Rooms.totalFor', { nights })}</span>
-        <b className="text-[18px] font-bold whitespace-nowrap">{fmtPrice(p.total)}</b>
+    <div className="flex items-center justify-between gap-4 border-t border-border px-5 py-3 sm:px-6">
+      <div className="min-w-0">
+        {named && <p className="truncate text-[13px] font-semibold">{p.title}</p>}
+        <p className="whitespace-nowrap tabular-nums"><b className="text-[17px] font-semibold">{fmtPrice(p.total)}</b><span className="text-[13px] text-muted-foreground"> / {nights}</span></p>
         {p.days_breakdown.length > 1 && (
           <Popover>
-            <PopoverTrigger className="block min-h-7 w-full cursor-pointer text-right text-[13px] text-primary underline-offset-4 hover:underline">{t('Rooms.priceDetail')}</PopoverTrigger>
-            <PopoverContent align="end" collisionPadding={16} className="w-80 max-w-[calc(100vw-2rem)] gap-0 p-0">
+            <PopoverTrigger className="cursor-pointer text-[12px] text-muted-foreground underline underline-offset-4 hover:text-primary">{t('Rooms.priceDetail')}</PopoverTrigger>
+            <PopoverContent align="start" collisionPadding={16} className="w-80 max-w-[calc(100vw-2rem)] gap-0 p-0">
               <p className="border-b border-border px-4 py-3 text-[13px] font-semibold">{p.title}</p>
               <NightPrices p={p} className="px-4 py-3" />
               <p className="flex items-baseline justify-between gap-3 border-t border-border px-4 py-3 tabular-nums">
@@ -208,12 +200,12 @@ function PlanRow({ p, nights, href }: { p: PlanOffer; nights: string; href: stri
           </Popover>
         )}
       </div>
-      <Link href={href} className={`${BOOK} col-span-2 @lg:col-span-1`}>{t('Rooms.bookNow')}</Link>
+      <Link href={href} className={`${BOOK} gap-2`}><LinkSpin />{t('Rooms.bookNow')}</Link>
     </div>
   )
 }
 
-/** Thẻ phòng ngang: ảnh trái · tên + một câu + "Thông tin phòng" · mỗi gói giá một hàng kèm "Book now". */
+/** Thẻ phòng ngang: ảnh trái · tên · mô tả · "Xem chi tiết →" · đáy thẻ: mỗi gói một hàng giá + "Đặt ngay". */
 function RoomCard({ offer, hotel, stay, onOpen, onPick, onOtherDates }: { offer: RoomOffer; hotel: RoomsHotel; stay: Stay; onOpen: () => void; onPick: (p?: PlanOffer) => void; onOtherDates: () => void }) {
   const t = useTranslations()
   const locale = useLocale()
@@ -222,32 +214,31 @@ function RoomCard({ offer, hotel, stay, onOpen, onPick, onOtherDates }: { offer:
   const nights = t('Common.nights', { n: diffDays(stay.checkin, stay.checkout) })
   const [img, setImg] = useState(0)
   return (
-    <article className="group grid overflow-hidden rounded-[20px] border border-border bg-white shadow-[0_4px_14px_rgb(30_28_24/0.05)] transition-shadow hover:shadow-[0_18px_40px_rgb(30_28_24/0.12)] md:grid-cols-[300px_minmax(0,1fr)]">
-      <Slides room={room} i={img} setI={setImg} onOpen={onOpen} sizes="(min-width: 768px) 300px, 100vw" className={cn('min-h-[240px] md:min-h-[260px]', off && 'opacity-60')}>
+    <article className="group grid overflow-hidden rounded-2xl border border-border bg-white transition-shadow hover:shadow-[0_12px_32px_rgb(30_28_24/0.08)] md:grid-cols-[minmax(0,9fr)_minmax(0,11fr)]">
+      <Slides room={room} i={img} setI={setImg} onOpen={onOpen} sizes="(min-width: 768px) 45vw, 100vw" className={cn('min-h-[240px] md:min-h-[280px]', off && 'opacity-60')}>
         {state === 'available' && left <= 3 && <span className="pointer-events-none absolute top-3.5 left-3.5 rounded-md bg-white px-2.5 py-1 text-[12px] font-semibold">{t('Rooms.lowStock', { n: left })}</span>}
       </Slides>
 
-      {/* @container: hàng gói giá chia cột theo bề rộng thẻ (cột phải trang có thẻ giá nên thẻ phòng hẹp hơn màn hình). */}
-      <div className="@container flex min-w-0 flex-col">
-        <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-4 sm:px-6">
-          <div className="min-w-0">
-            <h3 className="text-[20px] leading-snug font-semibold text-brand">{room.name}</h3>
-            <p className="mt-0.5 line-clamp-2 text-[14px] text-muted-foreground">{room.tagline ?? room.description}</p>
-          </div>
-          <button type="button" onClick={onOpen} className={`${UNDERLINE} mt-1 shrink-0`}>{t('Rooms.roomInfo')}</button>
+      <div className="flex min-w-0 flex-col">
+        <div className="flex flex-1 flex-col gap-1.5 px-5 py-4 sm:px-6">
+          <h3 className="text-[20px] leading-snug font-semibold text-brand">{room.name}</h3>
+          <p className="line-clamp-2 text-[14px] leading-relaxed text-muted-foreground">{room.tagline ?? room.description}</p>
+          <button type="button" onClick={onOpen} className="mt-auto inline-flex w-fit cursor-pointer items-center gap-1.5 pt-1 text-[14px] font-medium text-foreground underline decoration-border-strong underline-offset-4 transition-colors hover:text-primary hover:decoration-primary">
+            {t('Rooms.roomInfo')}<ArrowRight className="size-4" aria-hidden />
+          </button>
         </div>
 
         {state === 'available' ? (
-          offer.plans.map(p => <PlanRow key={p.rate_plan_id} p={p} nights={nights} href={`/dat-phong?${selectionQuery({ hotel: hotel.slug, room: room.slug, plan: p.rate_plan_id }, stay)}`} />)
+          offer.plans.map(p => <PlanRow key={p.rate_plan_id} p={p} named={offer.plans.length > 1} nights={nights} href={`/dat-phong?${selectionQuery({ hotel: hotel.slug, room: room.slug, plan: p.rate_plan_id }, stay)}`} />)
         ) : (
-          <div className="flex flex-1 flex-wrap items-center justify-between gap-3 px-5 py-4 sm:px-6">
-            <p className="text-[14px] text-muted-foreground">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-5 py-3 sm:px-6">
+            <p className="min-w-0 text-[14px] text-muted-foreground">
               {state === 'sold_out' ? t('Rooms.soldOut', { range: fmtRange(stay.checkin, stay.checkout, locale) })
                 : state === 'too_small' && offer.occ ? t('Rooms.roomMax', { max: t('Common.guests', { adults: offer.occ.adults, children: offer.occ.children }), party: t('Common.guests', { adults: stay.adults, children: stay.children }) })
                 : t('Rooms.askPrice')}
             </p>
-            {state === 'sold_out' ? <button type="button" onClick={onOtherDates} className={`${BTN_OUT} h-10 rounded-full`}>{t('Rooms.otherDates')}</button>
-              : state !== 'too_small' && <button type="button" onClick={() => onPick()} className={`${BTN_OUT} h-10 rounded-full`}>{t('Rooms.book')}</button>}
+            {state === 'sold_out' ? <button type="button" onClick={onOtherDates} className={`${BTN_OUT} ml-auto h-10 rounded-full`}>{t('Rooms.otherDates')}</button>
+              : state !== 'too_small' && <button type="button" onClick={() => onPick()} className={`${BTN_OUT} ml-auto h-10 rounded-full`}>{t('Rooms.book')}</button>}
           </div>
         )}
       </div>
@@ -255,9 +246,9 @@ function RoomCard({ offer, hotel, stay, onOpen, onPick, onOtherDates }: { offer:
   )
 }
 
-/** Chi tiết phòng: ảnh lớn + ảnh nhỏ · mô tả · thông số · đã gồm · khung đặt phòng (ngày, khách, gói, tổng, "Book now"). */
-function RoomDialog({ offer, hotel, stay, party, initialPlan, onClose, onEdit, onPick }: {
-  offer: RoomOffer; hotel: RoomsHotel; stay: Stay; party: string; initialPlan: string | null
+/** Chi tiết phòng: ảnh lớn + ảnh nhỏ · mô tả · thông số · đã gồm · khung đặt phòng (ngày, khách, gói, tổng, "Đặt ngay"). */
+function RoomDialog({ offer, loading, hotel, stay, party, initialPlan, onClose, onEdit, onPick }: {
+  offer: RoomOffer; loading: boolean; hotel: RoomsHotel; stay: Stay; party: string; initialPlan: string | null
   onClose: () => void; onEdit: () => void; onPick: (p?: PlanOffer) => void
 }) {
   const t = useTranslations()
@@ -356,7 +347,9 @@ function RoomDialog({ offer, hotel, stay, party, initialPlan, onClose, onEdit, o
                 </dl>
               </div>
 
-              {state === 'available' && plan ? (
+              {loading ? (
+                <div role="status" aria-label={t('Rooms.loading')} className="grid gap-2">{[0, 1].map(i => <div key={i} className="h-14 animate-pulse rounded-xl bg-white" />)}</div>
+              ) : state === 'available' && plan ? (
                 <>
                   <div role="radiogroup" aria-label={t('Rooms.choosePlan')} className="grid gap-2">
                     {offer.plans.map(p => {
@@ -386,10 +379,10 @@ function RoomDialog({ offer, hotel, stay, party, initialPlan, onClose, onEdit, o
               )}
             </div>
 
-            {state === 'available' && plan ? (
+            {loading ? <div className="h-11 animate-pulse rounded-full bg-muted" /> : state === 'available' && plan ? (
               <div className="grid gap-3 px-1">
                 <p className="flex items-baseline justify-between gap-3"><span className="text-[14px] text-muted-foreground">{t('Rooms.totalLabel')} {t('Common.nights', { n: nights })}</span><b className="text-[22px] font-bold tabular-nums">{fmtPrice(plan.total)}</b></p>
-                <Link href={`/dat-phong?${selectionQuery({ hotel: hotel.slug, room: room.slug, plan: plan.rate_plan_id }, stay)}`} className={`${BOOK} h-11 w-full text-[15px]`}>{t('Rooms.bookNow')}</Link>
+                <Link href={`/dat-phong?${selectionQuery({ hotel: hotel.slug, room: room.slug, plan: plan.rate_plan_id }, stay)}`} className={cn(BOOK, 'h-11 w-full gap-2 px-5 text-[15px]')}><LinkSpin />{t('Rooms.bookNow')}</Link>
                 <p className="text-[12px] leading-relaxed text-muted-foreground">{hotel.cancel_summary}. {t('Room.noChargeYet')}.</p>
               </div>
             ) : state === 'sold_out' || state === 'too_small' ? (

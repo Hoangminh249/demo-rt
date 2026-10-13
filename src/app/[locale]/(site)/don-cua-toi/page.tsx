@@ -1,5 +1,4 @@
-// Đơn đặt phòng của tôi — mọi booking của khách đang đăng nhập (chỉ khi DATA_SOURCE=db). ?tab=upcoming|stayed|cancelled.
-import { notFound } from 'next/navigation'
+// Đơn đặt phòng của tôi — mọi booking của khách đang đăng nhập. ?tab=upcoming|stayed|cancelled.
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { bookingApi } from '@/api/booking'
 import { hotelApi } from '@/api/hotel'
@@ -17,7 +16,6 @@ export async function generateMetadata() {
 export default async function OrdersPage({ params, searchParams }: PageProps<'/[locale]/don-cua-toi'>) {
   const { locale } = await params
   setRequestLocale(locale as Locale)
-  if (!bookingApi.enabled()) notFound()
   const t = await getTranslations('Orders')
   const user = await currentUser()
   if (!user) return <div className={`${CONTAINER} max-w-[720px] py-16`}><LoginCard title={t('loginTitle')} body={t('loginBody')} /></div>

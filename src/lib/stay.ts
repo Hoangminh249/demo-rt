@@ -1,9 +1,9 @@
 // Ngày ở + số khách ↔ URL (?in=&out=&a=&c=), để trang chủ truyền sang trang khách sạn và chia sẻ link được.
-// validRange dùng chung cho URL (trình duyệt) và route handler phòng trống (server): sai thì không gọi Gohost.
+// validRange dùng chung cho URL (trình duyệt) và route handler phòng trống (server): sai thì không truy vấn.
 import type { Stay } from '@/types/hotel'
 import { addDays, diffDays, isISODate, today } from './format'
 
-export const MAX_NIGHTS = 30 // Gohost: khoảng ngày tối đa 30 đêm
+export const MAX_NIGHTS = 30 // khoảng ngày tối đa 30 đêm
 const MAX_AHEAD = 365
 
 /** Ngày nhận sớm nhất: hôm nay, hoặc ngày khai trương nếu khách sạn chưa mở. */
@@ -15,7 +15,7 @@ export function defaultStay(now: string, opening?: string | null): Stay {
   return { checkin, checkout: addDays(checkin, 2), adults: 2, children: 0, ages: [] }
 }
 
-/** Khoảng ngày hỏi được Gohost. Cho lùi 1 ngày so với `now` vì đồng hồ trình duyệt và server có thể lệch qua nửa đêm. */
+/** Khoảng ngày hợp lệ để hỏi phòng trống. Cho lùi 1 ngày so với `now` vì đồng hồ trình duyệt và server có thể lệch qua nửa đêm. */
 export function validRange(checkin: string | null, checkout: string | null, now: string, opening?: string | null): checkin is string {
   if (!isISODate(checkin) || !isISODate(checkout)) return false
   const nights = diffDays(checkin, checkout)

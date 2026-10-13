@@ -24,15 +24,7 @@ export interface GhProperty { id: string; prefix: string; title: string; propert
 export interface GhAvailRatePlan { id: string; title: string; currency: string; sell_mode?: string; is_default?: boolean; has_breakfast: boolean; days_breakdown: { day: string; price: number }[]; estimated_total_price: number }
 export interface GhAvailRoomType { id: string; title: string; quantity: number; occ_adults: number; occ_children: number; occ_infants: number; rate_plans: GhAvailRatePlan[] }
 
-// ---------- Lỗi + trạng thái lượt gọi (admin) ----------
+// ---------- Lỗi ----------
 
 export type GohostErrorCode = 'NOT_CONFIGURED' | 'RATE_LIMITED' | 'UPSTREAM' | 'NOT_FOUND'
 
-export interface GohostStatus {
-  configured: boolean
-  budget: number
-  budgetLeft: number
-  cooldownUntil: number
-  last: { at: number; path: string; status: number | 'network' } | null
-  lastError: { at: number; code: GohostErrorCode } | null
-}

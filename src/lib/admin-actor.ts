@@ -5,7 +5,6 @@
 import 'server-only'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { isDbSource } from './db'
 import { currentUser } from '@/auth'
 import { isSession, SESSION_COOKIE } from './admin-auth'
 
@@ -20,7 +19,7 @@ export async function adminActor(): Promise<AdminActor | null> {
 }
 
 /** Trang đầu của STAFF (chỉ xem booking, check-in/out). */
-export const staffHome = () => (isDbSource() ? '/admin/orders' : '/admin/bookings')
+export const staffHome = () => '/admin/orders'
 
 /** Dùng ở đầu trang admin (server): chưa đăng nhập → /admin/login; sai role → trang của role đó. */
 export async function requireAdmin(roles: AdminRole[] = ['ADMIN']): Promise<AdminActor> {

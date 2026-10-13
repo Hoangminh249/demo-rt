@@ -7,6 +7,7 @@ import { fmtPrice } from '@/lib/format'
 import { useCancelBooking } from '@/hooks/use-booking'
 import { Dialog } from '@/components/ui/overlay'
 import { BTN_OUT } from '@/components/site/kit'
+import { Spin } from '@/components/site/spin'
 import { mmss, useSecondsLeft } from './live-payment'
 
 export function HoldLeft({ until }: { until: string }) {
@@ -29,7 +30,7 @@ export function CancelBooking({ code, penalty, refund, unpaid }: { code: string;
           <button type="button" onClick={() => setOpen(false)} className={BTN_OUT}>{t('cancelKeep')}</button>
           <button type="button" disabled={cancel.isPending}
             onClick={() => cancel.mutate(undefined, { onSuccess: r => { if (r.ok) { setOpen(false); router.refresh() } } })}
-            className="inline-flex h-11 cursor-pointer items-center justify-center rounded-lg bg-destructive px-5 text-[15px] font-semibold text-white disabled:opacity-50">{t('cancelDo')}</button>
+            className="inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-lg bg-destructive px-5 text-[15px] font-semibold text-white disabled:opacity-50"><Spin on={cancel.isPending} />{t('cancelDo')}</button>
         </>}>
         <p className="text-[15px] leading-relaxed">{unpaid ? t('cancelUnpaid') : t('cancelConfirmBody', { penalty: fmtPrice(penalty), refund: fmtPrice(refund) })}</p>
         {failed && <p role="alert" className="mt-3 text-[14px] text-destructive">{t('cancelFailed')}</p>}

@@ -132,7 +132,7 @@ export function SaveBar({ dirty, pending, onReset, result, label = 'Lưu thay đ
     <div className="sticky bottom-3 z-20 flex flex-wrap items-center gap-3 rounded-2xl border border-border-strong bg-card/95 p-3 pl-4 shadow-lg backdrop-blur">
       <div className="min-w-0 flex-1 text-sm">{dirty ? <span className="font-medium">Có thay đổi chưa lưu</span> : result}</div>
       {dirty && <Button type="button" variant="ghost" onClick={onReset} disabled={pending}>Huỷ thay đổi</Button>}
-      {dirty && <Button type="submit" disabled={pending}>{pending ? 'Đang lưu…' : label}</Button>}
+      {dirty && <Button type="submit" loading={pending}>{label}</Button>}
     </div>
   )
 }

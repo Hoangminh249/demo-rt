@@ -46,7 +46,7 @@ function CommandForm({ build, submit, danger, children }: {
       {write.isSuccess && <Notice ok>{write.data.message}</Notice>}
       {write.isError && <Notice ok={false}>{adminErrorText(write.error)}</Notice>}
       <div className="flex flex-wrap gap-2">
-        <Button type="submit" disabled={write.isPending} className="h-10">{write.isPending ? 'Đang lưu…' : submit}</Button>
+        <Button type="submit" loading={write.isPending} className="h-10">{submit}</Button>
         {danger && (
           <Button type="button" variant="outline" disabled={write.isPending} className="h-10 text-red-700"
             onClick={() => confirm(danger.confirm) && write.mutate(danger.cmd)}><Trash2 aria-hidden />{danger.label}</Button>

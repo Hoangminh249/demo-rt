@@ -5,7 +5,7 @@ import type { IconKey, InfoTable, InfoTableContent, L } from './global'
 // ---------- Nội dung Rooty (src/content) ----------
 
 export interface RoomContent {
-  gohost_room_type_id: string | null // null = chưa ánh xạ với Gohost → chưa có giá trực tuyến
+  gohost_room_type_id: string | null // ánh xạ Gohost (tuỳ chọn, chỉ để nhập giá / đối chiếu OTA)
   slug: string
   name: L
   size: L
@@ -22,7 +22,7 @@ export interface HeroImage { src: string; focus: string }
 
 export interface HotelContent {
   slug: string // rootyhospitality.com/hotel/{slug} — vĩnh viễn, không đổi
-  code: string // mã Rooty (review §4.5), vd PITO
+  code: string // mã Rooty, vd PITO
   gohost_tenant_id: string | null // null = chưa nối Gohost → web không có giá trực tuyến
   opening: string | null // 'YYYY-MM-DD'; ngày tương lai thì web hiện nhãn khai trương và chặn ngày nhận trước đó
   name: string
@@ -64,7 +64,7 @@ export type Contact = Pick<SiteContent, 'phone' | 'phone_display' | 'zalo' | 'em
 // ---------- Bản đã chọn ngôn ngữ, đưa cho UI ----------
 
 export interface Room {
-  room_type_id: string | null // khoá ghép với RoomAvailability: id Gohost (nguồn gohost) hoặc slug hạng phòng (nguồn db)
+  room_type_id: string // = slug hạng phòng, khoá ghép với RoomAvailability
   slug: string
   name: string
   size: string
@@ -80,8 +80,6 @@ export interface Room {
 export interface Hotel {
   slug: string
   code: string
-  online: boolean // có giá và phòng trống trực tuyến: nguồn db, hoặc đã nối Gohost (có tenant)
-  calendar: boolean // có lịch giá theo ngày (chỉ nguồn db)
   opening: string | null
   name: string
   area: string

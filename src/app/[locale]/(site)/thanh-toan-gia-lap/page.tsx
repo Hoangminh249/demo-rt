@@ -17,7 +17,7 @@ export async function generateMetadata() {
 export default async function MockGatewayPage({ params, searchParams }: PageProps<'/[locale]/thanh-toan-gia-lap'>) {
   const { locale } = await params
   setRequestLocale(locale as Locale)
-  if (!bookingApi.enabled() || !bookingApi.mockPayments()) notFound()
+  if (!bookingApi.mockPayments()) notFound()
   const t = await getTranslations('Live')
   const ref = (await searchParams).ref
   const user = await currentUser()

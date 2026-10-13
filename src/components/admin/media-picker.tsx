@@ -40,7 +40,7 @@ function Library({ open, onClose, chosen, onPick }: { open: boolean; onClose: ()
                   </button>
                   <p className="mt-1 truncate text-[11px] text-muted-foreground" title={m.path}>{m.source === 'UPLOAD' ? 'Tải lên' : 'Có sẵn'} · {m.used ? `dùng ${m.used}` : 'chưa dùng'}</p>
                   {m.source === 'UPLOAD' && !m.used && (
-                    <button type="button" aria-label="Xoá ảnh khỏi thư viện" onClick={() => confirm('Xoá hẳn ảnh này?') && write.mutate({ op: 'media.delete', id: m.id })}
+                    <button type="button" aria-label="Xoá ảnh khỏi thư viện" disabled={write.isPending} onClick={() => confirm('Xoá hẳn ảnh này?') && write.mutate({ op: 'media.delete', id: m.id })}
                       className="absolute top-1 right-1 hidden size-7 place-items-center rounded-lg bg-white/90 text-red-600 group-hover:grid"><Trash2 className="size-4" /></button>
                   )}
                 </div>
@@ -75,7 +75,7 @@ export function MediaSet({ title, hint, target, targetId, kind, value }: {
         <div><h4 className="text-sm font-semibold">{title} <span className="font-normal text-muted-foreground tabular-nums">· {items.length}</span></h4>{hint && <p className="text-xs text-muted-foreground">{hint}</p>}</div>
         <div className="flex gap-2">
           <Button type="button" variant="outline" size="sm" onClick={() => setLib(true)}><ImagePlus aria-hidden />Thêm ảnh</Button>
-          <Button type="button" size="sm" disabled={!dirty || write.isPending} onClick={save}>{write.isPending ? 'Đang lưu…' : 'Lưu bộ ảnh'}</Button>
+          <Button type="button" size="sm" loading={write.isPending} disabled={!dirty} onClick={save}>Lưu bộ ảnh</Button>
         </div>
       </div>
       {items.length ? (

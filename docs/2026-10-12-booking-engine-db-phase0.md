@@ -1,6 +1,6 @@
 # Phase 0 — Web fullstack tự chủ: booking engine + Postgres (12/10/2026)
 
-Chỉ khảo sát + kế hoạch. **Chưa cài gói, chưa viết code, chưa kết nối DB.**
+Bắt đầu là khảo sát + kế hoạch; các phase đã làm ghi ở §9–§13. **13/10/2026: bỏ hẳn chế độ `DATA_SOURCE=gohost`** — web chỉ chạy bằng Postgres, Gohost chỉ còn ở admin (Kết nối Gohost) + `yarn db:import-gohost`.
 
 ## 1. Quyết định (anh Hoang Minh xác nhận 12/10/2026)
 

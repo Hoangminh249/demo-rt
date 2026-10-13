@@ -35,6 +35,12 @@ Năng lực kỹ thuật công ty đã vận hành được: **Next.js 16, Node/
 - → TourWell là **phần mềm của nhà cung cấp** (có thể được tuỳ biến cho Rooty). Hệ quả: các mục chiến lược như "công ty giữ mã nguồn", "module RIVUS riêng", "thiết kế cho nhiều pháp nhân" **phụ thuộc nhà cung cấp**. Mức độ Rooty sở hữu/kiểm soát TourWell: **UNKNOWN — cần lãnh đạo xác nhận**.
 - Chưa rõ TourWell có API **tạo khách / tạo đơn** để nhận dữ liệu khách sạn đổ về hay không: **UNKNOWN**.
 
+### Vai trò từng hệ thống với rootyhospitality.com (anh Hoang Minh chốt 12–13/10/2026)
+
+- **Web (Postgres riêng)** tự giữ giá, tồn phòng bán web, booking, thanh toán (ngân hàng + OnePay, trả đủ) → **không phụ thuộc** Gohost hay TourWell để bán.
+- **Gohost** = nơi khách sạn bán OTA. Web chỉ đọc (tuỳ chọn) để đối chiếu / nhập giá; chia phòng web ↔ OTA hiện làm bằng tay.
+- **TourWell** = nơi kế toán toàn công ty làm việc: **mọi đơn hàng phải được ghi nhận ở TourWell**, kể cả đơn đặt phòng trên web. Cách đẩy đơn: UNKNOWN (chưa có code, chưa rõ API tạo đơn — xem mục trên).
+
 ### Hệ quả
 
 - Chiến lược nói "2 hệ thống", thực tế có ≥ 5 khối. Nguyên tắc "mỗi loại dữ liệu một nơi gốc" cần bản đồ dữ liệu bao trùm cả các khối này.

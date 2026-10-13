@@ -8,6 +8,7 @@ import { signIn } from 'next-auth/react'
 import { ArrowLeft, Mail } from 'lucide-react'
 import { useAuthProviders, useSendCode, useVerifyCode } from '@/hooks/use-auth'
 import { Dialog } from '@/components/ui/overlay'
+import { Spin } from '@/components/site/spin'
 
 type Lang = 'vi' | 'en'
 const T = {
@@ -53,6 +54,8 @@ export function LoginPanel({ callbackUrl, lang = 'vi' }: { callbackUrl: string; 
   const [step, setStep] = useState<'email' | 'code'>('email')
   const [error, setError] = useState<string | null>(null)
   const [wait, setWait] = useState(0)
+  const [google, setGoogle] = useState(false) // chuyển sang Google: quay tới khi rời trang
+  const verifying = verify.isPending || !!verify.data?.ok
   useEffect(() => {
     if (!wait) return
     const id = setTimeout(() => setWait(w => w - 1), 1000)
@@ -84,8 +87,8 @@ export function LoginPanel({ callbackUrl, lang = 'vi' }: { callbackUrl: string; 
     <div className="grid gap-4">
       {providers.data?.google && (
         <>
-          <button type="button" onClick={() => signIn('google', { redirectTo: callbackUrl })} className={`${BTN} border border-border-strong bg-white text-foreground hover:bg-item-hover`}>
-            <GoogleMark />{t.google}
+          <button type="button" disabled={google} onClick={() => { setGoogle(true); signIn('google', { redirectTo: callbackUrl }) }} className={`${BTN} border border-border-strong bg-white text-foreground hover:bg-item-hover`}>
+            {google ? <Spin on /> : <GoogleMark />}{t.google}
           </button>
           <p className="flex items-center gap-3 text-[13px] text-muted-foreground" aria-hidden><span className="h-px flex-1 bg-border" />{t.or}<span className="h-px flex-1 bg-border" /></p>
         </>
@@ -96,7 +99,7 @@ export function LoginPanel({ callbackUrl, lang = 'vi' }: { callbackUrl: string; 
           <label className="grid gap-1.5 text-[14px] font-medium">{t.email}
             <input type="email" required autoComplete="email" inputMode="email" value={email} onChange={e => setEmail(e.target.value)} placeholder={t.emailPh} className={INPUT} />
           </label>
-          <button type="submit" disabled={send.isPending} className={`${BTN} bg-primary text-primary-foreground hover:bg-primary/90`}><Mail className="size-4" aria-hidden />{t.send}</button>
+          <button type="submit" disabled={send.isPending} className={`${BTN} bg-primary text-primary-foreground hover:bg-primary/90`}>{send.isPending ? <Spin on /> : <Mail className="size-4" aria-hidden />}{t.send}</button>
           <p className="text-[13px] text-muted-foreground">{t.note}</p>
         </form>
       ) : (
@@ -106,7 +109,7 @@ export function LoginPanel({ callbackUrl, lang = 'vi' }: { callbackUrl: string; 
             <input autoFocus required inputMode="numeric" autoComplete="one-time-code" pattern="\d{6}" maxLength={6} value={code}
               onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))} className={`${INPUT} text-center text-2xl font-semibold tracking-[0.5em] tabular-nums`} />
           </label>
-          <button type="submit" disabled={verify.isPending || code.length !== 6} className={`${BTN} bg-primary text-primary-foreground hover:bg-primary/90`}>{t.verify}</button>
+          <button type="submit" disabled={verifying || code.length !== 6} className={`${BTN} bg-primary text-primary-foreground hover:bg-primary/90`}><Spin on={verifying} />{t.verify}</button>
           <div className="flex flex-wrap items-center justify-between gap-2 text-[14px]">
             <button type="button" onClick={() => { setStep('email'); setError(null) }} className="inline-flex min-h-10 cursor-pointer items-center gap-1 text-muted-foreground hover:text-foreground"><ArrowLeft className="size-4" aria-hidden />{t.change}</button>
             <button type="button" disabled={wait > 0 || send.isPending} onClick={sendCode} className="min-h-10 cursor-pointer font-medium text-primary disabled:cursor-default disabled:text-muted-foreground">{wait > 0 ? t.resendIn(wait) : t.resend}</button>

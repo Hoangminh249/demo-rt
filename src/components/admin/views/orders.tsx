@@ -104,6 +104,7 @@ function Box({ title, children, className }: { title: string; children: ReactNod
 
 /** `act` ở component cha: khối này dựng lại khi trạng thái / tiền đổi (để form về số mới) mà câu báo kết quả vẫn còn. */
 function Actions({ o, staff, act }: { o: AdminOrder; staff: boolean; act: ReturnType<typeof useOrderAction> }) {
+  const busy = (op: string, noShow?: boolean) => act.isPending && act.variables?.op === op && (noShow === undefined || (act.variables as { noShow?: boolean }).noShow === noShow)
   const [pay, setPay] = useState({ amount: o.balanceDue, method: 'cash' as (typeof PAY_METHODS)[number], note: '' })
   const [reason, setReason] = useState('')
   const live = ['CONFIRMED', 'CHECKED_IN', 'CHECKED_OUT'].includes(o.status)
@@ -112,9 +113,9 @@ function Actions({ o, staff, act }: { o: AdminOrder; staff: boolean; act: Return
       <div className="grid gap-4">
         {(act.isSuccess || act.isError) && (act.isSuccess ? <Notice ok>{act.data.message}</Notice> : <Notice ok={false}>{adminErrorText(act.error)}</Notice>)}
         <div className="flex flex-wrap gap-2">
-          {o.status === 'CONFIRMED' && <Button type="button" disabled={act.isPending} onClick={() => act.mutate({ op: 'order.checkin' })}>Nhận phòng (check-in)</Button>}
-          {o.status === 'CHECKED_IN' && <Button type="button" disabled={act.isPending} onClick={() => act.mutate({ op: 'order.checkout' })}>Trả phòng (check-out)</Button>}
-          {!staff && live && <Button type="button" variant="outline" disabled={act.isPending} onClick={() => act.mutate({ op: 'order.email' })}>Gửi lại email</Button>}
+          {o.status === 'CONFIRMED' && <Button type="button" disabled={act.isPending} loading={busy('order.checkin')} onClick={() => act.mutate({ op: 'order.checkin' })}>Nhận phòng (check-in)</Button>}
+          {o.status === 'CHECKED_IN' && <Button type="button" disabled={act.isPending} loading={busy('order.checkout')} onClick={() => act.mutate({ op: 'order.checkout' })}>Trả phòng (check-out)</Button>}
+          {!staff && live && <Button type="button" variant="outline" disabled={act.isPending} loading={busy('order.email')} onClick={() => act.mutate({ op: 'order.email' })}>Gửi lại email</Button>}
         </div>
 
         {!staff && live && o.balanceDue > 0 && (
@@ -123,7 +124,7 @@ function Actions({ o, staff, act }: { o: AdminOrder; staff: boolean; act: Return
             <Field label="Số tiền (VND)"><input type="number" min={1} max={o.balanceDue} required value={pay.amount} onChange={e => setPay({ ...pay, amount: Number(e.target.value) || 0 })} className={INPUT} /></Field>
             <Field label="Hình thức"><select value={pay.method} onChange={e => setPay({ ...pay, method: e.target.value as typeof pay.method })} className={INPUT}>{PAY_METHODS.map(m => <option key={m} value={m}>{METHOD[m]}</option>)}</select></Field>
             <Field label="Ghi chú"><input value={pay.note} maxLength={300} onChange={e => setPay({ ...pay, note: e.target.value })} className={INPUT} /></Field>
-            <Button type="submit" disabled={act.isPending} className="self-end">Ghi nhận</Button>
+            <Button type="submit" disabled={act.isPending} loading={busy('order.pay')} className="self-end">Ghi nhận</Button>
           </form>
         )}
 
@@ -137,9 +138,9 @@ function Actions({ o, staff, act }: { o: AdminOrder; staff: boolean; act: Return
             <p className="text-xs text-muted-foreground">Theo chính sách lúc đặt: {o.cancellation}</p>
             <Field label="Lý do (bắt buộc, lưu vào lịch sử)"><input value={reason} onChange={e => setReason(e.target.value)} maxLength={300} className={INPUT} /></Field>
             <div className="flex flex-wrap gap-2">
-              <Button type="button" variant="outline" className="text-red-700" disabled={act.isPending || reason.trim().length < 3}
+              <Button type="button" variant="outline" className="text-red-700" disabled={act.isPending || reason.trim().length < 3} loading={busy('order.cancel', false)}
                 onClick={() => confirm(`Huỷ ${o.code}? Phạt ${vnd(o.preview!.penalty)}.`) && act.mutate({ op: 'order.cancel', reason, noShow: false })}>Huỷ booking</Button>
-              {o.status === 'CONFIRMED' && <Button type="button" variant="outline" className="text-red-700" disabled={act.isPending || reason.trim().length < 3}
+              {o.status === 'CONFIRMED' && <Button type="button" variant="outline" className="text-red-700" disabled={act.isPending || reason.trim().length < 3} loading={busy('order.cancel', true)}
                 onClick={() => confirm(`Đánh dấu ${o.code} không đến? Phạt ${vnd(o.preview!.noShow)}.`) && act.mutate({ op: 'order.cancel', reason, noShow: true })}>Không đến (no-show)</Button>}
             </div>
           </div>

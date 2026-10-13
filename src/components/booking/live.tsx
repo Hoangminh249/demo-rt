@@ -1,4 +1,4 @@
-// Đặt phòng thật (DATA_SOURCE=db) — các khối KHÔNG cần JS trình duyệt: thẻ đăng nhập Google, thẻ "chưa mở",
+// Đặt phòng — các khối KHÔNG cần JS trình duyệt: thẻ đăng nhập Google, thẻ "chưa mở",
 // tóm tắt booking (cột phải bước thanh toán / kết quả). Phần có tương tác ở live-payment.tsx, live-result.tsx.
 import type { ReactNode } from 'react'
 import { useLocale, useTranslations } from 'next-intl'

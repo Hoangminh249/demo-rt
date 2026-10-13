@@ -8,6 +8,7 @@ import { fmtDate, fmtPrice } from '@/lib/format'
 import type { LiveQuote } from '@/types/booking'
 import { Input } from '@/components/ui/input'
 import { BTN_OUT } from '@/components/site/kit'
+import { Spin } from '@/components/site/spin'
 
 export function QuoteErrors({ quote }: { quote: LiveQuote }) {
   const t = useTranslations('Live')
@@ -52,8 +53,8 @@ export function LiveQuoteCard({ quote, loading, failed, promo, onPromo }: {
             onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); onPromo(draft.trim() || null) } }}
             aria-invalid={!!promoError} aria-describedby={promoError ? 'promo-err' : undefined} />
         </label>
-        <button type="button" onClick={() => onPromo(draft.trim() || null)} className={`${BTN_OUT} h-11`}>{t('promoApply')}</button>
-        {promo && <button type="button" onClick={() => { setDraft(''); onPromo(null) }} className="h-11 px-2 text-[14px] text-muted-foreground underline-offset-2 hover:underline">{t('promoRemove')}</button>}
+        <button type="button" disabled={loading} onClick={() => onPromo(draft.trim() || null)} className={`${BTN_OUT} h-11 disabled:opacity-60`}><Spin on={loading} />{t('promoApply')}</button>
+        {promo && <button type="button" disabled={loading} onClick={() => { setDraft(''); onPromo(null) }} className="h-11 px-2 text-[14px] text-muted-foreground underline-offset-2 hover:underline">{t('promoRemove')}</button>}
         {promoError && <p id="promo-err" className="w-full text-[13px] text-destructive">{t(`errors.${promoError.code}` as 'errors.PROMO_NOT_FOUND')}</p>}
       </div>
 

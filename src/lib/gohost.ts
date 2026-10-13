@@ -4,7 +4,7 @@
 // bookings:read (không bookings:write), và file này chỉ có hàm get() — không có đường nào gửi POST.
 import 'server-only'
 import axios from 'axios'
-import type { GhResponse, GohostErrorCode, GohostStatus } from '@/types/gohost'
+import type { GhResponse, GohostErrorCode } from '@/types/gohost'
 
 const BASE = 'https://platform.gohost.vn/pms/api/public/v1'
 const BUDGET = 50 // lượt / 5 phút. Gohost cho 60 cho cả key; chừa 10 cho người khác dùng chung key
@@ -21,7 +21,7 @@ export const isGohostError = (e: unknown): e is GohostError => e instanceof Erro
 
 // ---------- Ngân sách lượt gọi + trạng thái cho admin ----------
 // ponytail: đếm trong một tiến trình (globalThis). Đúng khi chạy 1 instance; khi có worker đồng bộ dùng chung key
-// hoặc nhiều instance thì chuyển sang bộ đếm dùng chung (Postgres) — xem review §4.4.
+// hoặc nhiều instance thì chuyển sang bộ đếm dùng chung (Postgres).
 interface State {
   calls: number[]
   cooldownUntil: number
@@ -38,14 +38,6 @@ function budgetLeft() {
   return BUDGET - s.calls.length
 }
 
-export const gohostStatus = (): GohostStatus => ({
-  configured: Boolean(process.env.GOHOST_API_KEY && process.env.GOHOST_API_SECRET),
-  budget: BUDGET,
-  budgetLeft: budgetLeft(),
-  cooldownUntil: s.cooldownUntil,
-  last: s.last,
-  lastError: s.lastError,
-})
 
 function fail(code: GohostErrorCode) {
   s.lastError = { at: Date.now(), code }

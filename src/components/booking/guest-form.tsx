@@ -1,9 +1,7 @@
 'use client'
-// Bước 2 — Thông tin khách & yêu cầu lưu trú. Chỉ hỏi thứ cần cho đặt phòng (field bám Gohost POST /bookings), không CCCD.
-// Bản minh hoạ (nguồn gohost): lưu sessionStorage rồi sang bước thanh toán, không gửi đi đâu.
-// Đặt phòng thật (`live`, nguồn db): báo giá server + mã khuyến mãi, bấm nút là GIỮ PHÒNG (POST /api/bookings) rồi sang thanh toán.
+// Bước 2 — Thông tin khách & yêu cầu lưu trú. Chỉ hỏi thứ cần cho đặt phòng, không CCCD.
+// Báo giá server + mã khuyến mãi, bấm nút là GIỮ PHÒNG (POST /api/bookings) rồi sang thanh toán.
 import { useState, type ReactNode } from 'react'
-import { useSearchParams } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 import { ArrowLeft, ArrowRight, Baby, Check, Clock, Lock, Sparkles, UserRound } from 'lucide-react'
 import { cn } from 'cn'
@@ -13,6 +11,7 @@ import type { BookingTarget, ChildAge, GuestDraft } from '@/types/booking'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { BTN, BTN_OUT } from '@/components/site/kit'
+import { Spin } from '@/components/site/spin'
 import { useRoomOffer } from '@/components/room/use-room-offer'
 import { useHold, useLiveQuote } from '@/hooks/use-booking'
 import { fmtPrice } from '@/lib/format'
@@ -20,7 +19,7 @@ import type { SelectionInput } from '@/lib/booking-requests'
 import { saveDraft, useDraft } from './draft'
 import { LiveQuoteCard } from './live-quote'
 
-/** Khách đã đăng nhập Google (đặt phòng thật) — điền sẵn tên, email. */
+/** Khách đã đăng nhập — điền sẵn tên, email. */
 export interface LiveAccount { name: string | null; email: string | null }
 
 /** Tuổi từng trẻ gửi server: tuổi đã chọn ở ô Số khách (?ag=), chưa chọn thì theo nhóm tuổi ở form (tính phụ thu theo mức cao). */
@@ -77,19 +76,18 @@ export function Checkbox({ id, checked, onChange, children, error }: { id: strin
 }
 
 /** Đọc bản nháp (quay lại từ bước thanh toán thì form điền sẵn) rồi mới vẽ form. */
-export function GuestForm({ target, live }: { target: BookingTarget; live?: LiveAccount }) {
+export function GuestForm({ target, live }: { target: BookingTarget; live: LiveAccount }) {
   const draft = useDraft()
   return draft ? <Form target={target} initial={draft.guest} live={live} /> : <div className="h-[640px] animate-pulse rounded-2xl bg-muted" />
 }
 
-function Form({ target, initial, live }: { target: BookingTarget; initial?: GuestDraft; live?: LiveAccount }) {
+function Form({ target, initial, live }: { target: BookingTarget; initial?: GuestDraft; live: LiveAccount }) {
   const tl = useTranslations('Live')
   const t = useTranslations('Booking')
   const locale = useLocale()
   const router = useRouter()
-  const query = useSearchParams().toString()
   const o = useRoomOffer(target.hotel, target.room)
-  const [f, setF] = useState<GuestDraft>({ ...EMPTY, ...(live && { name: live.name ?? '', email: live.email ?? '' }), ...initial })
+  const [f, setF] = useState<GuestDraft>({ ...EMPTY, name: live.name ?? '', email: live.email ?? '', ...initial })
   const [consent, setConsent] = useState(!!initial)
   const [errors, setErrors] = useState<Partial<Record<'name' | 'phone' | 'email' | 'guest' | 'consent', string>>>({})
 
@@ -99,17 +97,18 @@ function Form({ target, initial, live }: { target: BookingTarget; initial?: Gues
   const kids: ChildAge[] = Array.from({ length: o.stay.children }, (_, i) => f.children[i] ?? ((o.stay.ages[i] ?? 0) >= 6 ? '6to11' : 'under6'))
   const countries = new Intl.DisplayNames([locale], { type: 'region' })
   const kidRow = (age: ChildAge) => target.children?.rows[CHILD_AGES.indexOf(age)] // bảng trẻ em: dưới 6 · 6–11 · từ 12
-  // Đặt phòng thật: báo giá server (đổi mã KM / số khách → tính lại), giữ phòng kèm tổng khách đã thấy.
+  // Báo giá server (đổi mã KM / số khách → tính lại), giữ phòng kèm tổng khách đã thấy.
   const [promo, setPromo] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const hold = useHold()
-  const selection: SelectionInput | null = live && o.plan ? {
+  const selection: SelectionInput | null = o.plan ? {
     hotel: target.hotel.slug, room: target.room.slug, ratePlanId: o.plan.rate_plan_id, checkin: o.stay.checkin, checkout: o.stay.checkout,
     rooms: 1, adults: o.stay.adults, childAges: liveAges(o.stay.ages, kids), promoCode: promo,
   } : null
   const lq = useLiveQuote(selection)
   const liveOk = !!lq.data && !lq.data.errors.length && !lq.isPlaceholderData
-  const ready = o.status === 'available' && !!o.plan && (!live || (liveOk && !hold.isPending))
+  const busy = hold.isPending || !!hold.data?.ok // giữ phòng xong vẫn quay tới khi sang trang thanh toán
+  const ready = o.status === 'available' && !!o.plan && liveOk && !busy
 
   function submit(e: React.FormEvent) {
     e.preventDefault()
@@ -123,7 +122,6 @@ function Form({ target, initial, live }: { target: BookingTarget; initial?: Gues
     const first = Object.keys(err)[0]
     if (first) { document.getElementById(`g-${first}`)?.focus(); return }
     saveDraft({ guest: { ...f, name: f.name.trim(), email: f.email.trim(), children: kids, notes: f.notes.slice(0, NOTES_MAX) } })
-    if (!live) { router.push(`/dat-phong/thanh-toan?${query}`); return }
     if (!selection || !lq.data) return
     const specialRequests = [
       f.arrival && `${t('arrivalTitle')}: ${t(`arrivals.${f.arrival}`)}`,
@@ -221,7 +219,7 @@ function Form({ target, initial, live }: { target: BookingTarget; initial?: Gues
         </div>
       </Card>
 
-      {live && <LiveQuoteCard quote={lq.data} loading={lq.isFetching} failed={lq.isError} promo={promo} onPromo={setPromo} />}
+      <LiveQuoteCard quote={lq.data} loading={lq.isFetching} failed={lq.isError} promo={promo} onPromo={setPromo} />
 
       <section className="grid gap-3 rounded-2xl bg-mint px-5 py-4">
         <Checkbox id="g-consent" checked={consent} onChange={v => { setConsent(v); setErrors(e => ({ ...e, consent: undefined })) }} error={errors.consent}>
@@ -235,7 +233,7 @@ function Form({ target, initial, live }: { target: BookingTarget; initial?: Gues
 
       <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
         <Link href={roomHref(target.hotel.slug, target.room.slug, o.stay, o.plan?.rate_plan_id)} className={`${BTN_OUT} h-12`}><ArrowLeft className="size-4" aria-hidden />{t('backRoom')}</Link>
-        <button type="submit" disabled={!ready} className={`${BTN} h-12 px-6`}>{live ? tl('holdCta') : t('toPayment')}<ArrowRight className="size-4" aria-hidden /></button>
+        <button type="submit" disabled={!ready} aria-busy={busy} className={`${BTN} h-12 px-6`}>{tl('holdCta')}{busy ? <Spin on /> : <ArrowRight className="size-4" aria-hidden />}</button>
       </div>
     </form>
   )

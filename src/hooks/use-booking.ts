@@ -1,4 +1,4 @@
-// Đặt phòng thật (DATA_SOURCE=db) — trình duyệt gọi /api/bookings/*. Giá luôn do server tính; trình duyệt chỉ hiển thị.
+// Đặt phòng — trình duyệt gọi /api/bookings/*. Giá luôn do server tính; trình duyệt chỉ hiển thị.
 import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query'
 import { api } from '@/lib/http'
 import type { HoldInput, PayInput, SelectionInput } from '@/lib/booking-requests'

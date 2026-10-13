@@ -1,28 +1,19 @@
 # Rooty Hospitality — rootyhospitality.com
 
 Website chung cho các khách sạn của Rooty (giao diện theo **rootytrip.com**), có đặt phòng trực tuyến và trang quản trị.
-Gohost vẫn bán OTA (Agoda, Booking.com…); web tự quản giá theo ngày, số phòng bán web, sản phẩm, booking, thanh toán — Gohost dừng thì web vẫn chạy.
-
-## Hai chế độ (`DATA_SOURCE`)
-
-| | `db` (Postgres của Rooty) | `gohost` / bỏ trống (bản cũ) |
-|---|---|---|
-| Nội dung khách sạn | Postgres — admin sửa | File `src/content/*.ts` |
-| Giá, phòng trống | Lịch giá + tồn web trong Postgres (admin sửa) | GET Gohost |
-| Đặt phòng | **Thật**: đăng nhập → giữ phòng 15' → trả đủ (chuyển khoản ngân hàng / OnePay — hiện qua cổng giả lập) → webhook → email | Bản minh hoạ chạy ở trình duyệt |
-| Admin | Sửa sản phẩm, lịch giá, booking web | Chỉ xem (Gohost) |
+Web chạy **độc lập** trên Postgres của mình: giá theo ngày, số phòng bán web, sản phẩm, booking, thanh toán. Gohost vẫn bán OTA (Agoda, Booking.com…) — tuỳ chọn, dừng thì web vẫn chạy. TourWell ghi nhận đơn cho kế toán (chưa tích hợp).
 
 ## Trang
 
 | Trang | Nội dung |
 |---|---|
-| `/`, `/hotel/[slug]` | Trang chủ, trang khách sạn (lịch chọn ngày có giá từng đêm; thẻ phòng hiện tổng cả kỳ ở + "Chi tiết giá" từng đêm) · tiếng Anh: `/en/…` |
-| `/dat-phong` → `/thanh-toan?code=` → `/xac-nhan?code=` | Đặt phòng: đăng nhập (modal), mã KM + báo giá server, giữ phòng, trả đủ qua ngân hàng / OnePay (không đặt cọc), cổng, kết quả (hỏi lại mỗi 2 giây) |
+| `/`, `/hotel/[slug]` | Trang chủ, trang khách sạn (lịch chọn ngày có giá từng đêm, bấm **Áp dụng** mới tải giá; thẻ phòng: tổng N đêm, giá, "Chi tiết giá", **Đặt ngay**, "Xem chi tiết" mở dialog phòng) · tiếng Anh: `/en/…` |
+| `/dat-phong` → `/dat-phong/thanh-toan?code=` → `/dat-phong/xac-nhan?code=` | Đặt phòng: đăng nhập (modal), mã KM + báo giá server, giữ phòng 15', trả đủ qua ngân hàng / OnePay (không đặt cọc), cổng, kết quả (hỏi lại mỗi 2 giây) → email xác nhận |
 | `/don-cua-toi`, `/don-cua-toi/[mã]` | Đơn của tôi (Sắp tới · Đã ở · Đã huỷ) và chi tiết đơn: tiến trình, giá từng đêm đã chốt, thanh toán, khách tự huỷ (phí theo chính sách lúc đặt, tiền hoàn chờ admin chuyển) |
-| `/thanh-toan-gia-lap` | Cổng thanh toán giả lập (`PAYMENT_PROVIDER=mock`) |
-| Modal đăng nhập (header) | Google (khi có OAuth) hoặc **email + mã 6 số** gửi qua email |
+| `/thanh-toan-gia-lap` | Cổng thanh toán giả lập (`PAYMENT_PROVIDER=mock`) — xoá khi có cổng thật |
+| Modal đăng nhập (header) | **Email + mã 6 số** gửi qua email, hoặc Google (khi có OAuth) |
 | `/admin/login` | Cùng cách đăng nhập (role ADMIN / STAFF) + tài khoản env dự phòng |
-| `/admin` | Tổng quan · Khách sạn (Giá & phòng trống · Hạng phòng → Thông tin / Ảnh / Số phòng / Gói giá · Thông tin khách sạn · Cài đặt: chính sách huỷ & cọc, thông số kỹ thuật, kết nối Gohost, xoá) · Thêm khách sạn · **Đặt phòng web** · Khuyến mãi · Tiện ích · Người dùng. Menu Booking Gohost chỉ còn ở bản cũ (`DATA_SOURCE=gohost`) |
+| `/admin` | **Đặt phòng web** (trang đầu) · Khách sạn (Giá & phòng trống · Hạng phòng → Thông tin / Ảnh / Số phòng / Gói giá · Thông tin khách sạn · Cài đặt: chính sách huỷ, thông số kỹ thuật, kết nối Gohost chỉ xem, xoá) · Thêm khách sạn · Khuyến mãi · Tiện ích · Người dùng |
 
 Quyền: **ADMIN** mọi thứ; **STAFF** chỉ Đặt phòng web (xem, nhận / trả phòng). Đổi role bằng SQL (`docs/db-setup.md` §4).
 
@@ -44,13 +35,13 @@ Kiểm tra:
 ```bash
 yarn lint && yarn build # build cũng là bước kiểm type; chạy được khi KHÔNG có DATABASE_URL
 yarn test               # logic thuần: khoảng ngày, tồn phòng, sinh giá
-yarn check:quote        # báo giá: giá từng đêm, phụ thu, khuyến mãi, cọc, minStay/CTA/CTD, phạt huỷ (không cần DB)
+yarn check:quote        # báo giá: giá từng đêm, phụ thu, khuyến mãi, minStay/CTA/CTD, phạt huỷ (không cần DB)
 yarn check:booking      # trên DB thật: tranh phòng cuối, hết hạn, webhook trùng, tiền về muộn, hoàn tiền, quyền admin (tự dọn)
 ```
 
 ## Biến môi trường
 
-Danh sách đầy đủ + giải thích: `.env.example`. Tối thiểu cho `DATA_SOURCE=db`: `DATABASE_URL`, `AUTH_SECRET`, `ADMIN_USER`, `ADMIN_PASSWORD`; production thêm `AUTH_URL`, `SMTP_USER`, `SMTP_PASS`, `CRON_SECRET`, `PAYMENT_PROVIDER=mock` (tới khi có cổng thật), `UPLOAD_DIR` (nếu tải ảnh).
+Danh sách đầy đủ + giải thích: `.env.example`. Tối thiểu: `DATABASE_URL`, `AUTH_SECRET`, `ADMIN_USER`, `ADMIN_PASSWORD`; production thêm `AUTH_URL`, `SMTP_USER`, `SMTP_PASS`, `CRON_SECRET`, `PAYMENT_PROVIDER=mock` (tới khi có cổng thật), `UPLOAD_DIR` (nếu tải ảnh).
 
 ## Deploy Render
 
@@ -74,7 +65,7 @@ src/lib/pg.ts, db.ts                          kết nối (TimeZone=UTC, pool 5)
 src/lib/quote.ts, inventory.ts, pricing.ts    logic THUẦN: báo giá, tồn theo ngày, sinh giá từ quy tắc, phạt huỷ (kiểm bằng yarn test / check:quote)
 src/lib/booking-engine.ts                     lõi DB: giữ phòng (chống bán quá), thanh toán, webhook idempotent, hết hạn, huỷ, thu tiền, hoàn tiền
 src/lib/booking-rules.ts                      giả định nghiệp vụ chưa chốt (gom một chỗ)
-src/lib/payment.ts, email.ts, emails/         cổng thanh toán (interface + giả lập ký HMAC), email Nodemailer (SMTP) + react-email
+src/lib/payment.ts, email.ts, emails/         cổng thanh toán (interface + giả lập ký HMAC; cổng thật thêm vào REAL), email Nodemailer (SMTP) + react-email
 src/auth.ts, src/lib/admin-actor.ts           đăng nhập Auth.js (Google + email/mã, phiên DB), quyền admin
 src/lib/*-commands.ts                         lệnh ghi admin (zod) dùng chung server / trình duyệt
 src/api/                                      cửa dữ liệu phía server, mỗi file một object: hotelApi, catalogApi (nội dung, cache 'catalog'),
@@ -82,10 +73,10 @@ src/api/                                      cửa dữ liệu phía server, m�
 src/app/api/                                  route: /bookings/*, /payments/*, /cron/*, /auth/*, /admin/* (kiểm quyền từng route)
 src/hooks/                                    TanStack Query — component client chỉ gọi hook
 src/components/{site,hotel,booking,auth,admin}  giao diện
-src/content/                                  nội dung gốc (nguồn seed; nguồn chính khi DATA_SOURCE=gohost)
+src/content/                                  nội dung gốc (nguồn seed, dự phòng lúc build) + SITE / 4 trang tĩnh
 ```
 
-Component không import `src/content`, `src/lib/gohost`, `src/api`, `src/lib/booking-engine` — trang server đọc qua `src/api`, component client qua hook (gọi `/api`). Trình duyệt không bao giờ gọi Gohost; giá luôn tính lại ở server.
+Component không import `src/content`, `src/lib/gohost`, `src/api`, `src/lib/booking-engine` — trang server đọc qua `src/api`, component client qua hook (gọi `/api`). Giá luôn tính lại ở server.
 
 Tài liệu: `docs/db-setup.md` (Postgres), `docs/2026-10-12-booking-engine-db-phase0.md` (quyết định + chi tiết từng phần), `docs/api-docs/gohost-api.md` (Gohost).
 

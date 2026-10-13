@@ -50,7 +50,7 @@ export function NewHotelView() {
         </Field>
         <Field label="Mã khách sạn" hint="2–12 chữ in hoa / số, dùng trong mã đặt phòng (RH-MÃ-…)"><input required value={v.code} onChange={e => setV({ ...v, code: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '') })} className={INPUT} /></Field>
         <Result w={write} />
-        <Button type="submit" disabled={write.isPending} className="h-11">Tạo khách sạn</Button>
+        <Button type="submit" loading={write.isPending} className="h-11">Tạo khách sạn</Button>
       </form>
     </div>
   )
@@ -83,8 +83,8 @@ function PromoForm({ p, ctx }: { p: PromoDraft; ctx: AdminPromotions }) {
       <LInput label="Tên hiện cho khách" value={x.name} onChange={v => set('name', v)} required />
       <Result w={write} />
       <div className="flex flex-wrap gap-2">
-        <Button type="submit" disabled={write.isPending}>{x.id ? 'Lưu khuyến mãi' : 'Tạo khuyến mãi'}</Button>
-        {x.id && <Button type="button" variant="outline" className="text-red-700" onClick={() => confirm(`Xoá mã ${x.code}? Mã đã dùng thì chỉ tắt.`) && write.mutate({ op: 'promotion.delete', id: x.id! })}><Trash2 aria-hidden />Xoá</Button>}
+        <Button type="submit" loading={write.isPending}>{x.id ? 'Lưu khuyến mãi' : 'Tạo khuyến mãi'}</Button>
+        {x.id && <Button type="button" variant="outline" className="text-red-700" disabled={write.isPending} onClick={() => confirm(`Xoá mã ${x.code}? Mã đã dùng thì chỉ tắt.`) && write.mutate({ op: 'promotion.delete', id: x.id! })}><Trash2 aria-hidden />Xoá</Button>}
       </div>
     </form>
   )
@@ -130,8 +130,8 @@ function AmenityForm({ a }: { a: Partial<AdminAmenity> }) {
       <LInput label="Tên" value={x.name} onChange={v => setX({ ...x, name: v })} required />
       <Result w={write} />
       <div className="flex gap-2">
-        <Button type="submit" disabled={write.isPending}>{a.id ? 'Lưu' : 'Thêm tiện ích'}</Button>
-        {a.id && <Button type="button" variant="outline" className="text-red-700" onClick={() => confirm(`Xoá tiện ích này khỏi thư viện và mọi khách sạn (${a.used} chỗ dùng)?`) && write.mutate({ op: 'amenity.delete', id: a.id! })}><Trash2 aria-hidden />Xoá</Button>}
+        <Button type="submit" loading={write.isPending}>{a.id ? 'Lưu' : 'Thêm tiện ích'}</Button>
+        {a.id && <Button type="button" variant="outline" className="text-red-700" disabled={write.isPending} onClick={() => confirm(`Xoá tiện ích này khỏi thư viện và mọi khách sạn (${a.used} chỗ dùng)?`) && write.mutate({ op: 'amenity.delete', id: a.id! })}><Trash2 aria-hidden />Xoá</Button>}
       </div>
     </form>
   )

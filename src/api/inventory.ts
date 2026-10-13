@@ -1,4 +1,4 @@
-// Giá + tồn phòng bán trên web, đọc từ Postgres của Rooty (khi DATA_SOURCE=db). Chỉ server.
+// Giá + tồn phòng bán trên web, đọc từ Postgres của Rooty. Chỉ server.
 // Trả cùng kiểu với nhánh Gohost (RoomAvailability, DayPrice) để UI không phân biệt nguồn. Logic thuần ở src/lib/inventory.ts.
 import 'server-only'
 import { expireDue } from '@/lib/booking-engine'

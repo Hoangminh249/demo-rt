@@ -1,18 +1,12 @@
-// Khách sạn + phòng: nội dung Rooty (src/api/catalog.ts — Postgres khi nguồn db, file src/content khi gohost) ghép với phòng trống + giá.
-// Nguồn giá + tồn: DATA_SOURCE=db → Postgres của Rooty (src/api/inventory.ts, ghép theo slug hạng phòng);
-// mặc định → Gohost (src/api/gohost.ts, ghép theo gohost_room_type_id).
-// Cửa duy nhất để trang server lấy dữ liệu khách sạn — component KHÔNG import src/content hay src/lib/gohost.
+// Khách sạn + phòng: nội dung (src/api/catalog.ts, Postgres) ghép với phòng trống + giá (src/api/inventory.ts, theo slug hạng phòng).
+// Cửa duy nhất để trang server lấy dữ liệu khách sạn — component KHÔNG import src/content hay src/api.
 import 'server-only'
-import { isDbSource } from '@/lib/db'
 import { today } from '@/lib/format'
-import { isGohostError } from '@/lib/gohost'
-import { minDefaultRate } from '@/lib/rooms'
 import { firstCheckin } from '@/lib/stay'
 import { table, tr } from '@/lib/tr'
 import type { Locale, L } from '@/types/global'
 import type { DayPrice, Hotel, HotelContent, RoomAvailability } from '@/types/hotel'
 import type { BookingTarget } from '@/types/booking'
-import { gohostApi } from './gohost'
 import { catalogApi } from './catalog'
 import { inventoryApi } from './inventory'
 
@@ -21,8 +15,6 @@ function localize(h: HotelContent, locale: Locale): Hotel {
   return {
     slug: h.slug,
     code: h.code,
-    online: isDbSource() || h.gohost_tenant_id !== null,
-    calendar: isDbSource(),
     opening: h.opening,
     name: h.name,
     area: t(h.area),
@@ -44,7 +36,7 @@ function localize(h: HotelContent, locale: Locale): Hotel {
     gallery: h.gallery,
     hero: h.hero,
     rooms: h.rooms.map(r => ({
-      room_type_id: isDbSource() ? r.slug : r.gohost_room_type_id,
+      room_type_id: r.slug,
       slug: r.slug,
       name: t(r.name),
       size: t(r.size),
@@ -76,57 +68,27 @@ export const hotelApi = {
     if (!h || !r) return null
     const l = localize(h, locale)
     return {
-      hotel: { slug: l.slug, code: l.code, name: l.name, online: l.online, opening: l.opening, cancel_summary: l.cancel_summary, address: l.address, map_url: l.map_url },
+      hotel: { slug: l.slug, code: l.code, name: l.name, opening: l.opening, cancel_summary: l.cancel_summary, address: l.address, map_url: l.map_url },
       room: l.rooms.find(x => x.slug === room)!,
       times: { checkin: l.policies[0]?.[1] ?? '', checkout: l.policies[1]?.[1] ?? '' }, // file KS mở đầu bằng Nhận phòng, Trả phòng
       children: l.children,
     }
   },
 
-  // --- Giá + phòng trống (Gohost hoặc Postgres) ---
-  /** "Giá từ …/đêm". null khi chưa có giá, chưa nối nguồn, hoặc nguồn lỗi — UI ẩn giá, không đoán. */
+  // --- Giá + phòng trống (Postgres) ---
+  /** "Giá từ …/đêm". null khi chưa có giá hoặc DB lỗi — UI ẩn giá, không đoán. */
   async fromPrice(slug: string): Promise<number | null> {
     const h = await content(slug)
-    if (h && isDbSource()) {
-      return inventoryApi.fromPrice(slug, firstCheckin(today(), h.opening)).catch(e => {
-        if (!(e instanceof Error && e.message === 'DB_UNAVAILABLE')) console.error('[db] fromPrice', e)
-        return null
-      })
-    }
-    if (!h?.gohost_tenant_id) return null
-    try {
-      const property = (await gohostApi.properties()).find(p => p.id === h.gohost_tenant_id)
-      const mapped = new Set(h.rooms.flatMap(r => (r.gohost_room_type_id ? [r.gohost_room_type_id] : [])))
-      return property ? minDefaultRate(property.room_types ?? [], mapped) : null
-    } catch (e) {
-      if (isGohostError(e)) return null
-      throw e
-    }
+    if (!h) return null
+    return inventoryApi.fromPrice(slug, firstCheckin(today(), h.opening)).catch(e => {
+      if (!(e instanceof Error && e.message === 'DB_UNAVAILABLE')) console.error('[db] fromPrice', e)
+      return null
+    })
   },
 
-  /** Phòng trống + gói giá theo khoảng ngày, mọi hạng phòng (kể cả hết phòng). Ném GohostError / lỗi DB khi lỗi. */
-  async availability(slug: string, checkin: string, checkout: string): Promise<RoomAvailability[]> {
-    if (isDbSource()) return inventoryApi.availability(slug, checkin, checkout)
-    const tenant = (await content(slug))?.gohost_tenant_id
-    if (!tenant) return []
-    return (await gohostApi.roomTypes({ tenant, checkin, checkout })).map(rt => ({
-      room_type_id: rt.id,
-      title: rt.title,
-      quantity: rt.quantity ?? 0,
-      occ_adults: rt.occ_adults ?? 0,
-      occ_children: rt.occ_children ?? 0,
-      occ_infants: rt.occ_infants ?? 0,
-      plans: (rt.rate_plans ?? []).map(p => ({
-        rate_plan_id: p.id,
-        title: p.title,
-        has_breakfast: Boolean(p.has_breakfast),
-        days_breakdown: p.days_breakdown ?? [],
-        total: p.estimated_total_price ?? (p.days_breakdown ?? []).reduce((sum, d) => sum + d.price, 0),
-      })),
-    }))
-  },
+  /** Phòng trống + gói giá theo khoảng ngày, mọi hạng phòng (kể cả hết phòng). Ném lỗi DB khi lỗi. */
+  availability: (slug: string, checkin: string, checkout: string): Promise<RoomAvailability[]> => inventoryApi.availability(slug, checkin, checkout),
 
-  /** Lịch giá thấp nhất từng đêm, 90 ngày từ `from` (chỉ nguồn db; Gohost không có giá theo ngày rẻ lượt gọi). */
-  calendar: (slug: string, from: string, room: string | null): Promise<DayPrice[]> =>
-    isDbSource() ? inventoryApi.calendar(slug, from, undefined, room) : Promise.resolve([]),
+  /** Lịch giá thấp nhất từng đêm, 90 ngày từ `from`. */
+  calendar: (slug: string, from: string, room: string | null): Promise<DayPrice[]> => inventoryApi.calendar(slug, from, undefined, room),
 }

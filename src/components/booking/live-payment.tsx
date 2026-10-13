@@ -11,6 +11,7 @@ import { usePay } from '@/hooks/use-booking'
 import { PAY_METHODS, type PayMethod } from '@/lib/booking-requests'
 import type { LiveBooking } from '@/types/booking'
 import { BTN, BTN_OUT } from '@/components/site/kit'
+import { Spin } from '@/components/site/spin'
 
 /** Giây còn lại tới `until` (null lúc render server để khỏi lệch giờ khi hydrate). */
 export function useSecondsLeft(until: string | null) {
@@ -30,6 +31,7 @@ export function LivePayment({ b, failed, mock }: { b: LiveBooking; failed: boole
   const t = useTranslations('Live')
   const locale = useLocale()
   const pay = usePay(b.code)
+  const paying = pay.isPending || !!pay.data?.ok // có URL cổng rồi vẫn quay tới khi rời trang
   const [method, setMethod] = useState<PayMethod>('bank')
   const left = useSecondsLeft(b.holdExpiresAt)
   const expired = b.status === 'EXPIRED' || left === 0
@@ -78,9 +80,9 @@ export function LivePayment({ b, failed, mock }: { b: LiveBooking; failed: boole
 
         {mock && <p className="flex gap-2 rounded-xl border border-dashed border-orange/50 bg-orange/5 px-4 py-3 text-[13px]"><FlaskConical className="mt-0.5 size-4 shrink-0 text-orange" aria-hidden />{t('payMock')}</p>}
         {err && err !== 'EXPIRED' && <p role="alert" className="text-[14px] text-destructive">{t('payError')}</p>}
-        <button type="button" disabled={pay.isPending || (pay.data?.ok ?? false)}
+        <button type="button" disabled={paying} aria-busy={paying}
           onClick={() => pay.mutate({ method, locale: locale === 'en' ? 'en' : 'vi' }, { onSuccess: r => { if (r.ok) window.location.assign(r.url) } })}
-          className={`${BTN} h-12 w-full`}>{t('payCta', { amount: fmtPrice(amount) })}</button>
+          className={`${BTN} h-12 w-full`}><Spin on={paying} />{t('payCta', { amount: fmtPrice(amount) })}</button>
       </section>
 
       <Link href={`/hotel/${b.hotel.slug}?room=${b.room.slug}#phong`} className={`${BTN_OUT} h-12 w-fit`}>{t('rebook')}</Link>

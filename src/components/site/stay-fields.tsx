@@ -12,7 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { addDays, diffDays, fmtDayMonth, fmtRange, fmtWeekday, today } from '@/lib/format'
 import { fitAges, MAX_NIGHTS } from '@/lib/stay'
 import type { Stay } from '@/types/hotel'
-import { EYEBROW } from './kit'
+import { BTN, EYEBROW } from './kit'
+import { Spin } from './spin'
 
 const toDate = (iso: string) => { const [y, m, d] = iso.split('-').map(Number); return new Date(y, m - 1, d) }
 const toISO = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -66,7 +67,7 @@ export function DateRangeField({ id, label, stay, min, onChange, boxed }: { id: 
   const step = !draft ? t('Fields.pickCheckin') : t('Fields.pickCheckout')
   const first = min ?? today()
   const last = addDays(today(), 365)
-  // Đã chọn ngày nhận thì chỉ cho ngày trả trong 30 đêm (giới hạn của Gohost).
+  // Đã chọn ngày nhận thì chỉ cho ngày trả trong 30 đêm.
   const until = draft?.from ? [addDays(toISO(draft.from), MAX_NIGHTS), last].sort()[0] : last
 
   // Bấm lần 1 = ngày nhận (luôn bắt đầu khoảng mới), lần 2 = ngày trả; đủ hai đầu thì lưu và đóng.
@@ -187,4 +188,20 @@ export function GuestsField({ id, stay, onChange, boxed }: { id: string; stay: S
       </Popover>
   )
   return boxed ? field : <Field id={id} label={t('Fields.guests')}>{field}</Field>
+}
+
+/** Ngày + số khách sửa trên bản nháp, chỉ gửi khi bấm "Áp dụng" (không gọi API mỗi lần chọn).
+ *  Gọi với `key={stayQuery(stay)}` để bản nháp làm mới khi URL đổi từ chỗ khác. */
+export function StayForm({ id, stay, min, pending, onApply, className }: { id: string; stay: Stay; min?: string; pending?: boolean; onApply: (s: Stay) => void; className?: string }) {
+  const t = useTranslations()
+  const [draft, setDraft] = useState(stay)
+  return (
+    <div className={cn('grid gap-3', className)}>
+      <DateRangeField id={`${id}-dates`} label={t('Fields.datesShort')} stay={draft} min={min} onChange={setDraft} />
+      <GuestsField id={`${id}-guests`} stay={draft} onChange={setDraft} />
+      <button type="button" onClick={() => onApply(draft)} disabled={pending} aria-busy={pending} className={`${BTN} mt-1 h-12 w-full rounded-xl`}>
+        <Spin on={!!pending} />{t('Common.apply')}
+      </button>
+    </div>
+  )
 }

@@ -1,5 +1,5 @@
 'use client'
-// Sản phẩm của một khách sạn (Postgres, DATA_SOURCE=db). Mỗi tab có thanh mục con (?sec=) và một công tắc Tiếng Việt / English.
+// Sản phẩm của một khách sạn (Postgres). Mỗi tab có thanh mục con (?sec=) và một công tắc Tiếng Việt / English.
 // · Thông tin khách sạn: Thông tin chung · Nội dung trang · Ảnh · Tiện ích · Thuế & phí
 // · Hạng phòng: lưới thẻ → trang hạng phòng (?rt=) gồm Thông tin · Ảnh · Số phòng · Gói giá
 // · Cài đặt (ráp ở views/hotel.tsx): TechPanel (đường dẫn, mã, toạ độ, Gohost, JSON) + DangerPanel
@@ -116,7 +116,7 @@ function TeamEmail({ h, set, setC, saved }: { h: HotelDraft; set: SetH; setC: Se
       <Field label="Hộp thư team" hint="Nhiều địa chỉ: cách nhau bằng dấu phẩy. Trả lời email báo booking là trả lời thẳng khách.">
         <div className="flex flex-wrap gap-2">
           <input value={h.notifyEmail ?? ''} onChange={e => set('notifyEmail', e.target.value)} placeholder="booking@…" className={`${INPUT} min-w-60 flex-1`} />
-          <Button type="button" variant="outline" className="h-10" disabled={!saved || dirty || test.isPending} title={dirty ? 'Lưu trước rồi gửi thử' : undefined}
+          <Button type="button" variant="outline" className="h-10" loading={test.isPending} disabled={!saved || dirty} title={dirty ? 'Lưu trước rồi gửi thử' : undefined}
             onClick={() => test.mutate({ op: 'hotel.testNotify', id: h.id })}>{test.isPending ? 'Đang gửi…' : 'Gửi email thử'}</Button>
         </div>
       </Field>
@@ -267,8 +267,8 @@ function TaxRow({ t, hotelId, write }: { t: TaxDraft; hotelId: string; write: Wr
         <label className="flex items-center gap-2"><input type="checkbox" checked={x.included} onChange={e => setX({ ...x, included: e.target.checked })} className="size-4" />Đã gồm trong giá</label>
         <label className="flex items-center gap-2"><input type="checkbox" checked={x.active} onChange={e => setX({ ...x, active: e.target.checked })} className="size-4" />Đang áp dụng</label>
         <span className="ml-auto flex gap-2">
-          {x.id && <Button type="button" variant="ghost" className="text-red-700" onClick={() => confirm('Xoá thuế / phí này?') && write.mutate({ op: 'taxFee.delete', id: x.id! })}><Trash2 aria-hidden />Xoá</Button>}
-          <Button type="submit" variant={x.id ? 'outline' : 'default'} disabled={write.isPending || JSON.stringify(x) === JSON.stringify(t)}>{x.id ? 'Lưu' : 'Thêm'}</Button>
+          {x.id && <Button type="button" variant="ghost" className="text-red-700" disabled={write.isPending} onClick={() => confirm('Xoá thuế / phí này?') && write.mutate({ op: 'taxFee.delete', id: x.id! })}><Trash2 aria-hidden />Xoá</Button>}
+          <Button type="submit" variant={x.id ? 'outline' : 'default'} loading={write.isPending} disabled={JSON.stringify(x) === JSON.stringify(t)}>{x.id ? 'Lưu' : 'Thêm'}</Button>
         </span>
       </div>
     </form>
@@ -368,7 +368,7 @@ export function DangerPanel({ slug }: { slug: string }) {
   const has = data.hotel.bookings > 0
   return (
     <Card title={has ? 'Lưu trữ khách sạn' : 'Xoá khách sạn'} desc={has ? `Đã có ${data.hotel.bookings} booking → chỉ lưu trữ được (ẩn khỏi web, giữ lịch sử).` : 'Xoá hẳn khách sạn cùng hạng phòng, gói giá, lịch giá. Không hoàn tác được.'}
-      footer={<><Button type="button" variant="outline" className="text-red-700" disabled={write.isPending}
+      footer={<><Button type="button" variant="outline" className="text-red-700" loading={write.isPending}
         onClick={() => confirm(`${has ? 'Lưu trữ' : 'Xoá hẳn'} ${data.hotel.name}?`) && write.mutate({ op: 'hotel.delete', id: data.hotel.id }, { onSuccess: () => { if (!has) router.replace('/admin') } })}>
         <Trash2 aria-hidden />{has ? 'Lưu trữ khách sạn' : 'Xoá khách sạn'}</Button>{resultOf(write)}</>}>
       <span className="text-[13px] text-muted-foreground">Thao tác ghi vào nhật ký.</span>
@@ -457,8 +457,8 @@ function RoomRow({ room, rtId, write }: { room?: AdminRoomTypeEdit['rooms'][numb
       <input value={x.note ?? ''} placeholder="Ghi chú (vd có bồn tắm)" aria-label={`Ghi chú ${label}`} onChange={e => setX({ ...x, note: e.target.value })} className={INPUT} />
       <label className="col-span-2 flex h-10 items-center gap-2 text-sm sm:col-span-1"><input type="checkbox" checked={x.active} onChange={e => setX({ ...x, active: e.target.checked })} className="size-4" />Đang dùng</label>
       <span className="flex justify-end gap-1">
-        {room && <Button type="button" variant="ghost" size="icon" className="text-red-700" aria-label={`Xoá ${label}`} onClick={() => confirm(`Xoá phòng ${room.number}?`) && write.mutate({ op: 'room.delete', id: room.id })}><Trash2 aria-hidden /></Button>}
-        <Button type="submit" variant={room ? 'outline' : 'default'} disabled={write.isPending || JSON.stringify(x) === JSON.stringify(init)}>{room ? 'Lưu' : <><Plus aria-hidden />Thêm</>}</Button>
+        {room && <Button type="button" variant="ghost" size="icon" className="text-red-700" disabled={write.isPending} aria-label={`Xoá ${label}`} onClick={() => confirm(`Xoá phòng ${room.number}?`) && write.mutate({ op: 'room.delete', id: room.id })}><Trash2 aria-hidden /></Button>}
+        <Button type="submit" variant={room ? 'outline' : 'default'} loading={write.isPending} disabled={JSON.stringify(x) === JSON.stringify(init)}>{room ? 'Lưu' : <><Plus aria-hidden />Thêm</>}</Button>
       </span>
     </form>
   )
@@ -492,7 +492,7 @@ function RoomTypeDetail({ slug, data, rt }: { slug: string; data: AdminHotelEdit
         <h2 className="text-lg font-semibold">{rt ? rt.name.vi : 'Thêm hạng phòng'}</h2>
         {rt && <Badge tone={statusTone(rt.status)}>{STATUS_TEXT[rt.status]}</Badge>}
         {rt && (
-          <Button type="button" variant="ghost" size="sm" className="ml-auto text-red-700" disabled={remove.isPending}
+          <Button type="button" variant="ghost" size="sm" className="ml-auto text-red-700" loading={remove.isPending}
             onClick={() => confirm(`${rt.bookings ? 'Lưu trữ' : 'Xoá hẳn'} hạng ${rt.name.vi}?`) && remove.mutate({ op: 'roomType.delete', id: rt.id }, { onSuccess: () => { if (!rt.bookings) router.replace(back, { scroll: false }) } })}>
             <Trash2 aria-hidden />{rt.bookings ? 'Lưu trữ' : 'Xoá hạng phòng'}
           </Button>

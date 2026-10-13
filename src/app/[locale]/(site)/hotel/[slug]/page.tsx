@@ -20,7 +20,7 @@ import { PriceCard } from '@/components/hotel/price-card'
 // Khách sạn mới thêm ở admin (nguồn db) không có trong danh sách dựng sẵn lúc build → dựng khi có người xem.
 export const dynamicParams = true
 export const generateStaticParams = async () => (await hotelApi.slugs()).map(slug => ({ slug }))
-// Dựng tĩnh, làm mới mỗi 10 phút ("Giá từ" lấy từ Gohost, cache 1 giờ). Phòng trống theo ngày tải ở trình duyệt.
+// Dựng tĩnh, làm mới mỗi 10 phút ("Giá từ" lấy từ DB). Phòng trống theo ngày tải ở trình duyệt.
 export const revalidate = 600
 
 export async function generateMetadata({ params }: PageProps<'/[locale]/hotel/[slug]'>) {
@@ -88,7 +88,7 @@ export default async function HotelPage({ params }: PageProps<'/[locale]/hotel/[
           </section>
 
           <Suspense fallback={<section id="phong" className="scroll-mt-36 border-t border-border pt-10"><h2 className="text-[26px] font-bold text-brand">{t('Rooms.title')}</h2><div className="mt-6 h-64 animate-pulse rounded-2xl bg-muted" /></section>}>
-            <Rooms hotel={{ slug: h.slug, name: h.name, online: h.online, opening: h.opening, cancel_summary: h.cancel_summary, included: h.included, not_available: h.not_available, checkin: h.policies[0][1], checkout: h.policies[1][1] }} rooms={h.rooms} contact={contact} />
+            <Rooms hotel={{ slug: h.slug, name: h.name, opening: h.opening, cancel_summary: h.cancel_summary, included: h.included, not_available: h.not_available, checkin: h.policies[0][1], checkout: h.policies[1][1] }} rooms={h.rooms} contact={contact} />
           </Suspense>
 
           <Section id="di-lai" title={t('Hotel.gettingHere')}>
@@ -143,7 +143,7 @@ export default async function HotelPage({ params }: PageProps<'/[locale]/hotel/[
 
         <aside className="hidden lg:block" aria-label={t('Hotel.bookAria')}>
           <div className="sticky top-[calc(var(--header-offset)+78px)] transition-[top] duration-300">
-            <Suspense fallback={<div className="h-[390px] animate-pulse rounded-2xl bg-muted" />}><PriceCard fromPrice={from} opening={h.opening} contact={contact} cover={h.cover} included={h.included} /></Suspense>
+            <Suspense fallback={<div className="h-[390px] animate-pulse rounded-2xl bg-muted" />}><PriceCard slug={h.slug} fromPrice={from} opening={h.opening} contact={contact} cover={h.cover} included={h.included} /></Suspense>
           </div>
         </aside>
       </div>

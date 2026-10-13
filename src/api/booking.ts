@@ -1,8 +1,8 @@
-// Đặt phòng thật (DATA_SOURCE=db) phía server: gắn khách đang đăng nhập, kiểm chủ booking, gửi email SAU commit.
+// Đặt phòng phía server: gắn khách đang đăng nhập, kiểm chủ booking, gửi email SAU commit.
 // Lõi giao dịch ở src/lib/booking-engine.ts. Route handler /api/bookings/*, /api/payments/*, /api/cron/* gọi file này.
 import 'server-only'
 import { after } from 'next/server'
-import { db, isDbSource } from '@/lib/db'
+import { db } from '@/lib/db'
 import { cancelBooking, createHold, expireDue, handleWebhook, penaltyPreview, quoteSelection, readBooking, startPayment, type Contact, type Selection } from '@/lib/booking-engine'
 import { cancellationText, sendBookingEmails, sendCancelEmails } from '@/lib/email'
 import { isMockProvider, methodOf, mockPayments, mockWebhook, MOCK_SIGNATURE_HEADER, newPaymentRef, paymentProvider, providerByName } from '@/lib/payment'
@@ -21,8 +21,6 @@ interface Snapshot {
 }
 
 export const bookingApi = {
-  /** Đặt phòng thật đang mở (DATA_SOURCE=db). Không thì các trang đặt phòng chạy bản minh hoạ như cũ. */
-  enabled: isDbSource,
   /** Cổng giả lập: trang thanh toán hiện nhãn "môi trường thử". */
   mockPayments,
 

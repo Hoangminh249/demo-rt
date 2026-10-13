@@ -1,7 +1,7 @@
 'use client'
 // Tab "Lịch giá & tồn" (Postgres của Rooty): lịch tháng của một hạng phòng — giá từng đêm của gói đang chọn + phòng web còn bán.
 // Sửa hàng loạt theo khoảng ngày + thứ (giá, số phòng bán web, đóng/mở, ở tối thiểu/tối đa, chặn đến/đi), quy tắc giá + "Sinh giá".
-// Website đọc đúng các bảng này khi DATA_SOURCE=db.
+// Website đọc đúng các bảng này.
 import { useState, type FormEvent } from 'react'
 import { ChevronDown, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react'
 import { cn } from 'cn'
@@ -134,7 +134,7 @@ function BulkForm({ rt, planId, range, setRange }: {
       </details>
       {write.isSuccess && <Notice ok>{write.data.message}</Notice>}
       {write.isError && <Notice ok={false}>{adminErrorText(write.error)}</Notice>}
-      <Button type="submit" disabled={write.isPending || !n} className="h-10">{write.isPending ? 'Đang lưu…' : `Áp dụng cho ${n} ngày`}</Button>
+      <Button type="submit" loading={write.isPending} disabled={!n} className="h-10">{`Áp dụng cho ${n} ngày`}</Button>
     </form>
   )
 }
@@ -197,13 +197,13 @@ function RulesPanel({ plan }: { plan: DbPlan }) {
         <Field label="Loại"><select name="type" className={INPUT} defaultValue="PERCENT"><option value="PERCENT">± % trên giá gốc</option><option value="FIXED">Giá cố định (VND)</option></select></Field>
         <Field label="Giá trị" hint="% (vd 20, -10) hoặc VND"><input name="value" required inputMode="numeric" className={INPUT} /></Field>
         <Field label="Ưu tiên"><input name="priority" type="number" min={0} max={100} defaultValue={0} className={INPUT} /></Field>
-        <div className="flex items-end sm:col-span-2 lg:col-span-3"><Button type="submit" variant="outline" disabled={write.isPending} className="h-10">Thêm quy tắc</Button></div>
+        <div className="flex items-end sm:col-span-2 lg:col-span-3"><Button type="submit" variant="outline" loading={write.isPending} className="h-10">Thêm quy tắc</Button></div>
       </form>
 
       <div className="flex flex-wrap items-end gap-3 border-t border-border bg-muted/40 px-5 py-4">
         <Field label="Sinh giá từ"><input type="date" className={INPUT} value={gen.from} onChange={e => setGen({ ...gen, from: e.target.value })} /></Field>
         <Field label="đến"><input type="date" className={INPUT} value={gen.to} min={gen.from} onChange={e => setGen({ ...gen, to: e.target.value })} /></Field>
-        <Button type="button" disabled={write.isPending}
+        <Button type="button" loading={write.isPending}
           onClick={() => confirm(`Ghi đè giá gói "${plan.name.vi}" từ ${fmtDate(gen.from)} đến ${fmtDate(gen.to)} theo quy tắc + giá gốc?`) && write.mutate({ op: 'generate', ratePlanId: plan.id, ...gen })}
           className="h-10">Sinh giá</Button>
         <p className="w-full text-xs text-muted-foreground">Ghi đè các đêm tính được; đêm không tính được (thiếu giá gốc) giữ nguyên.</p>

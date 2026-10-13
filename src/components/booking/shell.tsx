@@ -1,7 +1,7 @@
-// Khung chung các bước đặt phòng: thanh bước · tiêu đề · nhãn bản minh hoạ · nội dung + cột tóm tắt dính.
+// Khung chung các bước đặt phòng: thanh bước · tiêu đề · nội dung + cột tóm tắt dính.
 import type { ReactNode } from 'react'
 import { useTranslations } from 'next-intl'
-import { Check, FlaskConical, SearchX } from 'lucide-react'
+import { Check, SearchX } from 'lucide-react'
 import { cn } from 'cn'
 import { Link } from '@/i18n/navigation'
 import { BTN, CONTAINER } from '@/components/site/kit'
@@ -32,18 +32,9 @@ export function Steps({ current }: { current: 1 | 2 | 3 }) {
   )
 }
 
-/** Bản minh hoạ: chưa nhận đặt phòng / thanh toán thật — để khách thật không tưởng đã đặt xong. */
-export function DemoNote({ className }: { className?: string }) {
-  const t = useTranslations('Booking')
-  return (
-    <p className={cn('flex gap-2.5 rounded-xl border border-dashed border-orange/50 bg-orange/5 px-4 py-3 text-[14px]', className)}>
-      <FlaskConical className="mt-0.5 size-4 shrink-0 text-orange" aria-hidden />{t('demo')}
-    </p>
-  )
-}
 
-export function BookingShell({ step, title, lead, demo, aside, children }: {
-  step: 1 | 2 | 3; title: string; lead: string; demo?: boolean; aside?: ReactNode; children: ReactNode
+export function BookingShell({ step, title, lead, aside, children }: {
+  step: 1 | 2 | 3; title: string; lead: string; aside?: ReactNode; children: ReactNode
 }) {
   return (
     <>
@@ -51,7 +42,6 @@ export function BookingShell({ step, title, lead, demo, aside, children }: {
       <div className={`${CONTAINER} pt-8 pb-16`}>
         <h1 className="text-[28px] leading-tight font-bold text-brand sm:text-[34px]">{title}</h1>
         <p className="mt-1.5 text-[16px] text-muted-foreground">{lead}</p>
-        {demo && <DemoNote className="mt-5" />}
         <div className={cn('mt-8 grid grid-cols-1 gap-8', aside && 'lg:grid-cols-[minmax(0,1fr)_380px]')}>
           <div className="min-w-0">{children}</div>
           {aside && <aside className="hidden lg:block"><div className="sticky top-[calc(var(--header-offset)+24px)] transition-[top] duration-300">{aside}</div></aside>}

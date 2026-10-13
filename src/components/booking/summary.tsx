@@ -1,5 +1,5 @@
 'use client'
-// Tóm tắt đặt phòng (bước 2, 3): ảnh, phòng, gói, ngày, khách, giá từng đêm, tổng — giá tính lại từ Gohost mỗi bước.
+// Tóm tắt đặt phòng (bước 2, 3): ảnh, phòng, gói, ngày, khách, giá từng đêm, tổng — giá tính lại ở server mỗi bước.
 // Máy tính: thẻ dính cột phải. Điện thoại: một dòng gập "Phòng · tổng tiền", mở ra xem đủ.
 import type { ReactNode } from 'react'
 import { useLocale, useTranslations } from 'next-intl'

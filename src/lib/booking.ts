@@ -1,16 +1,10 @@
-// Luồng đặt phòng (bản minh hoạ, chỉ chạy trên trình duyệt — chưa POST Gohost, chưa cổng thanh toán).
+// Tiện ích luồng đặt phòng dùng chung server + trình duyệt (mã booking, URL, kiểm form).
 // Lựa chọn (khách sạn, phòng, gói, ngày, khách) nằm trên URL; thông tin cá nhân của khách KHÔNG lên URL (sessionStorage).
 import { stayQuery } from './stay'
 import type { Stay } from '@/types/hotel'
 import type { Arrival, ChildAge, StayRequest } from '@/types/booking'
 
-// ponytail: tỉ lệ cọc cố định 30% — chờ kế toán chốt (review §"Trả 100% hay đặt cọc?"), đổi ở đây.
-export const DEPOSIT_RATE = 0.3
-
-/** Tiền cọc, làm tròn nghìn đồng. */
-export const deposit = (total: number) => Math.round((total * DEPOSIT_RATE) / 1000) * 1000
-
-/** Mã đặt phòng Rooty theo review §4.5: RH-{KS}-{yymmdd}-{seq 4 số}. */
+/** Mã đặt phòng Rooty: RH-{KS}-{yymmdd}-{seq 4 số}. */
 export const bookingCode = (hotelCode: string, isoDate: string, seq: number) =>
   `RH-${hotelCode}-${isoDate.slice(2, 4)}${isoDate.slice(5, 7)}${isoDate.slice(8, 10)}-${String(seq % 10000).padStart(4, '0')}`
 

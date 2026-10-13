@@ -6,26 +6,25 @@
 import { useId, useState, type ReactNode } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { usePathname, useSearchParams } from 'next/navigation'
-import { CalendarCheck, ChevronDown, Hotel, LayoutDashboard, LogOut, PanelLeftClose, PanelLeftOpen, ReceiptText, Sparkles, TicketPercent, Users, type LucideIcon } from 'lucide-react'
+import { usePathname } from 'next/navigation'
+import { ChevronDown, Hotel, LogOut, PanelLeftClose, PanelLeftOpen, ReceiptText, Sparkles, TicketPercent, Users, type LucideIcon } from 'lucide-react'
 import { cn } from 'cn'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { useAdminOverview, useLogout } from '@/hooks/use-admin'
+import { useLogout } from '@/hooks/use-admin'
 import { MobileNav } from './mobile-nav'
 import { SIDEBAR_COOKIE } from './ui'
 
 export interface FrameHotel { slug: string; name: string }
 export interface FrameActor { name: string; role: 'ADMIN' | 'STAFF' }
 
-/** Trang + tiêu đề header. `db`: true = chỉ khi DATA_SOURCE=db, false = chỉ bản cũ (Gohost). `admin`: chỉ ADMIN (STAFF chỉ xem booking, check-in/out). */
+/** Trang + tiêu đề header. `admin`: chỉ ADMIN (STAFF chỉ xem booking, check-in/out). */
 const PAGES = [
-  { href: '/admin/orders', label: 'Đặt phòng web', icon: ReceiptText, db: true, admin: false },
-  { href: '/admin/bookings', label: 'Booking', icon: CalendarCheck, db: false, admin: false },
-  { href: '/admin/promotions', label: 'Khuyến mãi', icon: TicketPercent, db: true, admin: true },
-  { href: '/admin/amenities', label: 'Tiện ích', icon: Sparkles, db: true, admin: true },
-  { href: '/admin/users', label: 'Người dùng', icon: Users, db: true, admin: true },
+  { href: '/admin/orders', label: 'Đặt phòng web', icon: ReceiptText, admin: false },
+  { href: '/admin/promotions', label: 'Khuyến mãi', icon: TicketPercent, admin: true },
+  { href: '/admin/amenities', label: 'Tiện ích', icon: Sparkles, admin: true },
+  { href: '/admin/users', label: 'Người dùng', icon: Users, admin: true },
 ] as const
 
 const ROW = 'relative flex h-10 w-full shrink-0 items-center gap-2.5 rounded-xl px-3 text-sm whitespace-nowrap text-foreground/70 outline-hidden transition-colors'
@@ -43,27 +42,19 @@ function Tip({ label, collapsed, children }: { label: string; collapsed: boolean
   )
 }
 
-function NavItem({ href, icon: Icon, label, active, collapsed, count }: { href: string; icon: LucideIcon; label: string; active: boolean; collapsed: boolean; count?: number }) {
+function NavItem({ href, icon: Icon, label, active, collapsed }: { href: string; icon: LucideIcon; label: string; active: boolean; collapsed: boolean }) {
   return (
-    <Tip label={count ? `${label} · ${count} việc cần xử lý` : label} collapsed={collapsed}>
+    <Tip label={label} collapsed={collapsed}>
       <Link href={href} aria-current={active ? 'page' : undefined} className={cn(ROW, active ? ON : IDLE)}>
         <Icon className="size-4 shrink-0" aria-hidden />
         <span className={cn('min-w-0 flex-1 truncate', fade(collapsed))}>{label}</span>
-        {!!count && (
-          <>
-            {/* Lúc mở: số trơn. Lúc thu: chấm xám ở góc icon. Số đọc cho trình đọc màn hình nằm ở sr-only. */}
-            <span aria-hidden className={cn('shrink-0 text-xs tabular-nums', active ? 'text-foreground' : 'text-muted-foreground', fade(collapsed))}>{count}</span>
-            <span aria-hidden className={cn('absolute top-2 left-6 size-1.5 rounded-full bg-foreground/50', fade(!collapsed))} />
-            <span className="sr-only">, {count} việc cần xử lý</span>
-          </>
-        )}
       </Link>
     </Tip>
   )
 }
 
 /** Mục cha "Khách sạn": lúc mở là nút mở/đóng menu con (trượt bằng grid-rows); lúc thu là nút bật menu con sang phải. */
-function HotelsGroup({ hotels, pathname, collapsed, db }: { hotels: FrameHotel[]; pathname: string; collapsed: boolean; db: boolean }) {
+function HotelsGroup({ hotels, pathname, collapsed }: { hotels: FrameHotel[]; pathname: string; collapsed: boolean }) {
   const [open, setOpen] = useState(true) // mặc định mở: trang đang xem nằm trong nhóm thì không bị giấu lúc tải
   const [flyout, setFlyout] = useState(false)
   const id = useId()
@@ -90,7 +81,7 @@ function HotelsGroup({ hotels, pathname, collapsed, db }: { hotels: FrameHotel[]
           <PopoverContent side="right" align="start" sideOffset={12} className="w-60 gap-1 p-1">
             <p className="px-3 pt-2 pb-1 text-xs font-medium tracking-wide text-muted-foreground uppercase">Khách sạn</p>
             {hotels.map(h => child(h))}
-            {db && child({ slug: 'new', name: '+ Thêm khách sạn' }, 'text-muted-foreground')}
+            {child({ slug: 'new', name: '+ Thêm khách sạn' }, 'text-muted-foreground')}
           </PopoverContent>
         </Popover>
       ) : (
@@ -111,7 +102,7 @@ function HotelsGroup({ hotels, pathname, collapsed, db }: { hotels: FrameHotel[]
                 {child(h)}
               </div>
             ))}
-            {db && <div className="relative ml-[26px]">{child({ slug: 'new', name: '+ Thêm khách sạn' }, 'text-muted-foreground')}</div>}
+            <div className="relative ml-[26px]">{child({ slug: 'new', name: '+ Thêm khách sạn' }, 'text-muted-foreground')}</div>
           </div>
         </div>
       </div>
@@ -132,9 +123,8 @@ function LogoutItem({ collapsed }: { collapsed: boolean }) {
   )
 }
 
-function SidebarBody({ hotels, pathname, collapsed, actor, db }: { hotels: FrameHotel[]; pathname: string; collapsed: boolean; actor: FrameActor; db: boolean }) {
+function SidebarBody({ hotels, pathname, collapsed, actor }: { hotels: FrameHotel[]; pathname: string; collapsed: boolean; actor: FrameActor }) {
   const admin = actor.role === 'ADMIN'
-  const { data } = useAdminOverview(admin) // dùng chung cache với trang Tổng quan: không gọi thêm
   return (
     <>
       <div className="relative flex h-16 shrink-0 items-center border-b border-border px-4">
@@ -146,9 +136,8 @@ function SidebarBody({ hotels, pathname, collapsed, actor, db }: { hotels: Frame
         <span aria-hidden className={cn('absolute left-4 grid size-8 place-items-center rounded-lg bg-brand text-sm font-bold text-white', fade(!collapsed))}>R</span>
       </div>
       <nav aria-label="Admin" className={cn('flex flex-1 flex-col gap-1 overflow-x-hidden overflow-y-auto px-3 py-3', collapsed && '[scrollbar-width:none]')}>
-        {admin && <NavItem href="/admin" icon={LayoutDashboard} label="Tổng quan" active={pathname === '/admin'} collapsed={collapsed} count={data?.issues.length} />}
-        {admin && <HotelsGroup hotels={hotels} pathname={pathname} collapsed={collapsed} db={db} />}
-        {PAGES.filter(p => p.db === db && (!p.admin || admin)).map(p => (
+        {admin && <HotelsGroup hotels={hotels} pathname={pathname} collapsed={collapsed} />}
+        {PAGES.filter(p => !p.admin || admin).map(p => (
           <NavItem key={p.href} href={p.href} icon={p.icon} label={p.label} active={pathname.startsWith(p.href)} collapsed={collapsed} />
         ))}
       </nav>
@@ -163,18 +152,13 @@ function SidebarBody({ hotels, pathname, collapsed, actor, db }: { hotels: Frame
 /** Tên trang trên thanh header, suy từ đường dẫn. Trang có đầu trang riêng (khách sạn, chi tiết booking) chỉ ghi cấp cha. */
 function HeaderTitle() {
   const pathname = usePathname()
-  const sp = useSearchParams()
-  if (pathname === '/admin') return <h1 className="min-w-0 truncate text-base font-semibold">Tổng quan</h1>
   const page = PAGES.find(p => p.href === pathname)
   if (page) return <h1 className="min-w-0 truncate text-base font-semibold">{page.label}</h1>
   if (pathname.startsWith('/admin/orders/')) return <p className="min-w-0 truncate text-sm text-muted-foreground"><Link href="/admin/orders" className="hover:text-foreground">Đặt phòng web</Link></p>
-  const parent = pathname.startsWith('/admin/bookings/')
-    ? { label: 'Booking', href: sp.get('property') ? `/admin/bookings?property=${encodeURIComponent(sp.get('property')!)}` : '/admin/bookings' }
-    : pathname.startsWith('/admin/hotels/') ? { label: 'Khách sạn', href: '/admin' } : { label: 'Tổng quan', href: '/admin' }
-  return <p className="min-w-0 truncate text-sm text-muted-foreground"><Link href={parent.href} className="hover:text-foreground">{parent.label}</Link></p>
+  return <p className="min-w-0 truncate text-sm text-muted-foreground">{pathname.startsWith('/admin/hotels/') ? 'Khách sạn' : 'Admin'}</p>
 }
 
-export function AdminFrame({ hotels, actor, db, defaultCollapsed, children }: { hotels: FrameHotel[]; actor: FrameActor; db: boolean; defaultCollapsed: boolean; children: ReactNode }) {
+export function AdminFrame({ hotels, actor, defaultCollapsed, children }: { hotels: FrameHotel[]; actor: FrameActor; defaultCollapsed: boolean; children: ReactNode }) {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(defaultCollapsed)
   const toggle = () => {
@@ -184,11 +168,11 @@ export function AdminFrame({ hotels, actor, db, defaultCollapsed, children }: { 
   return (
     <div className="flex min-h-screen">
       <aside className={cn('sticky top-0 hidden h-screen shrink-0 flex-col overflow-hidden bg-card transition-[width] duration-200 ease-out motion-reduce:transition-none lg:flex', collapsed ? 'w-16' : 'w-60')}>
-        <SidebarBody hotels={hotels} pathname={pathname} collapsed={collapsed} actor={actor} db={db} />
+        <SidebarBody hotels={hotels} pathname={pathname} collapsed={collapsed} actor={actor} />
       </aside>
       <div className="min-w-0 flex-1">
         <header className="sticky top-0 z-20 flex h-16 items-center gap-2 border-b border-border bg-card px-4 lg:px-6">
-          <MobileNav><div className="flex h-full flex-col"><SidebarBody hotels={hotels} pathname={pathname} collapsed={false} actor={actor} db={db} /></div></MobileNav>
+          <MobileNav><div className="flex h-full flex-col"><SidebarBody hotels={hotels} pathname={pathname} collapsed={false} actor={actor} /></div></MobileNav>
           <Button type="button" variant="ghost" size="icon" onClick={toggle} className="-ml-2 hidden aria-expanded:bg-transparent aria-expanded:hover:bg-foreground/5 lg:inline-flex"
             aria-label={collapsed ? 'Mở rộng sidebar' : 'Thu gọn sidebar'} aria-expanded={!collapsed} title={collapsed ? 'Mở rộng sidebar' : 'Thu gọn sidebar'}>
             {collapsed ? <PanelLeftOpen className="size-5" aria-hidden /> : <PanelLeftClose className="size-5" aria-hidden />}

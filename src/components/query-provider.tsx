@@ -1,5 +1,5 @@
 'use client'
-// Một QueryClient cho mỗi tab trình duyệt. Mặc định tiết kiệm lượt gọi Gohost (60 lượt / 5 phút cho cả key):
+// Một QueryClient cho mỗi tab trình duyệt. Mặc định tiết kiệm lượt gọi:
 // dữ liệu coi là mới trong 60 giây, không tự gọi lại khi quay về tab, không tự thử lại khi lỗi.
 import { useState, type ReactNode } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'

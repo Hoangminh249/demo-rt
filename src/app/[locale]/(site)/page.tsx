@@ -16,7 +16,7 @@ import { CONTAINER, Photo } from '@/components/site/kit'
 import { HeroSlides } from '@/components/site/hero-slides'
 import { QuickBar } from '@/components/site/quick-bar'
 
-// Dựng tĩnh, làm mới mỗi 10 phút ("Giá từ" lấy từ Gohost, cache 1 giờ trong src/lib/gohost.ts).
+// Dựng tĩnh, làm mới mỗi 10 phút ("Giá từ" lấy từ DB).
 export const revalidate = 600
 
 export async function generateMetadata({ params }: PageProps<'/[locale]'>) {
@@ -27,11 +27,7 @@ export async function generateMetadata({ params }: PageProps<'/[locale]'>) {
 const PROMISE_ICONS = [Bus, Coffee, Receipt, MessageCircle]
 // ponytail: ảnh lấy tạm từ Figma (public/home) — thay bằng video banner và ảnh thật khi có.
 const HERO = [{ src: '/home/hero-1.jpg', focus: '50% 40%' }, { src: '/home/hero-2.jpg', focus: 'center' }, { src: '/home/hero-3.jpg', focus: 'center' }]
-// Khách sạn chưa có ảnh (Calista, chưa chụp) dùng tạm ảnh Figma /home/hotel-sample.jpg trên trang chủ.
-// ponytail: 5 khách sạn mẫu của Figma để lưới đủ 7 ô — xoá mảng này trước khi go-live / khi có khách sạn thật thứ 3.
-const SAMPLES = [['Wyndham Grand', '/home/hotel-sample.jpg'], ['Wyndham Garden', '/home/hero-2.jpg'], ['Casepia', '/home/hotel-sample.jpg'], ['La Racine', '/home/hero-2.jpg'], ['Almafi', '/home/hotel-sample.jpg']] as const
-// Lưới so le 3 cột của Figma: chiều cao từng ô theo cột (máy tính). Điện thoại: một cột, ô cao đều.
-const BENTO = [[560, 320], [320, 560], [420, 218, 218]]
+// Khách sạn chưa có ảnh bìa (Calista, chưa chụp) dùng tạm ảnh Figma /home/hotel-sample.jpg trên trang chủ.
 const ECO = [{ img: '/home/shuttle.jpg', href: null, warm: false }, { img: '/home/story.jpg', href: 'https://rootytrip.com', warm: true }, { img: '/home/hero-3.jpg', href: 'https://rivusyacht.com', warm: false }]
 
 const BTN_SM = 'inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-lg bg-primary px-4 text-[13px] font-semibold whitespace-nowrap text-white transition-colors hover:bg-primary-hover'
@@ -73,8 +69,6 @@ function HotelCard({ h, from, now, height }: { h: Hotel; from: number | null; no
   )
 }
 
-type Cell = { hotel: Hotel; from: number | null } | { sample: (typeof SAMPLES)[number] }
-
 export default async function HomePage({ params }: PageProps<'/[locale]'>) {
   const locale = (await params).locale as Locale
   setRequestLocale(locale)
@@ -86,13 +80,6 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
   const promises = t.raw('promises') as [string, string][]
   const story = t.raw('story.items') as [string, string][]
   const eco = t.raw('eco') as [string, string, string, string][]
-
-  // Khách sạn thật đứng đầu cột 1 và 2 (ô lớn), khách sạn mẫu lấp phần còn lại theo thứ tự cột.
-  const real: Cell[] = hotels.map((hotel, i) => ({ hotel, from: prices[i] }))
-  const fill: Cell[] = SAMPLES.map(sample => ({ sample }))
-  const order = [real[0], fill[0], real[1], fill[1], ...real.slice(2), ...fill.slice(2)].filter(Boolean)
-  let k = 0
-  const columns = BENTO.map(col => col.map(height => ({ cell: order[k++], height })).filter(x => x.cell))
 
   return (
     <>
@@ -124,20 +111,8 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
           <p className="text-[12px] font-bold tracking-[0.08em] text-orange uppercase">{t('hotelsEyebrow')}</p>
           <h2 className="mt-2.5 text-[30px] leading-tight font-bold text-brand sm:text-[42px]">{t('hotelsLead')} <span className="text-brand-accent">Rooty</span></h2>
           <p className="mt-2 text-[16px] text-muted-foreground">{t('hotelsSub')}</p>
-          <div className="mt-10 grid gap-6 lg:grid-cols-3">
-            {columns.map((col, c) => (
-              <div key={c} className="flex flex-col gap-6">
-                {col.map(({ cell, height }) => 'hotel' in cell
-                  ? <HotelCard key={cell.hotel.slug} h={cell.hotel} from={cell.from} now={now} height={height} />
-                  : (
-                    <ImageCard key={cell.sample[0]} img={cell.sample[1]} alt={cell.sample[0]} h={height} tag={t('sampleTag')}>
-                      <h3 className="text-xl font-bold">{cell.sample[0]}</h3>
-                      <p className="text-[13px] text-[#c8e8de]">{t('sampleDesc')}</p>
-                      <p className="text-[15px] font-semibold">{t('samplePrice')}</p>
-                    </ImageCard>
-                  ))}
-              </div>
-            ))}
+          <div className="mt-10 grid gap-6 md:grid-cols-2">
+            {hotels.map((h, i) => <HotelCard key={h.slug} h={h} from={prices[i]} now={now} height={520} />)}
           </div>
         </div>
       </section>

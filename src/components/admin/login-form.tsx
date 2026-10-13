@@ -81,7 +81,7 @@ function EnvLoginForm({ next }: { next: string }) {
           {empty.password && <p id="login-password-err" className="text-sm text-red-700">Chưa nhập mật khẩu</p>}
         </div>
         {failed && <p role="alert" className="text-sm text-red-700">{failed}</p>}
-        <Button type="submit" variant="default" disabled={login.isPending || login.isSuccess} className="mt-2 h-12 w-full">
+        <Button type="submit" variant="default" loading={login.isPending || login.isSuccess} className="mt-2 h-12 w-full">
           {login.isPending || login.isSuccess ? 'Đang đăng nhập…' : 'Đăng nhập'}
         </Button>
       </form>

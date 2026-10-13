@@ -1,6 +1,5 @@
 // Chi tiết một đơn của khách đang đăng nhập: tiến trình, kỳ ở, giá từng đêm đã chốt, huỷ đơn, thanh toán, liên hệ khách sạn.
 // Người khác / mã sai → "Không tìm thấy đặt phòng" (không lộ đơn tồn tại hay không).
-import { notFound } from 'next/navigation'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { bookingApi } from '@/api/booking'
 import { hotelApi } from '@/api/hotel'
@@ -18,7 +17,6 @@ export async function generateMetadata({ params }: PageProps<'/[locale]/don-cua-
 export default async function OrderPage({ params }: PageProps<'/[locale]/don-cua-toi/[code]'>) {
   const { locale, code } = await params
   setRequestLocale(locale as Locale)
-  if (!bookingApi.enabled()) notFound()
   const t = await getTranslations('Orders')
   const user = await currentUser()
   if (!user) return <div className={`${CONTAINER} max-w-[720px] py-16`}><LoginCard title={t('loginTitle')} body={t('loginBody')} /></div>

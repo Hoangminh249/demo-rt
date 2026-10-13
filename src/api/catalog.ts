@@ -4,7 +4,7 @@
 import 'server-only'
 import { revalidateTag, unstable_cache } from 'next/cache'
 import { HOTELS } from '@/content'
-import { db, isDbSource } from '@/lib/db'
+import { db } from '@/lib/db'
 import type { HotelContent, RoomContent } from '@/types/hotel'
 
 export const CATALOG_TAG = 'catalog'
@@ -71,10 +71,9 @@ const cached = unstable_cache(load, ['catalog-v1'], { tags: [CATALOG_TAG], reval
 
 /**
  * Khách sạn cho web (`all` = false: chỉ PUBLISHED) hoặc admin (`all` = true: cả DRAFT).
- * Nguồn gohost / DB lỗi / đang build → nội dung file src/content.
+ * DB lỗi / đang build (db() chặn truy vấn lúc build) → nội dung file src/content.
  */
 async function contents(all = false): Promise<HotelContent[]> {
-  if (!isDbSource()) return HOTELS
   try {
     return await cached(all)
   } catch (e) {

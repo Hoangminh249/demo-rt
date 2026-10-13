@@ -1,5 +1,5 @@
 // GET /api/hotels/{slug}/calendar[?room=slug] — giá thấp nhất từng đêm, 90 ngày từ ngày nhận sớm nhất, cho lịch chọn ngày.
-// Chỉ có khi DATA_SOURCE=db; nguồn Gohost trả [] (lịch hiện không kèm giá).
+// Lấy từ Postgres (src/api/inventory.ts).
 import type { NextRequest } from 'next/server'
 import { hotelApi } from '@/api/hotel'
 import { today } from '@/lib/format'

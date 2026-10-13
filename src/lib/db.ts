@@ -3,9 +3,6 @@ import 'server-only'
 import type { PrismaClient } from '@/generated/prisma/client'
 import { newPrisma } from './pg'
 
-/** Nguồn giá + tồn phòng: DATA_SOURCE=db → Postgres của Rooty; mặc định (gohost) → GET Gohost như trước. */
-export const isDbSource = () => process.env.DATA_SOURCE === 'db'
-
 const g = globalThis as typeof globalThis & { __prisma?: PrismaClient }
 
 /**

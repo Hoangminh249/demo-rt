@@ -1,19 +1,18 @@
 'use client'
-// Bản nháp đặt phòng trong sessionStorage (đóng tab là mất) — thông tin cá nhân không lên URL, không gửi server.
-// ponytail: chưa có backend; khi nối Gohost POST /bookings thì bước thanh toán gửi bản nháp này lên server rồi xoá.
+// Bản nháp thông tin khách trong sessionStorage (đóng tab là mất) — quay lại bước 2 thì form điền sẵn. Không lên URL, không gửi server.
 import { useMemo, useSyncExternalStore } from 'react'
-import type { GuestDraft, PaymentDraft } from '@/types/booking'
+import type { GuestDraft } from '@/types/booking'
 
 const KEY = 'rooty-booking'
-export interface Draft { guest?: GuestDraft; payment?: PaymentDraft }
+export interface Draft { guest?: GuestDraft }
 
 const parse = (raw: string | null): Draft => { try { return JSON.parse(raw || '{}') as Draft } catch { return {} } }
 const raw = () => { try { return sessionStorage.getItem(KEY) ?? '' } catch { return '' } }
 
-export const readDraft = () => parse(raw())
+const readDraft = () => parse(raw())
 
 export function saveDraft(d: Draft) {
-  try { sessionStorage.setItem(KEY, JSON.stringify({ ...readDraft(), ...d })) } catch { /* chế độ riêng tư chặn storage: bước sau báo thiếu thông tin */ }
+  try { sessionStorage.setItem(KEY, JSON.stringify({ ...readDraft(), ...d })) } catch { /* chế độ riêng tư chặn storage: lần sau form trống */ }
 }
 
 /** null khi render ở server / lúc hydrate (không có sessionStorage) — component hiện khung chờ rồi mới vẽ form. */

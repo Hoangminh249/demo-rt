@@ -2,6 +2,7 @@ import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "cn"
 import { Slot } from "radix-ui"
+import { Loader2 } from "lucide-react"
 
 // Dáng theo skill evon (I1, button.md): outline là mặc định · default (= primary) · secondary · ghost,
 // + destructive nền đỏ mờ (luật khoá 2). Cao 40px, bo 12px; nút thấp hơn 40px bo 8px (luật khoá 10). Không bóng.
@@ -39,15 +40,20 @@ const variants = cva(
 // Dùng thẳng cva trên <a>/<Link> thì cả hai class cùng nằm đó và thứ tự CSS cho transparent thắng → nút viền mất viền.
 const buttonVariants = (...args: Parameters<typeof variants>) => cn(variants(...args))
 
+/** `loading`: khoá nút + vòng quay trước nhãn (đang gọi API). */
 function Button({
   className,
   variant = "outline",
   size = "default",
   asChild = false,
+  loading = false,
+  disabled,
+  children,
   ...props
 }: React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean
+    loading?: boolean
   }) {
   const Comp = asChild ? Slot.Root : "button"
 
@@ -57,8 +63,12 @@ function Button({
       data-variant={variant}
       data-size={size}
       className={cn(buttonVariants({ variant, size, className }))}
+      disabled={disabled || loading}
+      aria-busy={loading || undefined}
       {...props}
-    />
+    >
+      {loading && !asChild ? <><Loader2 className="animate-spin" aria-hidden />{children}</> : children}
+    </Comp>
   )
 }
 

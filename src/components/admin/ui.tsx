@@ -110,5 +110,3 @@ export const vnd = (n: number) => `${new Intl.NumberFormat('vi-VN').format(Math.
 export const vndPlain = (n: number) => new Intl.NumberFormat('vi-VN').format(Math.round(n))
 /** Giá một đêm gọn: 2,5 tr · 2,48 tr · 900 k */
 export const shortVnd = (n: number) => (n >= 1e6 ? `${(n / 1e6).toLocaleString('vi-VN', { maximumFractionDigits: 2 })} tr` : `${Math.round(n / 1000)} k`)
-/** Giờ:phút theo giờ Việt Nam */
-export const hhmm = (t: number) => new Intl.DateTimeFormat('vi-VN', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Ho_Chi_Minh' }).format(t)
